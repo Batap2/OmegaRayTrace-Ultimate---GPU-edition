@@ -1,0 +1,3 @@
+/media/bat/HDD_2To/Dossier_Bat/Fac_CV/fac/M2_Local/mesh-viewer/cmake-build-debug/CMakeFiles/viewer.dir
+/media/bat/HDD_2To/Dossier_Bat/Fac_CV/fac/M2_Local/mesh-viewer/cmake-build-debug/CMakeFiles/edit_cache.dir
+/media/bat/HDD_2To/Dossier_Bat/Fac_CV/fac/M2_Local/mesh-viewer/cmake-build-debug/CMakeFiles/rebuild_cache.dir
