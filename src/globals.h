@@ -37,6 +37,7 @@ inline mat4 projection, modelview, model, view;
 inline GLuint vertexshader, fragmentshader, shaderprogram;
 inline GLuint projectionLoc, modelviewLoc, modelLoc, viewLoc;
 
+inline GLuint lightsPosID, lightsColorID;
 inline GLuint lightcol;
 inline GLuint lightpos;
 inline GLuint numusedcol;
@@ -47,6 +48,9 @@ inline GLuint specularcol;
 inline GLuint emissioncol;
 inline GLuint shininesscol;
 inline GLuint camPosLoc;
+
+inline GLuint lightsPosAttribPos = 100;
+inline GLuint lightsColorAttribPos = 101;
 
 inline enum { view2, translate, scale } transop;
 

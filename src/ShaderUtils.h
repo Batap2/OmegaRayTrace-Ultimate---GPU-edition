@@ -29,7 +29,19 @@ namespace ShaderUtils{
     }
 
     void sendLightsToShaders(){
-        
+        std::vector<glm::vec3> lightsPos;
+        std::vector<glm::vec3> lightsColor;
+
+        glGenBuffers(1, &lightsPosID);
+        glGenBuffers(1, &lightsColorID);
+
+        glBindBuffer(GL_UNIFORM_BUFFER, lightsPosID);
+        glBindBuffer(GL_UNIFORM_BUFFER, lightsColorID);
+
+        glBufferData(GL_ARRAY_BUFFER, lightsPos.size() * sizeof(glm::vec3), lightsPos.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, lightsColor.size() * sizeof(glm::vec3), lightsColor.data(), GL_DYNAMIC_DRAW);
+
+        glBindBufferBase(GL_UNIFORM_BUFFER, lightsPosAttribPos, lightsPosID);
     }
 }
 

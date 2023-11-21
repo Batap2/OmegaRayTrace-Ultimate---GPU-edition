@@ -192,22 +192,6 @@ void display(float& ambient_slider, float& diffuse_slider, float& specular_slide
     glUniform4fv(lightpos, numLights, &light_position);
     glUniform4fv(lightcol, numLights, &light_color);  
 
-    // Transformations for objects, involving translation and scaling 
-    mat4 sc(1.0) , tr(1.0), transf(1.0); 
-    sc = gl::Transform::scale(sx,sy,1.0); 
-    tr = gl::Transform::translate(tx,ty,0.0);   
-    modelview = tr * sc * modelview;
-
-    if (!custom_color){
-        *(&ambient_slider + 1) = ambient_slider;
-        *(&ambient_slider + 2) = ambient_slider; 
-
-        *(&diffuse_slider + 1) = diffuse_slider;
-        *(&diffuse_slider + 2) = diffuse_slider; 
-
-        *(&specular_slider + 1) = specular_slider;
-        *(&specular_slider + 2) = specular_slider; 
-    }
 
     glUniform4fv(ambientcol, 1, &ambient_slider);
     glUniform4fv(diffusecol, 1, &diffuse_slider);
@@ -257,7 +241,7 @@ int main(int argc, char* argv[]){
 
     if (!glfwInit()) return -1;
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); 
-    window = glfwCreateWindow(1920, 1080, "Scene Viewer", NULL, NULL);
+    window = glfwCreateWindow(window_width, window_height, "Scene Viewer", NULL, NULL);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
 
@@ -273,13 +257,6 @@ int main(int argc, char* argv[]){
 
     // Initialise all variable initial values
     initialise_shader_and_mesh();
-    eye = (eyeinit); 
-    up = (upinit); 
-    amount = amountinit;
-    sx = sy = 1.0;   
-    tx = ty = 0.0;
-
-    Camera camera = Camera();
 
     glEnable(GL_DEPTH_TEST);
     glfwSetWindowSizeCallback(window, ShaderUtils::reshape);

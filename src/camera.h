@@ -11,7 +11,7 @@ class Camera{
 
 public:
 
-    Camera(){std::cout<<"camera";};
+    Camera(){};
     ~Camera(){};
 
 
