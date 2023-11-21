@@ -13,6 +13,7 @@ inline int amount;
 inline vec3 eye;
 inline vec3 up;
 
+inline float screenSeparation1 = 4;
 inline vec3 eyeinit(0.0, 0.0, 5.0);
 inline vec3 upinit(0.0, 1.0, 0.0);
 inline vec3 center(0.0, 0.0, 0.0);
@@ -60,11 +61,11 @@ inline GLfloat lightcolor[4 * numLights];
 inline GLfloat lightransf[4 * numLights];
 
 // Callback and reshape globals
-inline int render_mode;
-inline int previous_y_position;
-inline int previous_x_position;
-inline float current_vp_width, current_vp_height;
-
+inline int render_mode = 0;
+inline int previous_y_position = 0;
+inline int previous_x_position = 0;
+inline float current_vp_width = window_width/screenSeparation1;
+inline float current_vp_height = window_height;
 // Global mesh
 inline Mesh mesh;
 

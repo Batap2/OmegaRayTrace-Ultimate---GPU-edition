@@ -309,13 +309,6 @@ int main(int argc, char* argv[]){
         light_colors[(4 * i) + 3] = 1.0f;
     }
 
-    previous_y_position = 0;
-    previous_x_position = 0;
-    render_mode = 3;
-
-    current_vp_width = 1920/4;
-    current_vp_height = 1080;
-
     while (!glfwWindowShouldClose(window))
     {
         manageInput();

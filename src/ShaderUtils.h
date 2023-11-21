@@ -16,7 +16,7 @@ namespace ShaderUtils{
         window_width = width;
         window_height = height;
 
-        int vp = width / 4;
+        int vp = width / screenSeparation1;
 
         current_vp_height = height;
         current_vp_width = vp;
@@ -26,6 +26,10 @@ namespace ShaderUtils{
         float aspect = (float) (width - vp) / (float) height;
         projection = glm::perspective(glm::radians(fovy), aspect, zNear, zFar);
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
+    }
+
+    void sendLightsToShaders(){
+        
     }
 }
 
