@@ -1,4 +1,4 @@
-# Install script for directory: /media/bat/HDD_2To/Dossier_Bat/Fac_CV/fac/M2_Local/mesh-viewer
+# Install script for directory: /media/bat/HDD_2To/Dossier_Bat/Fac_CV/fac/M2_Local/OmegaRayTrace-Ultimate---GPU-edition
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/media/bat/HDD_2To/Dossier_Bat/Fac_CV/fac/M2_Local/mesh-viewer/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/media/bat/HDD_2To/Dossier_Bat/Fac_CV/fac/M2_Local/OmegaRayTrace-Ultimate---GPU-edition/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

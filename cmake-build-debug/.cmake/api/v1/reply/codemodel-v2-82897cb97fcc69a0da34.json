@@ -39,7 +39,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "viewer::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-viewer-Debug-e5e4318c76ea4955148e.json",
+					"jsonFile" : "target-viewer-Debug-c6b860d656d799fc2fe7.json",
 					"name" : "viewer",
 					"projectIndex" : 0
 				}
@@ -49,8 +49,8 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "/media/bat/HDD_2To/Dossier_Bat/Fac_CV/fac/M2_Local/mesh-viewer/cmake-build-debug",
-		"source" : "/media/bat/HDD_2To/Dossier_Bat/Fac_CV/fac/M2_Local/mesh-viewer"
+		"build" : "/media/bat/HDD_2To/Dossier_Bat/Fac_CV/fac/M2_Local/OmegaRayTrace-Ultimate---GPU-edition/cmake-build-debug",
+		"source" : "/media/bat/HDD_2To/Dossier_Bat/Fac_CV/fac/M2_Local/OmegaRayTrace-Ultimate---GPU-edition"
 	},
 	"version" : 
 	{

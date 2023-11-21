@@ -1,9 +1,4 @@
-#include <deque>
-#include <fstream>
 #include <iostream>
-#include <memory>
-#include <sstream>
-#include <stack>
 #include <string>
 
 #include <GL/glew.h>
@@ -34,92 +29,144 @@ void reshape(GLFWwindow* window, int width, int height){
 
     glViewport(vp, 0, width - vp, height);
 
-    std::cout << "resize \n";
-
-    float aspect = (float) (width) / (float) height;
+    float aspect = (float) (width - vp) / (float) height;
     projection = glm::perspective(glm::radians(fovy), aspect, zNear, zFar); 
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS){
+        rclickHolded = true;
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE){
+        rclickHolded = false;
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
 }
 
 void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (action == GLFW_PRESS){
         switch(key){
-            case GLFW_KEY_EQUAL:
-                amount++;
-                std::cout << "Sensitivity set to " << amount << "\n" ;
-                break;
-            case GLFW_KEY_MINUS:
-                amount--;
-                std::cout << "Sensitivity set to " << amount << "\n" ; 
-                break;
             case GLFW_KEY_ESCAPE: 
                 exit(0) ;
                 break ;
-            case GLFW_KEY_R:  
-                eye = eyeinit ; 
-                up = upinit ; 
+            case GLFW_KEY_R:
+                mainCamera.cameraPos = eyeinit ;
+                mainCamera.cameraUp = upinit ;
                 amount = amountinit ;
                 transop = view2 ;
                 sx = sy = 1.0 ; 
                 tx = ty = 0.0 ; 
-                break ;   
-            case GLFW_KEY_LEFT: 
-                if (keyboard_mode == 1) gl::Transform::left(amount, eye,  up);
-                else if (keyboard_mode == 0) tx -= amount * 0.01 ; 
+                break ;
+            case GLFW_KEY_A:
+                leftHolded = true;
                 break;
-            case GLFW_KEY_UP: 
-                if (keyboard_mode == 1) gl::Transform::up(-amount,  eye,  up);
-                else if (keyboard_mode == 0) ty += amount * 0.01 ; 
+            case GLFW_KEY_D:
+                rightHolded = true;
                 break;
-            case GLFW_KEY_RIGHT:
-                if (keyboard_mode == 1) gl::Transform::left(-amount, eye,  up);
-                else if (keyboard_mode == 0) tx += amount * 0.01 ; 
+            case GLFW_KEY_W:
+                upHolded = true;
                 break;
-            case GLFW_KEY_DOWN: 
-                if (keyboard_mode == 1) gl::Transform::up(amount,  eye,  up);
-                else if (keyboard_mode == 0) ty -= amount * 0.01 ; 
+            case GLFW_KEY_S:
+                 downHolded = true;
+                break;
+            case GLFW_KEY_Q:
+                aHolded = true;
+                break;
+            case GLFW_KEY_E:
+                eHolded = true;
+                break;
+        }
+    } else if (action == GLFW_RELEASE)
+    {
+        switch(key){
+            case GLFW_KEY_A:
+                leftHolded = false;
+                break;
+            case GLFW_KEY_D:
+                rightHolded = false;
+                break;
+            case GLFW_KEY_W:
+                upHolded = false;
+                break;
+            case GLFW_KEY_S:
+                downHolded = false;
+                break;
+            case GLFW_KEY_Q:
+                aHolded = false;
+                break;
+            case GLFW_KEY_E:
+                eHolded = false;
                 break;
         }
     }
 }
 
-static void custom_mouse_callback(GLFWwindow* window, float sensitivity){
-    bool clicked_state = true; 
-    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE) {
-        clicked_state = false;
-    }
-    if (clicked_state){
-        double x;
-        double y;
-        glfwGetCursorPos(window, &x, &y);
-        if (x > current_vp_width){
-            if (previous_y_position - y > 0){
-                if (mouse_mode == 1) gl::Transform::up(-amount * sensitivity,  eye,  up);
-                else if (mouse_mode == 0) ty += amount * 0.005;
-                previous_y_position = y;
-            }
-            else if(previous_y_position - y < 0){
-                if (mouse_mode == 1) gl::Transform::up(amount * sensitivity,  eye,  up);
-                else if (mouse_mode == 0) ty -= amount * 0.005;
-                previous_y_position = y;
-            }
-            if (previous_x_position - x > 0){
-                if (mouse_mode == 1) gl::Transform::left(amount * sensitivity,  eye,  up);
-                else if (mouse_mode == 0) tx -= amount * 0.005; 
-                previous_x_position = x;
-            }
-            else if(previous_x_position - x < 0){
-                if (mouse_mode == 1) gl::Transform::left(-amount * sensitivity,  eye,  up);
-                else if (mouse_mode == 0) tx += amount * 0.005;
-                previous_x_position = x;
-            }
-        }
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if(rclickHolded)
+    {
+        float xoffset = xpos - lastX;
+        float yoffset = lastY - ypos;
+        lastX = xpos;
+        lastY = ypos;
+
+        float sensitivity = 0.1f;
+        xoffset *= sensitivity;
+        yoffset *= sensitivity;
+
+        yaw   += xoffset;
+        pitch += yoffset;
+
+        if(pitch > 89.0f)
+            pitch = 89.0f;
+        if(pitch < -89.0f)
+            pitch = -89.0f;
+
+        glm::vec3 direction;
+        direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        direction.y = sin(glm::radians(pitch));
+        direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+
+        mainCamera.cameraDirection = glm::normalize(direction);
+        mainCamera.cameraRight = glm::normalize(glm::cross(mainCamera.cameraDirection, upinit));
+        mainCamera.cameraUp = glm::cross(mainCamera.cameraRight, mainCamera.cameraDirection);
+    } else {
+        lastX = xpos;
+        lastY = ypos;
     }
 }
 
 static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset){
-    sx += yoffset * 0.01;
-    sy += yoffset * 0.01; 
+    cameraSpeed += yoffset * 0.005;
+    cameraSpeed = fmax(0.0f, cameraSpeed);
+}
+
+void manageInput()
+{
+    if(rclickHolded)
+    {
+        if(leftHolded){
+            mainCamera.cameraPos -= cameraSpeed * mainCamera.cameraRight;
+        }
+        if(rightHolded){
+            mainCamera.cameraPos += cameraSpeed * mainCamera.cameraRight;
+        }
+        if(upHolded){
+            mainCamera.cameraPos += cameraSpeed * mainCamera.cameraDirection;
+        }
+        if(downHolded){
+            mainCamera.cameraPos -= cameraSpeed * mainCamera.cameraDirection;
+        }
+        if(aHolded){
+            mainCamera.cameraPos -= cameraSpeed * upinit;
+        }
+        if(eHolded){
+            mainCamera.cameraPos += cameraSpeed * upinit;
+        }
+    }
 }
 
 void initialise_shader_and_mesh(){
@@ -149,14 +196,9 @@ void initialise_shader_and_mesh(){
 
 void display(float& ambient_slider, float& diffuse_slider, float& specular_slider, float& shininess_slider, bool custom_color, float& light_position, float& light_color) {
     glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);    
-    modelview = glm::lookAt(eye,center,up);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-    projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
-
-    std::cout << "display \n";
+    modelview = glm::lookAt(mainCamera.cameraPos,mainCamera.cameraPos + mainCamera.cameraDirection, mainCamera.cameraUp);
 
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
@@ -259,8 +301,12 @@ int main(int argc, char* argv[]){
     glfwSetWindowSizeCallback(window, reshape);
 
     glfwSetKeyCallback(window, keyboard);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
-    
+
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+
     float ambient[4] = {0.05, 0.05, 0.05, 1};
     float diffusion[4] = {0.2, 0.2, 0.2, 1};
     float specular[4] = {0.5, 0.5, 0.5, 1};
@@ -274,6 +320,11 @@ int main(int argc, char* argv[]){
     light_colors[1] = 1.0f;
     light_colors[2] = 1.0f;
 
+    for (int i = 0; i < numLights; i++){
+        light_positions[(4 * i) + 3] = 1.0f;
+        light_colors[(4 * i) + 3] = 1.0f;
+    }
+
     previous_y_position = 0;
     previous_x_position = 0;
     render_mode = 3;
@@ -283,14 +334,12 @@ int main(int argc, char* argv[]){
 
     while (!glfwWindowShouldClose(window))
     {
+        manageInput();
+
         display(*ambient, *diffusion, *specular, shininess, custom_color, *light_positions, *light_colors);
         GUI::draw();
 
-        reshape(window, window_width, window_height);
-
         glfwSwapBuffers(window);
-        glfwSetScrollCallback(window, scroll_callback);
-        custom_mouse_callback(window, 0.25);
         glfwPollEvents();
     }
 

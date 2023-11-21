@@ -10,7 +10,7 @@
 
 #include "deps/glm/glm.hpp"
 
-namespace gl {
+
 class Mesh{
 private:
     GLuint vertex_array, vertex_buffer, normal_buffer, index_buffer;
@@ -29,6 +29,5 @@ public:
     void parse_and_bind();
     inline void bind(){glBindVertexArray(vertex_array);}
 };
-}
 
 #endif

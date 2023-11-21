@@ -4,7 +4,6 @@
 #include "transform.h"
 #include "globals.h"
 
-namespace gl {
 void Mesh::generate_buffers(){
 	glGenVertexArrays(1, &vertex_array);
 	glGenBuffers(1, &vertex_buffer);
@@ -87,5 +86,4 @@ void Mesh::parse_and_bind(){
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
-}
 }

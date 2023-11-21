@@ -4,6 +4,10 @@
 #include "mesh.h"
 #include "Light.h"
 #include "transform.h"
+#include "camera.h"
+
+// -------------- HOLDED KEYS-------------- //
+inline bool rclickHolded, upHolded, downHolded, leftHolded, rightHolded, aHolded, eHolded;
 
 inline int amount;
 inline vec3 eye;
@@ -20,23 +24,18 @@ inline int amountinit    = 5;
 inline float fovy        = 90.0f;
 inline float zFar        = 99.0f;
 inline float zNear       = 0.1f;
+inline bool firstMouse = true;
+inline float yaw   = -90.0f;
+inline float pitch =  -20.0f;
+inline float lastX =  window_width / 2.0;
+inline float lastY =  window_height / 2.0;
 
-inline GLuint vertexshader, fragmentshader, shaderprogram;
 inline mat4 projection, modelview, model, view;
+
+// -------------- SHADER & UNIFORM LOCATIONS -------------- //
+inline GLuint vertexshader, fragmentshader, shaderprogram;
 inline GLuint projectionLoc, modelviewLoc, modelLoc, viewLoc;
 
-inline enum { view2, translate, scale } transop;
-
-inline float sx, sy;
-inline float tx, ty;
-
-// Globals regarding lighting details
-inline constexpr int numLights = 5;
-inline GLfloat lightposn[4 * numLights];
-inline GLfloat lightcolor[4 * numLights];
-inline GLfloat lightransf[4 * numLights];
-
-// Variables to set uniform params for lighting fragment shader
 inline GLuint lightcol;
 inline GLuint lightpos;
 inline GLuint numusedcol;
@@ -47,6 +46,18 @@ inline GLuint specularcol;
 inline GLuint emissioncol;
 inline GLuint shininesscol;
 
+inline enum { view2, translate, scale } transop;
+
+inline float sx, sy;
+inline float tx, ty;
+
+// Globals regarding lighting details
+inline constexpr int numLights = 5;
+inline GLfloat lightposn[4 * numLights];
+inline GLfloat lightcolor[4 * numLights];
+
+inline GLfloat lightransf[4 * numLights];
+
 // Callback and reshape globals
 inline int render_mode;
 inline int previous_y_position;
@@ -54,11 +65,14 @@ inline int previous_x_position;
 inline float current_vp_width, current_vp_height;
 
 // Global mesh
-inline gl::Mesh mesh;
+inline Mesh mesh;
 
 // Scene
 
-inline std::vector<gl::Mesh> meshes;
+inline Camera mainCamera;
+inline float cameraSpeed = 0.05f;
+
+inline std::vector<Mesh> meshes;
 inline std::vector<Light> lights;
 
 #endif
