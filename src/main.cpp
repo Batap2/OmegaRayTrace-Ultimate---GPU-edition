@@ -3,6 +3,7 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include "deps/glm/ext.hpp"
 
 #include "deps/imgui/imgui.h"
 #include "deps/imgui/imgui_impl_glfw.h"
@@ -12,27 +13,11 @@
 #include "mesh.h"
 #include "camera.h"
 #include "GUI.h"
+#include "ShaderUtils.h"
 
 #include "shaders.h"
 #include "transform.h"
 #include "globals.h"
-
-
-void reshape(GLFWwindow* window, int width, int height){
-    window_width = width;
-    window_height = height;
-
-    int vp = width / 4; 
-
-    current_vp_height = height; 
-    current_vp_width = vp;
-
-    glViewport(vp, 0, width - vp, height);
-
-    float aspect = (float) (width - vp) / (float) height;
-    projection = glm::perspective(glm::radians(fovy), aspect, zNear, zFar); 
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
-}
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
@@ -186,8 +171,7 @@ void initialise_shader_and_mesh(){
     shininesscol = glGetUniformLocation(shaderprogram,"shininess") ;
     projectionLoc = glGetUniformLocation(shaderprogram, "projection");
     modelviewLoc = glGetUniformLocation(shaderprogram, "modelview");
-    modelLoc = glGetUniformLocation(shaderprogram, "model");
-    viewLoc = glGetUniformLocation(shaderprogram, "view");
+    camPosLoc = glGetUniformLocation(shaderprogram, "camPos");
 
     // Initialize global mesh
     mesh.generate_buffers();
@@ -200,10 +184,10 @@ void display(float& ambient_slider, float& diffuse_slider, float& specular_slide
 
     modelview = glm::lookAt(mainCamera.cameraPos,mainCamera.cameraPos + mainCamera.cameraDirection, mainCamera.cameraUp);
 
-    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
-    glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
     glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
     glUniformMatrix4fv(modelviewLoc, 1, GL_FALSE, &modelview[0][0]);
+
+    glUniform3fv(camPosLoc, 1, glm::value_ptr(mainCamera.cameraPos));
 
     glUniform4fv(lightpos, numLights, &light_position);
     glUniform4fv(lightcol, numLights, &light_color);  
@@ -298,7 +282,7 @@ int main(int argc, char* argv[]){
     Camera camera = Camera();
 
     glEnable(GL_DEPTH_TEST);
-    glfwSetWindowSizeCallback(window, reshape);
+    glfwSetWindowSizeCallback(window, ShaderUtils::reshape);
 
     glfwSetKeyCallback(window, keyboard);
     glfwSetMouseButtonCallback(window, mouse_button_callback);
@@ -337,7 +321,7 @@ int main(int argc, char* argv[]){
         manageInput();
 
         display(*ambient, *diffusion, *specular, shininess, custom_color, *light_positions, *light_colors);
-        GUI::draw();
+        GUI::draw(window);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -346,5 +330,7 @@ int main(int argc, char* argv[]){
 
     mesh.destroy_buffers();
     glfwTerminate();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
     return 0;
 }

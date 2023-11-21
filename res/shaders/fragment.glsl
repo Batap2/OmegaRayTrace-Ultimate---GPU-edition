@@ -9,6 +9,7 @@ in vec4 myvertex;
 
 // Uniform variable modelview
 uniform mat4 modelview;
+uniform vec3 camPos;
 
 // Uniform variables to do with lighting
 uniform vec4 light_posn[num_lights];
@@ -30,7 +31,7 @@ void main (void){
     vec3 lightColor = vec3(1,1,1);
 
     vec3 lp = vec3(1,1,1);
-    vec3 vp = vec3(1,1,1);
+    vec3 vp = camPos;
     vec3 N = mynormal;
 
     vec3 lightDir = normalize(lp - vec3(myvertex));

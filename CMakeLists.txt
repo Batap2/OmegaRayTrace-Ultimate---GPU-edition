@@ -15,7 +15,8 @@ file (GLOB source_files "${source_dir}/*.cpp" "${source_dir}/deps/*.cpp" "${sour
 add_executable (viewer ${source_files}
         src/Light.h
         src/Material.h
-        src/MeshLoader.h)
+        src/MeshLoader.h
+        src/ShaderUtils.h)
 target_link_libraries(viewer glfw)
 target_link_libraries(viewer OpenGL::GL)
 target_link_libraries(viewer GLEW)

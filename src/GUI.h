@@ -9,14 +9,13 @@
 #include "deps/imgui/imgui_impl_glfw.h"
 #include "deps/imgui/imgui_impl_opengl3.h"
 
+#include "ShaderUtils.h"
+
 #include "globals.h"
 
 namespace GUI{
 
-    void displayMainToolbar(){
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+    void displayMainToolbar(GLFWwindow* window){
 
         ImGui::SetNextWindowPos({0, 0});
         ImGui::SetNextWindowSize({current_vp_width, current_vp_height});
@@ -67,9 +66,12 @@ namespace GUI{
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
         ImGui::Text(" ");
-        //reshape(window, window_width, window_height);
         ImGui::Separator(); ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Camera"); ImGui::Separator();
-        ImGui::SliderFloat("Field of view2", &fovy, 0.0f, 180.0f);
+        if(ImGui::SliderFloat("Field of view2", &fovy, 0.0f, 180.0f)) {
+            ShaderUtils::reshape(window, window_width, window_height);
+        }
+
+
         ImGui::SliderFloat("Frustum near plane", &zNear, 0.0f, 15.0f);
         ImGui::SliderFloat("Frustum far plane", &zFar, 0.0f, 150.0f);
         ImGui::Text(" ");
@@ -80,19 +82,18 @@ namespace GUI{
         ImGui::Separator(); ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Lighting"); ImGui::Separator();
         ImGui::Text("Most lights are switched off by default, and the below");
         ImGui::Text("sliders can play with the light positions and color intensities");
+    }
 
-        ////////////////////////////////////////////////////////////////////////////////////////////////
+    void draw(GLFWwindow* window){
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        displayMainToolbar(window);
 
         ImGui::End();
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        ////////////////////////////////////////////////////////////////////////////////////////////////
-    }
-
-    void draw(){
-
-        displayMainToolbar();
     }
 };
 

@@ -45,6 +45,7 @@ inline GLuint diffusecol;
 inline GLuint specularcol;
 inline GLuint emissioncol;
 inline GLuint shininesscol;
+inline GLuint camPosLoc;
 
 inline enum { view2, translate, scale } transop;
 
