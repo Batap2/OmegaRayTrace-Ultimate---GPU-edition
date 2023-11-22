@@ -10,10 +10,11 @@
 #include "deps/imgui/imgui_impl_opengl3.h"
 
 
-#include "mesh.h"
+#include "Mesh.h"
 #include "camera.h"
 #include "GUI.h"
 #include "ShaderUtils.h"
+#include "SceneOperations.h"
 
 #include "shaders.h"
 #include "transform.h"
@@ -201,31 +202,31 @@ void display(float& ambient_slider, float& diffuse_slider, float& specular_slide
     mesh.bind();
     if (render_mode == 0){
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDrawElements(GL_TRIANGLES, mesh.objectIndices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, mesh.indicies.size(), GL_UNSIGNED_INT, 0);
     }
     if (render_mode == 1){
         glLineWidth(1); 
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDrawElements(GL_TRIANGLES, mesh.objectIndices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, mesh.indicies.size(), GL_UNSIGNED_INT, 0);
     } 
     if (render_mode == 2){
         glPointSize(2.5); 
         glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-        glDrawElements(GL_TRIANGLES, mesh.objectIndices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, mesh.indicies.size(), GL_UNSIGNED_INT, 0);
     } 
     if (render_mode == 3){
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDrawElements(GL_TRIANGLES, mesh.objectIndices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, mesh.indicies.size(), GL_UNSIGNED_INT, 0);
         glUniform4fv(diffusecol, 1, black);
         glUniform4fv(specularcol, 1, white);
 
         glPointSize(2.5); 
         glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-        glDrawElements(GL_TRIANGLES, mesh.objectIndices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, mesh.indicies.size(), GL_UNSIGNED_INT, 0);
 
         glLineWidth(2.5); 
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDrawElements(GL_TRIANGLES, mesh.objectIndices.size(), GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, mesh.indicies.size(), GL_UNSIGNED_INT, 0);
     } 
     glBindVertexArray(0);
 }
@@ -271,7 +272,8 @@ int main(int argc, char* argv[]){
     float light_colors[20] = {0.0f};
     float shininess = 10; 
     bool custom_color = false; 
-    
+
+    SceneOperations::initSceneLights();
 
     ShaderUtils::reshape(window, window_width, window_height);
 

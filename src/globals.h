@@ -1,7 +1,7 @@
 #ifndef GLOBAL_VARS_H
 #define GLOBAL_VARS_H
 
-#include "mesh.h"
+#include "Object3D.h"
 #include "Light.h"
 #include "transform.h"
 #include "camera.h"
@@ -48,12 +48,9 @@ inline GLuint emissioncol;
 inline GLuint shininesscol;
 inline GLuint camPosLoc;
 
-inline GLuint lightsPosBufferID, lightsColorBufferID;
-inline GLuint lightsPosBindingIndex;
-inline GLuint lightsColorBindingIndex;
+inline GLuint lightsBufferID, lights_numberID;
 
 // -------------- SHADER BUFFER SIZE -------------- //
-inline int lightsNumber = 1;
 inline int lightsMaxNumber = 64;
 
 

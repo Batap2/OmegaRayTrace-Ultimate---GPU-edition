@@ -10,6 +10,11 @@
 
 #include "deps/glm/glm.hpp"
 
+struct UVCoord{
+    float u, v;
+    UVCoord(float _u, float _v) : u(_u), v(_v) {}
+    UVCoord() : u(0.0f), v(0.0f) {}
+};
 
 class Mesh{
 private:
@@ -17,12 +22,14 @@ private:
 public:
     std::string object_path; 
 
-    std::vector <glm::vec3> objectVertices;
-    std::vector <glm::vec3> objectNormals;
-    std::vector <unsigned int> objectIndices;
-    //std::vector <>
+    std::vector <glm::vec3> vertices;
+    std::vector <glm::vec3> normals;
+    std::vector <unsigned int> indicies;
+    std::vector<UVCoord> uv;
 
     glm::mat4 tansform;
+
+    void applyTransform();
 
     void generate_buffers();
     void destroy_buffers();

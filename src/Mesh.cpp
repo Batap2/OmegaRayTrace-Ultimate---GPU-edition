@@ -42,7 +42,7 @@ void Mesh::parse_and_bind(){
 		c2 = fgetc(fp);
 		if ((c1 == 'v') && (c2 == ' ')) {
 			fscanf(fp, "%f %f %f", &x, &y, &z);
-			objectVertices.push_back(vec3(x, y, z));
+			vertices.push_back(vec3(x, y, z));
 			if (y < minY) minY = y;
 			if (z < minZ) minZ = z;
 			if (y > maxY) maxY = y;
@@ -50,39 +50,39 @@ void Mesh::parse_and_bind(){
 		}
 		else if ((c1 == 'v') && (c2 == 'n')) {
 			fscanf(fp, "%f %f %f", &x, &y, &z);
-			objectNormals.push_back(glm::normalize(vec3(x, y, z)));
+			normals.push_back(glm::normalize(vec3(x, y, z)));
 		}
 		else if (c1 == 'f'){
 			fscanf(fp, "%d//%d %d//%d %d//%d", &fx, &ignore, &fy, &ignore, &fz, &ignore);
-			objectIndices.push_back(fx - 1);
-			objectIndices.push_back(fy - 1);
-			objectIndices.push_back(fz - 1);
+			indicies.push_back(fx - 1);
+			indicies.push_back(fy - 1);
+			indicies.push_back(fz - 1);
 		}
 	}
 	fclose(fp); 
 	float avgY = (minY + maxY) / 2.0f - 0.02f;
 	float avgZ = (minZ + maxZ) / 2.0f;
-	for (unsigned int i = 0; i < objectVertices.size(); ++i) {
-		vec3 shiftedVertex = (objectVertices[i] - vec3(0.0f, avgY, avgZ)) * vec3(1.58f, 1.58f, 1.58f);
-		objectVertices[i] = shiftedVertex;
+	for (unsigned int i = 0; i < vertices.size(); ++i) {
+		vec3 shiftedVertex = (vertices[i] - vec3(0.0f, avgY, avgZ)) * vec3(1.58f, 1.58f, 1.58f);
+        vertices[i] = shiftedVertex;
 	}
 
 	glBindVertexArray(vertex_array);
 
 	// Bind vertices to layout location 0
 	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer );
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * objectVertices.size(), &objectVertices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0); // This allows usage of layout location 0 in the vertex shader
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
 
 	// Bind normals to layout location 1
 	glBindBuffer(GL_ARRAY_BUFFER, normal_buffer );
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * objectNormals.size(), &objectNormals[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vec3) * normals.size(), &normals[0], GL_STATIC_DRAW);
 	glEnableVertexAttribArray(1); // This allows usage of layout location 1 in the vertex shader
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer );
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * objectIndices.size(), &objectIndices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indicies.size(), &indicies[0], GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);

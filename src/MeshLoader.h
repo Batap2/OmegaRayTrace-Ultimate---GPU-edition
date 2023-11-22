@@ -11,7 +11,7 @@
 
 #include <iostream>
 
-#include "mesh.h"
+#include "Mesh.h"
 #include "deps/glm/glm.hpp"
 
 namespace ObjLoader{
@@ -39,7 +39,7 @@ namespace ObjLoader{
         unsigned int sizeV = scene->mMeshes[0]->mNumVertices;
         unsigned int sizeT = scene->mMeshes[0]->mNumFaces;
 
-        mesh.objectVertices.resize (sizeV);
+        mesh.vertices.resize (sizeV);
         //TODO mesh.triangles.resize (sizeT);
 
         for (unsigned int i = 0; i < sizeV; i++){
@@ -47,7 +47,7 @@ namespace ObjLoader{
             float y = scene->mMeshes[0]->mVertices[i].y;
             float z = scene->mMeshes[0]->mVertices[i].z;
             glm::vec3 pos(x,y,z);
-            mesh.objectVertices[i] = pos;
+            mesh.vertices[i] = pos;
         }
 
         // TODO génère les triangles du mesh

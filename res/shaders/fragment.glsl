@@ -1,6 +1,7 @@
 # version 330 core
 
 const int LIGHTS_MAX_SIZE = 64;
+const int lightStructByteSize = 7;
 
 // Max number of light sources
 const int num_lights = 5;
@@ -13,13 +14,16 @@ in vec4 myvertex;
 uniform mat4 modelview;
 uniform vec3 camPos;
 
-layout(std140) uniform LightsPosBuffer {
-    vec3 data[LIGHTS_MAX_SIZE];
-} lightsPosBuffer;
+struct Light
+{
+        vec3 pos;
+        vec3 color;
+        float intensity;
+};
 
-layout(std140) uniform LightsColorBuffer {
-    vec3 data[LIGHTS_MAX_SIZE];
-} lightsColorBuffer;
+uniform int lights_number;
+uniform float lights[LIGHTS_MAX_SIZE * lightStructByteSize];
+//uniform vec3 lightPos[LIGHTS_MAX_SIZE]
 
 // Uniform variable for object properties
 uniform vec4 ambient;
@@ -30,24 +34,49 @@ uniform float shininess;
 // Output of the fragment shader
 out vec4 fragColor;
 
+vec3 phong(vec3 lightPos, vec3 viewPos, vec3 normal, vec3 lightColor, vec3 objectColor, vec4 fragPos, float ambientStrength, float specularStrength, float shininess)
+{
+    vec3 lightDir = normalize(lightPos - vec3(fragPos));
+    vec3 viewDir = normalize(viewPos - vec3(fragPos));
+    vec3 reflectDir = reflect(-lightDir, normal);
+
+    vec3 ambient = ambientStrength * objectColor;
+    float diff = max(dot(normal, lightDir), 0.0);
+    vec3 diffuse = diff * objectColor;
+
+    vec3 specular = vec3(0.0);
+    if (diff > 0.0) {
+        vec3 halfwayDir = normalize(lightDir + viewDir);
+        float spec = pow(max(dot(normal, halfwayDir), 0.0), shininess);
+        specular = specularStrength * spec * lightColor;
+    }
+
+    vec3 result = (ambient + diffuse + specular) * lightColor;
+
+    return result;
+}
 void main (void){
 
-    vec3 colorFromTexture = vec3(0.8,0.2,0.2);
+    vec3 finalColor = vec3(0,0,0);
 
-    vec3 lightColor = vec3(1,1,1);
 
-    vec3 lp = lightsPosBuffer.data[0];
-    vec3 vp = camPos;
-    vec3 N = mynormal;
+    for(int i = 0; i < lights_number; i++)
+    {
+        int offset = i*lightStructByteSize;
 
-    vec3 lightDir = normalize(lp - vec3(myvertex));
-    vec3 viewDir = normalize(vp - vec3(myvertex));
-    vec3 reflectDir = reflect(-lightDir, N);
+        vec3 colorFromTexture = vec3(1,1,1);
 
-    vec3 ambient = 0.1 * colorFromTexture;
-    vec3 diffuse = max(dot(N, lightDir), 0.0) * colorFromTexture;
-    vec3 specular = lightColor * pow(max(dot(viewDir, reflectDir), 0), 50) * 0.2;
-    vec4 classicPhongColor = vec4(ambient + diffuse + specular, 1.0);
 
-    fragColor = classicPhongColor;
+        vec3 lp = vec3(lights[offset+0], lights[offset+1], lights[offset+2]);
+        vec3 lightColor = vec3(lights[offset+3], lights[offset+4], lights[offset+5]);
+
+
+        vec3 newCol = phong(lp, camPos, mynormal, lightColor, colorFromTexture, myvertex, 0, 0.5, 32);
+
+        finalColor += newCol;
+
+        finalColor = min(finalColor, vec3(1,1,1));
+    }
+
+    fragColor = vec4(finalColor, 1.0f);
 }

@@ -12,6 +12,13 @@
 
 
 namespace ShaderUtils{
+
+    struct ShaderLight{
+        glm::vec3 pos;
+        glm::vec3 color;
+        float intensity;
+    };
+
     void reshape(GLFWwindow* window, int width, int height){
         window_width = width;
         window_height = height;
@@ -28,29 +35,38 @@ namespace ShaderUtils{
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
     }
 
-    void sendLightsToShaders(){
-        
-        std::vector<glm::vec3> lightsPosBuffer;
-        std::vector<glm::vec3> lightsColorBuffer;
+    void sendLightsToShaders()
+    {
+        if(lights.size() > lightsMaxNumber){
+            std::cout << "max lights number reached\n";
+            return;
+        }
 
-        lightsPosBuffer.push_back(glm::vec3(0.0f, 2.0f, 0.0f)); // Ajoutez vos positions de lumière
-        lightsColorBuffer.push_back(glm::vec3(1.0f, -1.0f, 1.0f)); // Ajoutez vos couleurs de lumière
-
-        glGenBuffers(1, &lightsPosBufferID);
-        glBindBuffer(GL_UNIFORM_BUFFER, lightsPosBufferID);
-        glBufferData(GL_UNIFORM_BUFFER, lightsPosBuffer.size() * sizeof(glm::vec3), lightsPosBuffer.data(), GL_DYNAMIC_DRAW);
-        GLuint lightsPosBindingIndex = glGetUniformBlockIndex(shaderprogram, "LightsPosBuffer");
-        std::cout << lightsPosBindingIndex << "\n";
-        
-        glBindBufferBase(GL_UNIFORM_BUFFER, lightsPosBindingIndex, lightsPosBufferID);
+        int structSize = 7;
+        GLfloat lightsBuffer[lightsMaxNumber * structSize];
 
 
-        glGenBuffers(1, &lightsColorBufferID);
-        glBindBuffer(GL_UNIFORM_BUFFER, lightsColorBufferID);
-        glBufferData(GL_UNIFORM_BUFFER, lightsColorBuffer.size() * sizeof(glm::vec3), lightsColorBuffer.data(), GL_DYNAMIC_DRAW);
-        GLuint lightsColorBindingIndex = glGetUniformBlockIndex(shaderprogram, "LightsColorBuffer");
-        glBindBufferBase(GL_UNIFORM_BUFFER, lightsColorBindingIndex, lightsColorBufferID);
-        std::cout << lightsColorBindingIndex << "\n";
+        for(int i = 0; i < lights.size(); ++i)
+        {
+            Light l = lights[i];
+
+            int offset = i*structSize;
+
+            lightsBuffer[offset] = l.pos.x;
+            lightsBuffer[offset+1] = l.pos.y;
+            lightsBuffer[offset+2] = l.pos.z;
+            lightsBuffer[offset+3] = l.color.x;
+            lightsBuffer[offset+4] = l.color.y;
+            lightsBuffer[offset+5] = l.color.z;
+            lightsBuffer[offset+6] = l.intensity;
+        }
+
+
+        lightsBufferID = glGetUniformLocation(shaderprogram, "lights");
+        glUniform1fv(lightsBufferID, lightsMaxNumber * structSize, lightsBuffer);
+
+        lights_numberID = glGetUniformLocation(shaderprogram, "lights_number");
+        glUniform1i(lights_numberID, lights.size());
     }
 }
 

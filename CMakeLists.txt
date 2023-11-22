@@ -18,7 +18,13 @@ add_executable (viewer ${source_files}
         src/Light.h
         src/Material.h
         src/MeshLoader.h
-        src/ShaderUtils.h)
+        src/ShaderUtils.h
+        src/SceneOperations.h
+        src/Object3D.h
+        src/Plane.h
+        src/Triangle.h
+        src/Sphere.h
+        src/Square.h)
 
 target_link_libraries(viewer glfw)
 target_link_libraries(viewer OpenGL::GL)
