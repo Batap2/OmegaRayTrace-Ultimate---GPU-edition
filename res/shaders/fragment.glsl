@@ -1,5 +1,7 @@
 # version 330 core
 
+const int LIGHTS_MAX_SIZE = 64;
+
 // Max number of light sources
 const int num_lights = 5;
 
@@ -10,6 +12,14 @@ in vec4 myvertex;
 // Uniform variable modelview
 uniform mat4 modelview;
 uniform vec3 camPos;
+
+layout(std140) uniform LightsPosBuffer {
+    vec3 data[LIGHTS_MAX_SIZE];
+} lightsPosBuffer;
+
+layout(std140) uniform LightsColorBuffer {
+vec3 data[LIGHTS_MAX_SIZE];
+} lightsColorBuffer;
 
 // Uniform variables to do with lighting
 uniform vec4 light_posn[num_lights];
@@ -30,7 +40,7 @@ void main (void){
 
     vec3 lightColor = vec3(1,1,1);
 
-    vec3 lp = vec3(1,1,1);
+    vec3 lp = lightsPosBuffer.data[0];
     vec3 vp = camPos;
     vec3 N = mynormal;
 

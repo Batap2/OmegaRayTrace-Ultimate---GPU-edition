@@ -37,7 +37,6 @@ inline mat4 projection, modelview, model, view;
 inline GLuint vertexshader, fragmentshader, shaderprogram;
 inline GLuint projectionLoc, modelviewLoc, modelLoc, viewLoc;
 
-inline GLuint lightsPosID, lightsColorID;
 inline GLuint lightcol;
 inline GLuint lightpos;
 inline GLuint numusedcol;
@@ -49,8 +48,16 @@ inline GLuint emissioncol;
 inline GLuint shininesscol;
 inline GLuint camPosLoc;
 
-inline GLuint lightsPosAttribPos = 100;
-inline GLuint lightsColorAttribPos = 101;
+inline GLuint lightsPosBufferID, lightsColorBufferID;
+inline GLuint lightsPosBindingIndex;
+inline GLuint lightsColorBindingIndex;
+
+// -------------- SHADER BUFFER SIZE -------------- //
+inline int lightsNumber = 1;
+inline int lightsMaxNumber = 64;
+
+
+
 
 inline enum { view2, translate, scale } transop;
 
@@ -74,6 +81,7 @@ inline float current_vp_height = window_height;
 inline Mesh mesh;
 
 // Scene
+
 
 inline Camera mainCamera;
 inline float cameraSpeed = 0.05f;
