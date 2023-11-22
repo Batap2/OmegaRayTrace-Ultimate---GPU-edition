@@ -18,12 +18,8 @@ layout(std140) uniform LightsPosBuffer {
 } lightsPosBuffer;
 
 layout(std140) uniform LightsColorBuffer {
-vec3 data[LIGHTS_MAX_SIZE];
+    vec3 data[LIGHTS_MAX_SIZE];
 } lightsColorBuffer;
-
-// Uniform variables to do with lighting
-uniform vec4 light_posn[num_lights];
-uniform vec4 light_col[num_lights];
 
 // Uniform variable for object properties
 uniform vec4 ambient;
@@ -40,7 +36,7 @@ void main (void){
 
     vec3 lightColor = vec3(1,1,1);
 
-    vec3 lp = vec3(2,2,2);
+    vec3 lp = lightsPosBuffer.data[0];
     vec3 vp = camPos;
     vec3 N = mynormal;
 

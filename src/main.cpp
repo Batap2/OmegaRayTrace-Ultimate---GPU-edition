@@ -189,10 +189,6 @@ void display(float& ambient_slider, float& diffuse_slider, float& specular_slide
 
     glUniform3fv(camPosLoc, 1, glm::value_ptr(mainCamera.cameraPos));
 
-    glUniform4fv(lightpos, numLights, &light_position);
-    glUniform4fv(lightcol, numLights, &light_color);  
-
-
     glUniform4fv(ambientcol, 1, &ambient_slider);
     glUniform4fv(diffusecol, 1, &diffuse_slider);
     glUniform4fv(specularcol, 1, &specular_slider);
@@ -276,25 +272,22 @@ int main(int argc, char* argv[]){
     float shininess = 10; 
     bool custom_color = false; 
     
-    light_positions[1] = 6.5f;
-    light_colors[0] = 1.0f;
-    light_colors[1] = 1.0f;
-    light_colors[2] = 1.0f;
 
-    for (int i = 0; i < numLights; i++){
-        light_positions[(4 * i) + 3] = 1.0f;
-        light_colors[(4 * i) + 3] = 1.0f;
-    }
+    ShaderUtils::reshape(window, window_width, window_height);
+
+    ShaderUtils::sendLightsToShaders();
 
     while (!glfwWindowShouldClose(window))
     {
         manageInput();
 
         display(*ambient, *diffusion, *specular, shininess, custom_color, *light_positions, *light_colors);
+
         GUI::draw(window);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+
     }
 
 

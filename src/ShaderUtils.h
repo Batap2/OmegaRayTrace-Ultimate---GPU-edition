@@ -29,26 +29,28 @@ namespace ShaderUtils{
     }
 
     void sendLightsToShaders(){
+        
         std::vector<glm::vec3> lightsPosBuffer;
         std::vector<glm::vec3> lightsColorBuffer;
 
-        lightsPosBuffer.push_back(glm::vec3(0.0f, 10.0f, 0.0f)); // Ajoutez vos positions de lumière
-        lightsColorBuffer.push_back(glm::vec3(1.0f, 1.0f, 1.0f)); // Ajoutez vos couleurs de lumière
+        lightsPosBuffer.push_back(glm::vec3(0.0f, 2.0f, 0.0f)); // Ajoutez vos positions de lumière
+        lightsColorBuffer.push_back(glm::vec3(1.0f, -1.0f, 1.0f)); // Ajoutez vos couleurs de lumière
 
         glGenBuffers(1, &lightsPosBufferID);
-        glGenBuffers(1, &lightsColorBufferID);
-
         glBindBuffer(GL_UNIFORM_BUFFER, lightsPosBufferID);
         glBufferData(GL_UNIFORM_BUFFER, lightsPosBuffer.size() * sizeof(glm::vec3), lightsPosBuffer.data(), GL_DYNAMIC_DRAW);
+        GLuint lightsPosBindingIndex = glGetUniformBlockIndex(shaderprogram, "LightsPosBuffer");
+        std::cout << lightsPosBindingIndex << "\n";
+        
+        glBindBufferBase(GL_UNIFORM_BUFFER, lightsPosBindingIndex, lightsPosBufferID);
 
+
+        glGenBuffers(1, &lightsColorBufferID);
         glBindBuffer(GL_UNIFORM_BUFFER, lightsColorBufferID);
         glBufferData(GL_UNIFORM_BUFFER, lightsColorBuffer.size() * sizeof(glm::vec3), lightsColorBuffer.data(), GL_DYNAMIC_DRAW);
-
-        GLuint lightsPosBindingIndex = glGetUniformBlockIndex(shaderprogram, "LightsPosBuffer");
         GLuint lightsColorBindingIndex = glGetUniformBlockIndex(shaderprogram, "LightsColorBuffer");
-
-        glBindBufferBase(GL_UNIFORM_BUFFER, lightsPosBindingIndex, lightsPosBufferID);
         glBindBufferBase(GL_UNIFORM_BUFFER, lightsColorBindingIndex, lightsColorBufferID);
+        std::cout << lightsColorBindingIndex << "\n";
     }
 }
 
