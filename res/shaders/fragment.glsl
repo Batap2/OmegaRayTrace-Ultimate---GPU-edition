@@ -40,7 +40,7 @@ void main (void){
 
     vec3 lightColor = vec3(1,1,1);
 
-    vec3 lp = lightsPosBuffer.data[0];
+    vec3 lp = vec3(2,2,2);
     vec3 vp = camPos;
     vec3 N = mynormal;
 
