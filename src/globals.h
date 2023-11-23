@@ -6,14 +6,18 @@
 #include "transform.h"
 #include "camera.h"
 
-// -------------- HOLDED KEYS-------------- //
+// -------------- MENU APPEARANCE -------------- //
+inline float screenSeparation1 = 4;
+
+// -------------- KEYS -------------- //
 inline bool rclickHolded, upHolded, downHolded, leftHolded, rightHolded, aHolded, eHolded;
+
 
 inline int amount;
 inline vec3 eye;
 inline vec3 up;
 
-inline float screenSeparation1 = 4;
+
 inline vec3 eyeinit(0.0, 0.0, 5.0);
 inline vec3 upinit(0.0, 1.0, 0.0);
 inline vec3 center(0.0, 0.0, 0.0);
@@ -22,7 +26,7 @@ inline int keyboard_mode = 0;
 inline int window_width  = 1920;
 inline int window_height = 1080;
 inline int amountinit    = 5;
-inline float fovy        = 90.0f;
+inline float fovy        = 60.0f;
 inline float zFar        = 99.0f;
 inline float zNear       = 0.1f;
 inline bool firstMouse = true;
@@ -53,9 +57,6 @@ inline GLuint lightsBufferID, lights_numberID;
 // -------------- SHADER BUFFER SIZE -------------- //
 inline int lightsMaxNumber = 64;
 
-
-
-
 inline enum { view2, translate, scale } transop;
 
 inline float sx, sy;
@@ -70,14 +71,12 @@ inline GLfloat lightransf[4 * numLights];
 
 // Callback and reshape globals
 inline int render_mode = 0;
-inline int previous_y_position = 0;
-inline int previous_x_position = 0;
 inline float current_vp_width = window_width/screenSeparation1;
 inline float current_vp_height = window_height;
 // Global mesh
 inline Mesh mesh;
 
-// Scene
+// -------------- SCENE -------------- //
 
 
 inline Camera mainCamera;
@@ -85,5 +84,10 @@ inline float cameraSpeed = 0.05f;
 
 inline std::vector<Mesh> meshes;
 inline std::vector<Light> lights;
+
+// -------------- IMGUI -------------- //
+
+inline bool showMenus = true;
+inline bool imguitest1;
 
 #endif

@@ -5,25 +5,56 @@
 #ifndef OBJECT_VIEWER_GUI_H
 #define OBJECT_VIEWER_GUI_H
 
+#include <cmath>
+
 #include "deps/imgui/imgui.h"
 #include "deps/imgui/imgui_impl_glfw.h"
 #include "deps/imgui/imgui_impl_opengl3.h"
+//#include "deps/ImGui-Addons/FileBrowser/ImGuiFileBrowser.h"
+
 
 #include "ShaderUtils.h"
+#include "SceneOperations.h"
 
 #include "globals.h"
+
+// FLAGS : https://pixtur.github.io/mkdocs-for-imgui/site/api-imgui/Flags---Enumerations/#ImGuiWindowFlags_NoMove
+// GIZMO : https://github.com/CedricGuillemet/ImGuizmo
+// FILE DIALOG : https://github.com/gallickgunner/ImGui-Addons
 
 namespace GUI{
 
     void displayMainToolbar(GLFWwindow* window){
 
         ImGui::SetNextWindowPos({0, 0});
-        ImGui::SetNextWindowSize({current_vp_width, current_vp_height});
+
+        float panelW = std::fmax(static_cast<float>(window_width)/4, 400.0f);
+        ImGui::SetNextWindowSize({panelW, static_cast<float>(window_height)});
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImColor(0,0,0,100).Value);
+
+        auto  flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar;
 
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
-        ImGui::Begin("Object Properties");
-        ImGui::Text("Application %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        ImGui::Begin("Scene Configuration", &imguitest1, flags );
+        if (ImGui::BeginMenuBar())
+        {
+            if (ImGui::BeginMenu("File"))
+            {
+                if (ImGui::MenuItem("Open..", "Ctrl+O"))
+                {
+                    SceneOperations::openFile();
+                }
+
+                if (ImGui::MenuItem("Save", "Ctrl+S"))   { /* Do stuff */ }
+                if (ImGui::MenuItem("Close", "Ctrl+W"))  {}
+                ImGui::EndMenu();
+            }
+            ImGui::EndMenuBar();
+        }
+
+
+        ImGui::Text("Application (%.1f FPS)", ImGui::GetIO().Framerate);
         ImGui::Text(" ");
 
         ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -34,6 +65,7 @@ namespace GUI{
         ImGui::RadioButton("Lines", &render_mode, 1); ImGui::SameLine();
         ImGui::RadioButton("Point Cloud", &render_mode, 2); ImGui::SameLine();
         ImGui::RadioButton("Mesh", &render_mode, 3);
+
 
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -82,6 +114,15 @@ namespace GUI{
         ImGui::Separator(); ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Lighting"); ImGui::Separator();
         ImGui::Text("Most lights are switched off by default, and the below");
         ImGui::Text("sliders can play with the light positions and color intensities");
+
+        ImGui::TextColored(ImVec4(1,1,0,1), "Important Stuff");
+        ImGui::BeginChild("Scrolling");
+        for (int n = 0; n < 50; n++)
+            ImGui::Text("%04d: Some text", n);
+        ImGui::EndChild();
+
+        ImGui::PopStyleColor();
+        ImGui::End();
     }
 
     void draw(GLFWwindow* window){
@@ -91,7 +132,7 @@ namespace GUI{
 
         displayMainToolbar(window);
 
-        ImGui::End();
+
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }

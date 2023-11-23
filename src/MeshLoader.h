@@ -16,7 +16,7 @@
 
 namespace ObjLoader{
 
-    bool import(gl::Mesh &mesh, const std::string& pFile) {
+    bool import(Mesh &mesh, const std::string& pFile) {
         // Create an instance of the Importer class
         Assimp::Importer importer;
 

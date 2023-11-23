@@ -23,7 +23,9 @@ namespace ShaderUtils{
         window_width = width;
         window_height = height;
 
-        int vp = width / screenSeparation1;
+        // vp pour avoir une rendu plus petit
+        //int vp = width / screenSeparation1;
+        int vp = 0;
 
         current_vp_height = height;
         current_vp_width = vp;

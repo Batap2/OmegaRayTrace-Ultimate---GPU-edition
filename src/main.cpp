@@ -64,6 +64,9 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
             case GLFW_KEY_E:
                 eHolded = true;
                 break;
+            case GLFW_KEY_TAB:
+                showMenus = !showMenus;
+                break;
         }
     } else if (action == GLFW_RELEASE)
     {
@@ -285,7 +288,9 @@ int main(int argc, char* argv[]){
 
         display(*ambient, *diffusion, *specular, shininess, custom_color, *light_positions, *light_colors);
 
-        GUI::draw(window);
+        if(showMenus){
+            GUI::draw(window);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();

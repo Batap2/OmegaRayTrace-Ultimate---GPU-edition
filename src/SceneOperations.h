@@ -49,6 +49,11 @@ namespace SceneOperations
 
         return 1;
     }
+
+    void openFile()
+    {
+
+    }
 }
 
 #endif //OBJECT_VIEWER_SCENEOPERATIONS_H
