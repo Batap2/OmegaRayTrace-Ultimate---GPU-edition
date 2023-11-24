@@ -50,9 +50,9 @@ namespace SceneOperations
         return 1;
     }
 
-    void openFile()
+    void openFile(std::string path)
     {
-
+        std::cout << path << "\n";
     }
 }
 

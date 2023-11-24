@@ -10,7 +10,7 @@
 #include "deps/imgui/imgui.h"
 #include "deps/imgui/imgui_impl_glfw.h"
 #include "deps/imgui/imgui_impl_opengl3.h"
-//#include "deps/ImGui-Addons/FileBrowser/ImGuiFileBrowser.h"
+#include "deps/imgui-filebrowser/imfilebrowser.h"
 
 
 #include "ShaderUtils.h"
@@ -23,6 +23,11 @@
 // FILE DIALOG : https://github.com/gallickgunner/ImGui-Addons
 
 namespace GUI{
+
+    void init(){
+        fileDialog.SetTitle("Open File");
+        fileDialog.SetTypeFilters({ ".obj", ".fbx", ".glb", ".gltf" });
+    }
 
     void displayMainToolbar(GLFWwindow* window){
 
@@ -43,7 +48,7 @@ namespace GUI{
             {
                 if (ImGui::MenuItem("Open..", "Ctrl+O"))
                 {
-                    SceneOperations::openFile();
+                    fileDialog.Open();
                 }
 
                 if (ImGui::MenuItem("Save", "Ctrl+S"))   { /* Do stuff */ }
@@ -131,7 +136,13 @@ namespace GUI{
         ImGui::NewFrame();
 
         displayMainToolbar(window);
+        fileDialog.Display();
 
+        if(fileDialog.HasSelected())
+        {
+            SceneOperations::openFile(fileDialog.GetSelected().string());
+            fileDialog.ClearSelected();
+        }
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

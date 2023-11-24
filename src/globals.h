@@ -5,6 +5,7 @@
 #include "Light.h"
 #include "transform.h"
 #include "camera.h"
+#include "deps/imgui-filebrowser/imfilebrowser.h"
 
 // -------------- MENU APPEARANCE -------------- //
 inline float screenSeparation1 = 4;
@@ -89,5 +90,6 @@ inline std::vector<Light> lights;
 
 inline bool showMenus = true;
 inline bool imguitest1;
+inline ImGui::FileBrowser fileDialog;
 
 #endif
