@@ -6,7 +6,6 @@
 
 #include "shaders.h"
 
-namespace gl {
 std::string Shader::read_text_file(const char * filename){
     std::string str, ret = ""; 
     std::ifstream in; 
@@ -83,5 +82,4 @@ GLuint Shader::init_program (GLuint vertexshader, GLuint fragmentshader){
         throw 4; 
     }
     return program; 
-}
 }

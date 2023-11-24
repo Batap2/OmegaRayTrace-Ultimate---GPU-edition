@@ -117,7 +117,7 @@ namespace GUI{
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
         ImGui::Separator(); ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Lighting"); ImGui::Separator();
-        ImGui::Text("Most lights are switched off by default, and the below");
+        ImGui::Text("Most scene_lights are switched off by default, and the below");
         ImGui::Text("sliders can play with the light positions and color intensities");
 
         ImGui::TextColored(ImVec4(1,1,0,1), "Important Stuff");

@@ -16,25 +16,43 @@ struct UVCoord{
     UVCoord() : u(0.0f), v(0.0f) {}
 };
 
+struct Tri{
+    uint32_t vertices[3];
+    Tri(uint32_t a, uint32_t b, uint32_t c){
+        vertices[0] = a;
+        vertices[1] = b;
+        vertices[2] = c;
+    }
+    Tri(){
+        vertices[0] = 0;
+        vertices[1] = 0;
+        vertices[2] = 0;
+    }
+};
+
 class Mesh{
 private:
     GLuint vertex_array, vertex_buffer, normal_buffer, index_buffer;
 public:
-    std::string object_path; 
+    GLuint VAO, VBO, EBO, NBO;
+    std::string object_path;
 
     std::vector <glm::vec3> vertices;
     std::vector <glm::vec3> normals;
+    std::vector<Tri> triangle_indicies;
     std::vector <unsigned int> indicies;
     std::vector<UVCoord> uv;
+
+    glm::vec3 bbmin;
+    glm::vec3 bbmax;
 
     glm::mat4 tansform;
 
     void applyTransform();
 
-    void generate_buffers();
+    void openglInit();
+
     void destroy_buffers();
-    void parse_and_bind();
-    inline void bind(){glBindVertexArray(vertex_array);}
 };
 
 #endif

@@ -158,31 +158,7 @@ void manageInput()
     }
 }
 
-void initialise_shader_and_mesh(){
-    // Initialize shaders
-    gl::Shader shader; 
-    vertexshader = shader.init_shaders(GL_VERTEX_SHADER, "res/shaders/vertex.glsl") ;
-    fragmentshader = shader.init_shaders(GL_FRAGMENT_SHADER, "res/shaders/fragment.glsl") ;
-    shaderprogram = shader.init_program(vertexshader, fragmentshader) ;
-
-    // Get uniform locations 
-    lightpos = glGetUniformLocation(shaderprogram,"light_posn") ;       
-    lightcol = glGetUniformLocation(shaderprogram,"light_col") ;       
-    ambientcol = glGetUniformLocation(shaderprogram,"ambient") ;       
-    diffusecol =  glGetUniformLocation(shaderprogram,"diffuse") ;       
-    specularcol = glGetUniformLocation(shaderprogram,"specular") ;       
-    emissioncol = glGetUniformLocation(shaderprogram,"emission") ;       
-    shininesscol = glGetUniformLocation(shaderprogram,"shininess") ;
-    projectionLoc = glGetUniformLocation(shaderprogram, "projection");
-    modelviewLoc = glGetUniformLocation(shaderprogram, "modelview");
-    camPosLoc = glGetUniformLocation(shaderprogram, "camPos");
-
-    // Initialize global mesh
-    mesh.generate_buffers();
-    mesh.parse_and_bind();   
-}
-
-void display(float& ambient_slider, float& diffuse_slider, float& specular_slider, float& shininess_slider, bool custom_color, float& light_position, float& light_color) {
+void display() {
     glClearColor(0, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -193,51 +169,23 @@ void display(float& ambient_slider, float& diffuse_slider, float& specular_slide
 
     glUniform3fv(camPosLoc, 1, glm::value_ptr(mainCamera.cameraPos));
 
-    glUniform4fv(ambientcol, 1, &ambient_slider);
-    glUniform4fv(diffusecol, 1, &diffuse_slider);
-    glUniform4fv(specularcol, 1, &specular_slider);
-    glUniform1f(shininesscol, shininess_slider);
-
     const GLfloat white[4] = {1, 1, 1, 1};
     const GLfloat black[4] = {0, 0, 0, 0};
 
     glUniformMatrix4fv(modelviewLoc, 1, GL_FALSE, &modelview[0][0]);
-    mesh.bind();
-    if (render_mode == 0){
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDrawElements(GL_TRIANGLES, mesh.indicies.size(), GL_UNSIGNED_INT, 0);
+
+    for(Mesh* meshP : scene_meshes)
+    {
+        glBindVertexArray(meshP->VAO);
+
+        glDrawElements(GL_TRIANGLES, meshP->indicies.size(), GL_UNSIGNED_INT, 0);
     }
-    if (render_mode == 1){
-        glLineWidth(1); 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDrawElements(GL_TRIANGLES, mesh.indicies.size(), GL_UNSIGNED_INT, 0);
-    } 
-    if (render_mode == 2){
-        glPointSize(2.5); 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-        glDrawElements(GL_TRIANGLES, mesh.indicies.size(), GL_UNSIGNED_INT, 0);
-    } 
-    if (render_mode == 3){
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glDrawElements(GL_TRIANGLES, mesh.indicies.size(), GL_UNSIGNED_INT, 0);
-        glUniform4fv(diffusecol, 1, black);
-        glUniform4fv(specularcol, 1, white);
 
-        glPointSize(2.5); 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-        glDrawElements(GL_TRIANGLES, mesh.indicies.size(), GL_UNSIGNED_INT, 0);
-
-        glLineWidth(2.5); 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glDrawElements(GL_TRIANGLES, mesh.indicies.size(), GL_UNSIGNED_INT, 0);
-    } 
-    glBindVertexArray(0);
 }
 
 int main(int argc, char* argv[]){
     // Initialise GLFW and GLEW; and parse path from command line  
     GLFWwindow* window;
-    mesh.object_path = argv[1]; 
 
     if (!glfwInit()) return -1;
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); 
@@ -256,7 +204,7 @@ int main(int argc, char* argv[]){
     ImGui::StyleColorsDark();
 
     // Initialise all variable initial values
-    initialise_shader_and_mesh();
+    ShaderUtils::init_shaders();
 
     glEnable(GL_DEPTH_TEST);
     glfwSetWindowSizeCallback(window, ShaderUtils::reshape);
@@ -268,25 +216,17 @@ int main(int argc, char* argv[]){
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    float ambient[4] = {0.05, 0.05, 0.05, 1};
-    float diffusion[4] = {0.2, 0.2, 0.2, 1};
-    float specular[4] = {0.5, 0.5, 0.5, 1};
-    float light_positions[20] = {0.0f};
-    float light_colors[20] = {0.0f};
-    float shininess = 10; 
-    bool custom_color = false; 
 
     SceneOperations::initSceneLights();
 
     ShaderUtils::reshape(window, window_width, window_height);
-
     ShaderUtils::sendLightsToShaders();
 
     while (!glfwWindowShouldClose(window))
     {
         manageInput();
 
-        display(*ambient, *diffusion, *specular, shininess, custom_color, *light_positions, *light_colors);
+        display();
 
         if(showMenus){
             GUI::draw(window);
@@ -297,7 +237,7 @@ int main(int argc, char* argv[]){
 
     }
 
-
+    SceneOperations::destroyScene();
     mesh.destroy_buffers();
     glfwTerminate();
     ImGui_ImplGlfw_Shutdown();

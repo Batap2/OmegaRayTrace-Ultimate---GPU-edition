@@ -9,6 +9,7 @@
 #include <GL/glew.h>
 #include "GLFW/glfw3.h"
 #include "globals.h"
+#include "shaders.h"
 
 
 namespace ShaderUtils{
@@ -18,6 +19,61 @@ namespace ShaderUtils{
         glm::vec3 color;
         float intensity;
     };
+
+    //TODO  cpt
+    void drawLights()
+    {
+
+//            glPointSize(5.0f); // Définit la taille du point
+//
+//            glBegin(GL_POINTS); // Commence à dessiner des points
+//            glColor3f(l->color.x, l->color.y, l->color.z); // Couleur du point : blanc
+//            glVertex3f(l->pos.x, l->color.y, l->color.z); // Coordonnées du point (ici, le centre de l'écran)
+//            glEnd();
+
+        GLuint lightsVertexArray, lightsVertexBuffer;
+
+        glGenVertexArrays(1, &lightsVertexArray);
+        glGenBuffers(1, &lightsVertexBuffer);
+
+        glBindVertexArray(lightsVertexArray);
+
+        // Bind vertices to layout location 0
+        glBindBuffer(GL_ARRAY_BUFFER, lightsVertexArray );
+
+        std::vector<glm::vec3> lightsVertex;
+        for(Light* l : scene_lights){
+            lightsVertex.push_back(l->pos);
+        }
+
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * lightsVertex.size(), &lightsVertex[0], GL_STATIC_DRAW);
+        glEnableVertexAttribArray(50); // This allows usage of layout location 0 in the vertex shader
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glBindVertexArray(lightsVertexArray);
+
+        glPointSize(2.5);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+        glDrawElements(GL_TRIANGLES, scene_lights.size()*3, GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(0);
+
+    }
+
+    void init_shaders(){
+        // Initialize shaders
+        Shader shader;
+        vertexshader = shader.init_shaders(GL_VERTEX_SHADER, "res/shaders/vertex.glsl") ;
+        fragmentshader = shader.init_shaders(GL_FRAGMENT_SHADER, "res/shaders/fragment.glsl") ;
+        shaderprogram = shader.init_program(vertexshader, fragmentshader) ;
+
+        // Get uniform locations
+        projectionLoc = glGetUniformLocation(shaderprogram, "projection");
+        modelviewLoc = glGetUniformLocation(shaderprogram, "modelview");
+        camPosLoc = glGetUniformLocation(shaderprogram, "camPos");
+    }
 
     void reshape(GLFWwindow* window, int width, int height){
         window_width = width;
@@ -39,8 +95,8 @@ namespace ShaderUtils{
 
     void sendLightsToShaders()
     {
-        if(lights.size() > lightsMaxNumber){
-            std::cout << "max lights number reached\n";
+        if(scene_lights.size() > lightsMaxNumber){
+            std::cout << "max scene_lights number reached\n";
             return;
         }
 
@@ -48,19 +104,19 @@ namespace ShaderUtils{
         GLfloat lightsBuffer[lightsMaxNumber * structSize];
 
 
-        for(int i = 0; i < lights.size(); ++i)
+        for(int i = 0; i < scene_lights.size(); ++i)
         {
-            Light l = lights[i];
+            Light* l = scene_lights[i];
 
             int offset = i*structSize;
 
-            lightsBuffer[offset] = l.pos.x;
-            lightsBuffer[offset+1] = l.pos.y;
-            lightsBuffer[offset+2] = l.pos.z;
-            lightsBuffer[offset+3] = l.color.x;
-            lightsBuffer[offset+4] = l.color.y;
-            lightsBuffer[offset+5] = l.color.z;
-            lightsBuffer[offset+6] = l.intensity;
+            lightsBuffer[offset] = l->pos.x;
+            lightsBuffer[offset+1] = l->pos.y;
+            lightsBuffer[offset+2] = l->pos.z;
+            lightsBuffer[offset+3] = l->color.x;
+            lightsBuffer[offset+4] = l->color.y;
+            lightsBuffer[offset+5] = l->color.z;
+            lightsBuffer[offset+6] = l->intensity;
         }
 
 
@@ -68,7 +124,7 @@ namespace ShaderUtils{
         glUniform1fv(lightsBufferID, lightsMaxNumber * structSize, lightsBuffer);
 
         lights_numberID = glGetUniformLocation(shaderprogram, "lights_number");
-        glUniform1i(lights_numberID, lights.size());
+        glUniform1i(lights_numberID, scene_lights.size());
     }
 }
 

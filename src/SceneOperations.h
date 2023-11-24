@@ -6,46 +6,58 @@
 #define OBJECT_VIEWER_SCENEOPERATIONS_H
 
 #include "globals.h"
-
+#include "MeshLoader.h"
 
 namespace SceneOperations
 {
 
     void initSceneLights()
     {
-        Light l1 = Light();
-        Light l2 = Light();
+        auto* l1 = new Light();
+        auto* l2 = new Light();
 
-        l1.pos = glm::vec3(5,0,2);
-        l2.pos = glm::vec3(-5,0,2);
+        l1->pos = glm::vec3(5,0,2);
+        l2->pos = glm::vec3(-5,0,2);
 
-        l1.color = glm::vec3((float)255/255,(float)190/255,(float)136/255);
-        l2.color = glm::vec3((float)198/255,(float)216/255,(float)255/255);
+        l1->color = glm::vec3((float)255/255,(float)190/255,(float)136/255);
+        l2->color = glm::vec3((float)198/255,(float)216/255,(float)255/255);
 
-        lights.push_back(l1);
-        lights.push_back(l2);
+        scene_lights.push_back(l1);
+        scene_lights.push_back(l2);
+    }
+
+    void destroyScene(){
+        for (auto& lightPtr : scene_lights) {
+            delete lightPtr;
+        }
+
+        for (auto& meshPtr : scene_meshes) {
+            delete meshPtr;
+        }
     }
 
     int addLight()
     {
-        if(lights.size() >= lightsMaxNumber){
-            std::cout << "max lights number reached\n";
+        if(scene_lights.size() >= lightsMaxNumber){
+            std::cout << "max scene_lights number reached\n";
             return -1;
         }
 
-        lights.push_back(Light());
+        Light l;
+
+        scene_lights.push_back(&l);
 
         return 1;
     }
 
     int removeLight()
     {
-        if(lights.size() == 0){
+        if(scene_lights.size() == 0){
             std::cout << "there is no light\n";
             return -1;
         }
 
-        lights.resize(lights.size()-1);
+        scene_lights.resize(scene_lights.size() - 1);
 
         return 1;
     }
@@ -53,6 +65,7 @@ namespace SceneOperations
     void openFile(std::string path)
     {
         std::cout << path << "\n";
+        MeshLoader::import(path);
     }
 }
 

@@ -29,3 +29,5 @@ add_executable (viewer ${source_files}
 target_link_libraries(viewer glfw)
 target_link_libraries(viewer OpenGL::GL)
 target_link_libraries(viewer GLEW)
+target_link_libraries(viewer assimp)
+

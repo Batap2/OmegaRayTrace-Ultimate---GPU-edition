@@ -1,4 +1,4 @@
-# version 330 core
+#version 330 core
 
 const int LIGHTS_MAX_SIZE = 64;
 const int lightStructByteSize = 7;
@@ -25,12 +25,6 @@ uniform int lights_number;
 uniform float lights[LIGHTS_MAX_SIZE * lightStructByteSize];
 //uniform vec3 lightPos[LIGHTS_MAX_SIZE]
 
-// Uniform variable for object properties
-uniform vec4 ambient;
-uniform vec4 diffuse;
-uniform vec4 specular;
-uniform float shininess;
-
 // Output of the fragment shader
 out vec4 fragColor;
 
@@ -43,6 +37,10 @@ vec3 phong(vec3 lightPos, vec3 viewPos, vec3 normal, vec3 lightColor, vec3 objec
     vec3 ambient = ambientStrength * objectColor;
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 diffuse = diff * objectColor;
+
+
+    //return vec3(1,normal.y,normal.z);
+
 
     vec3 specular = vec3(0.0);
     if (diff > 0.0) {
@@ -70,7 +68,6 @@ void main (void){
         vec3 lp = vec3(lights[offset+0], lights[offset+1], lights[offset+2]);
         vec3 lightColor = vec3(lights[offset+3], lights[offset+4], lights[offset+5]);
 
-
         vec3 newCol = phong(lp, camPos, mynormal, lightColor, colorFromTexture, myvertex, 0, 0.5, 32);
 
         finalColor += newCol;
@@ -79,4 +76,5 @@ void main (void){
     }
 
     fragColor = vec4(finalColor, 1.0f);
+    //fragColor = vec4(1,1,1,1);
 }
