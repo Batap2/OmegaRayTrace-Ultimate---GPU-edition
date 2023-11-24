@@ -85,6 +85,7 @@ inline float cameraSpeed = 0.05f;
 
 inline std::vector<Mesh*> scene_meshes;
 inline std::vector<Light*> scene_lights;
+inline std::vector<Object3D*> scene_objects;
 
 // -------------- IMGUI -------------- //
 

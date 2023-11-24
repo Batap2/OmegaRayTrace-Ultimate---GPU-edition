@@ -35,7 +35,7 @@ private:
     GLuint vertex_array, vertex_buffer, normal_buffer, index_buffer;
 public:
     GLuint VAO, VBO, EBO, NBO;
-    std::string object_path;
+    std::string object_path, name;
 
     std::vector <glm::vec3> vertices;
     std::vector <glm::vec3> normals;

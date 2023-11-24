@@ -50,6 +50,8 @@ namespace MeshLoader{
             newMesh->indicies.resize (sizeT*3);
             newMesh->normals.resize(sizeV);
 
+            newMesh->name = aiScene->mName.C_Str();
+
             for (unsigned int j = 0; j < sizeV; ++j)
             {
                 float x = aiScene->mMeshes[i]->mVertices[j].x;

@@ -23,12 +23,12 @@ public:
     }
     ~Object3D();
 
-    Mesh mesh;
+    Mesh* mesh;
 
     glm::mat4 transform = glm::mat4(1.0f);
 
     void applyTransform(){
-        mesh.applyTransform();
+        mesh->applyTransform();
     }
 
     glm::vec3 getRotationEulerAngles()

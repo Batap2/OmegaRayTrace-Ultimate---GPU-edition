@@ -75,30 +75,18 @@ namespace GUI{
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
         ImGui::Separator(); ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Object Properties"); ImGui::Separator();
-        ImGui::Text("These set of boxes and sliders change the way the object reacts");
-        ImGui::Text("with light giving us the impression of its material. The initial");
-        ImGui::Text("sliders assume the object stays white, and the checkbox 'Custom");
-        ImGui::Text("Colors' allows us to change the associated colors");
+        ImGui::Text("Objects :");
+        ImGui::Separator();
+
+
+        for(int i = 0; i < scene_meshes.size(); ++i)
+        {
+            ImGui::Button(scene_meshes[i]->name.c_str());
+        }
+
         ImGui::Separator();
 
         ImGui::Text(" ");
-
-        ////////////////////////////////////////////////////////////////////////////////////////////////
-
-        ImGui::Separator(); ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Input Devices"); ImGui::Separator();
-        ImGui::Text("Decide which input device associates to which transformation.");
-        ImGui::Text("By default the scroll wheel is associated with scaling");
-        ImGui::Separator();
-
-        ImGui::Text("Use mouse to "); ImGui::SameLine();
-        ImGui::RadioButton("translate", &mouse_mode, 0); ImGui::SameLine();
-        ImGui::RadioButton("rotate", &mouse_mode, 1);
-
-        ImGui::Text("Using keyboard to"); ImGui::SameLine();
-        ImGui::RadioButton("translate ", &keyboard_mode, 0); ImGui::SameLine();
-        ImGui::RadioButton("rotate ", &keyboard_mode, 1);
-
-        keyboard_mode = !(mouse_mode);
 
         ////////////////////////////////////////////////////////////////////////////////////////////////
 

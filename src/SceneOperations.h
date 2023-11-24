@@ -66,6 +66,14 @@ namespace SceneOperations
     {
         std::cout << path << "\n";
         MeshLoader::import(path);
+
+        for(Mesh* m : scene_meshes)
+        {
+            auto* newObj = new Object3D();
+            newObj->mesh = m;
+
+            scene_objects.push_back(newObj);
+        }
     }
 }
 
