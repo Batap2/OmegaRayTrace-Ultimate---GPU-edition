@@ -36,10 +36,13 @@ namespace MeshLoader{
         }
 
         int meshNumber = aiScene->mNumMeshes;
+        int textureNumber = aiScene->mNumTextures;
 
         for(int i = 0; i < meshNumber; ++i)
         {
             auto* newMesh = new Mesh();
+
+            aiMesh* aiMesh = aiScene->mMeshes[i];
 
             // Now we can access the file's contents.
             unsigned int sizeV = aiScene->mMeshes[i]->mNumVertices;
@@ -93,6 +96,34 @@ namespace MeshLoader{
 
             newMesh->openglInit();
             scene_meshes.push_back(newMesh);
+
+
+
+
+            // --------------- TEXTURE ---------------- //
+
+            //Check if the mesh has textures
+            if (aiMesh->HasTextureCoords(0)) {
+                // Access texture coordinates
+                aiVector3D* textureCoords = aiMesh->mTextureCoords[0];
+
+                // Access material
+                aiMaterial* material = aiScene->mMaterials[aiMesh->mMaterialIndex];
+
+                // Access the texture count
+                unsigned int textureCount = material->GetTextureCount(aiTextureType_DIFFUSE);
+
+                // Loop through all textures of the mesh
+                for (unsigned int j = 0; j < textureCount; ++j) {
+                    aiString texturePath;
+                    material->GetTexture(aiTextureType_DIFFUSE, j, &texturePath);
+
+                    aiTexture* texture = importer.GetEmbeddedTexture(texturePath.C_Str());
+
+                    // texturePath now contains the file path or name of the embedded texture
+                    // You can use this path to load or process the texture further
+                }
+            }
         }
 
 

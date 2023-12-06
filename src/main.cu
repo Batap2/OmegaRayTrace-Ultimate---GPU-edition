@@ -204,46 +204,46 @@ void display() {
 int main(int argc, char* argv[]){
 
 
-    int nx = 1200;
-    int ny = 600;
-    int tx = 8;
-    int ty = 8;
+    // int nx = 1200;
+    // int ny = 600;
+    // int tx = 8;
+    // int ty = 8;
 
-    std::cerr << "Rendering a " << nx << "x" << ny << " image ";
-    std::cerr << "in " << tx << "x" << ty << " blocks.\n";
+    // std::cerr << "Rendering a " << nx << "x" << ny << " image ";
+    // std::cerr << "in " << tx << "x" << ty << " blocks.\n";
 
-    int num_pixels = nx*ny;
-    size_t fb_size = num_pixels*sizeof(vec3);
+    // int num_pixels = nx*ny;
+    // size_t fb_size = num_pixels*sizeof(vec3);
 
-    // allocate FB
-    vec3 *fb;
-    checkCudaErrors(cudaMallocManaged((void **)&fb, fb_size));
+    // // allocate FB
+    // vec3 *fb;
+    // checkCudaErrors(cudaMallocManaged((void **)&fb, fb_size));
 
-    clock_t start, stop;
-    start = clock();
-    // Render our buffer
-    dim3 blocks(nx/tx+1,ny/ty+1);
-    dim3 threads(tx,ty);
-    GPURenderer::render<<<blocks, threads>>>(fb, nx, ny);
-    checkCudaErrors(cudaGetLastError());
-    checkCudaErrors(cudaDeviceSynchronize());
-    stop = clock();
-    double timer_seconds = ((double)(stop - start)) / CLOCKS_PER_SEC;
-    std::cerr << "took " << timer_seconds << " seconds.\n";
+    // clock_t start, stop;
+    // start = clock();
+    // // Render our buffer
+    // dim3 blocks(nx/tx+1,ny/ty+1);
+    // dim3 threads(tx,ty);
+    // GPURenderer::render<<<blocks, threads>>>(fb, nx, ny);
+    // checkCudaErrors(cudaGetLastError());
+    // checkCudaErrors(cudaDeviceSynchronize());
+    // stop = clock();
+    // double timer_seconds = ((double)(stop - start)) / CLOCKS_PER_SEC;
+    // std::cerr << "took " << timer_seconds << " seconds.\n";
 
-    // Output FB as Image
-    std::cout << "P3\n" << nx << " " << ny << "\n255\n";
-    for (int j = ny-1; j >= 0; j--) {
-        for (int i = 0; i < nx; i++) {
-            size_t pixel_index = j*nx + i;
-            int ir = int(255.99*fb[pixel_index][0]);
-            int ig = int(255.99*fb[pixel_index][1]);
-            int ib = int(255.99*fb[pixel_index][2]);
-            std::cout << ir << " " << ig << " " << ib << "\n";
-        }
-    }
+    // // Output FB as Image
+    // std::cout << "P3\n" << nx << " " << ny << "\n255\n";
+    // for (int j = ny-1; j >= 0; j--) {
+    //     for (int i = 0; i < nx; i++) {
+    //         size_t pixel_index = j*nx + i;
+    //         int ir = int(255.99*fb[pixel_index][0]);
+    //         int ig = int(255.99*fb[pixel_index][1]);
+    //         int ib = int(255.99*fb[pixel_index][2]);
+    //         std::cout << ir << " " << ig << " " << ib << "\n";
+    //     }
+    // }
 
-    checkCudaErrors(cudaFree(fb));
+    // checkCudaErrors(cudaFree(fb));
 
     // Initialise GLFW and GLEW; and parse path from command line  
     GLFWwindow* window;

@@ -9,6 +9,7 @@
 #include <GL/glew.h>
 
 #include "deps/glm/glm.hpp"
+#include "Material.h"
 
 struct UVCoord{
     float u, v;
@@ -42,6 +43,8 @@ public:
     std::vector<Tri> triangle_indicies;
     std::vector <unsigned int> indicies;
     std::vector<UVCoord> uv;
+
+    Material material;
 
     glm::vec3 bbmin;
     glm::vec3 bbmax;
