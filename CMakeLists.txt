@@ -28,13 +28,13 @@ enable_language(CUDA)
 
 # Spécifier l'architecture CUDA (ajustez selon vos besoins)
 # Spécifier l'architecture CUDA (ajustez selon vos besoins)
-set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS};-arch=sm_61 --expt-relaxed-constexpr")  # Ajout de l'option --expt-relaxed-constexpr
+set(CMAKE_CUDA_ARCHITECTURES 52 60 61 75)
 
 
 
 
 # Ajouter l'exécutable avec les fichiers source
-cuda_add_executable(viewer ${source_files}
+add_executable(viewer ${source_files}
         src/Light.h
         src/Material.h
         src/MeshLoader.h
