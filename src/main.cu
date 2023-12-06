@@ -20,8 +20,11 @@
 #include "transform.h"
 #include "globals.h"
 
+// CUDA - Merging
+#include "GPURenderer.h"
 
-// limited version of checkCudaErrors from helper_cuda.h in CUDA examples
+
+// Gestion des erreurs CUDA
 #define checkCudaErrors(val) check_cuda( (val), #val, __FILE__, __LINE__ )
 
 void check_cuda(cudaError_t result, char const *const func, const char *const file, int const line) {
@@ -34,13 +37,6 @@ void check_cuda(cudaError_t result, char const *const func, const char *const fi
     }
 }
 
-__global__ void render(vec3 *fb, int max_x, int max_y) {
-    int i = threadIdx.x + blockIdx.x * blockDim.x;
-    int j = threadIdx.y + blockIdx.y * blockDim.y;
-    if((i >= max_x) || (j >= max_y)) return;
-    int pixel_index = j*max_x + i;
-    fb[pixel_index] = vec3( float(i) / max_x, float(j) / max_y, 0.2f);
-}
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
@@ -228,7 +224,7 @@ int main(int argc, char* argv[]){
     // Render our buffer
     dim3 blocks(nx/tx+1,ny/ty+1);
     dim3 threads(tx,ty);
-    render<<<blocks, threads>>>(fb, nx, ny);
+    GPURenderer::render<<<blocks, threads>>>(fb, nx, ny);
     checkCudaErrors(cudaGetLastError());
     checkCudaErrors(cudaDeviceSynchronize());
     stop = clock();
