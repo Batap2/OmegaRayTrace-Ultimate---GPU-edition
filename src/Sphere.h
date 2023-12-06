@@ -23,9 +23,45 @@ public:
     glm::vec3 m_center;
     float m_radius;
 
-    Sphere() : Object3D() {}
-    Sphere(glm::vec3 c , float r) : Object3D() , m_center(c) , m_radius(r) {}
-
+    __host__ __device__ Sphere () : Object3D() {}
+    __host__ __device__ Sphere(glm::vec3 c , float r) : Object3D() , m_center(c) , m_radius(r) {}
+    __host__ __device__ Sphere(const Sphere &other) : Object3D(), m_center(other.m_center), m_radius(other.m_radius) {material = Material(other.material);}
+    __device__ virtual bool hit(const ray& r, float tmin, float tmax, HitData& rec) const;
 
 };
+
+
+__device__ bool Sphere::hit(const ray& r, float t_min, float t_max, HitData& rec) const {
+    vec3 oc = r.origin() - m_center;
+    float a = dot(r.direction(), r.direction());
+    float b = dot(oc, r.direction());
+    float c = dot(oc, oc) - m_radius * m_radius;
+    float discriminant = b * b - a * c;
+
+    if (discriminant > 0) {
+        float temp = (-b - sqrt(discriminant)) / a;
+
+        if (temp < t_max && temp > t_min) {
+            rec.t = temp;
+            rec.position = r.point_at_parameter(rec.t);
+            rec.normal = (rec.position - m_center) / m_radius;
+            rec.mat = material;
+            return true;
+        }
+
+        temp = (-b + sqrt(discriminant)) / a;
+        if (temp < t_max && temp > t_min) {
+            rec.t = temp;
+            rec.position = r.point_at_parameter(rec.t);
+            rec.normal = (rec.position - m_center) / m_radius;
+            rec.mat = material;
+            return true;
+        }
+    }
+
+    return false;
+};
+
+
+
 #endif

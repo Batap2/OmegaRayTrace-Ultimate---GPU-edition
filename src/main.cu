@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <fstream>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -23,6 +24,7 @@
 // CUDA - Merging
 #include "GPURenderer.h"
 
+#include "ray.h"
 
 // Gestion des erreurs CUDA
 #define checkCudaErrors(val) check_cuda( (val), #val, __FILE__, __LINE__ )
@@ -35,6 +37,57 @@ void check_cuda(cudaError_t result, char const *const func, const char *const fi
         cudaDeviceReset();
         exit(99);
     }
+}
+
+__host__ void draw_frame(vec3* fb, int nx, int ny) {
+    // Open the file for writing, and truncate the existing content
+    std::ofstream outfile("image.ppm", std::ios::trunc);
+
+    // Output PPM header
+    outfile << "P3\n" << nx << " " << ny << "\n255\n";
+
+    // Output pixel values
+    for (int j = ny - 1; j >= 0; j--) {
+        for (int i = 0; i < nx; i++) {
+            size_t pixel_index = j * nx + i;
+            int ir = int(255.99 * fb[pixel_index].r);
+            int ig = int(255.99 * fb[pixel_index].g);
+            int ib = int(255.99 * fb[pixel_index].b);
+            outfile << ir << " " << ig << " " << ib << "\n";
+        }
+    }
+
+    std::cerr << "Image has been created by raytrace" << std::endl;
+}
+
+
+void renderImage(int nx, int ny, int tx, int ty) {
+
+    int num_pixels = nx * ny;
+    size_t fb_size = num_pixels * sizeof(vec3);
+
+    // allocate FB
+    vec3* fb;
+    checkCudaErrors(cudaMallocManaged((void**)&fb, fb_size));
+
+    clock_t start, stop;
+    start = clock();
+    // Render our buffer
+    dim3 blocks(nx / tx + 1, ny / ty + 1);
+    dim3 threads(tx, ty);
+    GPURenderer::render<<<blocks, threads>>>(fb, nx, ny,
+                                             vec3(-2.0, -1.0, -1.0),
+                                             vec3(4.0, 0.0, 0.0),
+                                             vec3(0.0, 2.0, 0.0),
+                                             vec3(0.0, 0.0, 0.0));
+    checkCudaErrors(cudaGetLastError());
+    checkCudaErrors(cudaDeviceSynchronize());
+    stop = clock();
+    double timer_seconds = ((double)(stop - start)) / CLOCKS_PER_SEC;
+
+    draw_frame(fb, nx, ny);
+
+    checkCudaErrors(cudaFree(fb));
 }
 
 
@@ -56,7 +109,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
             case GLFW_KEY_ESCAPE: 
                 exit(0) ;
                 break ;
-            case GLFW_KEY_R:
+            case GLFW_KEY_T:
                 mainCamera.cameraPos = eyeinit ;
                 mainCamera.cameraUp = upinit ;
                 amount = amountinit ;
@@ -84,6 +137,15 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
                 break;
             case GLFW_KEY_TAB:
                 showMenus = !showMenus;
+                break;
+            case GLFW_KEY_R:
+
+                int nx = 1200;
+                int ny = 600;
+                int tx = 8;
+                int ty = 8;
+                renderImage(nx, ny, tx, ty);
+
                 break;
         }
     } else if (action == GLFW_RELEASE)
@@ -201,49 +263,17 @@ void display() {
 
 }
 
+
+
 int main(int argc, char* argv[]){
 
+//---------------------------- GPU PART ----------------------------------//
 
-    int nx = 1200;
-    int ny = 600;
-    int tx = 8;
-    int ty = 8;
 
-    std::cerr << "Rendering a " << nx << "x" << ny << " image ";
-    std::cerr << "in " << tx << "x" << ty << " blocks.\n";
+ //-------------------------------------------------------------//
 
-    int num_pixels = nx*ny;
-    size_t fb_size = num_pixels*sizeof(vec3);
 
-    // allocate FB
-    vec3 *fb;
-    checkCudaErrors(cudaMallocManaged((void **)&fb, fb_size));
 
-    clock_t start, stop;
-    start = clock();
-    // Render our buffer
-    dim3 blocks(nx/tx+1,ny/ty+1);
-    dim3 threads(tx,ty);
-    GPURenderer::render<<<blocks, threads>>>(fb, nx, ny);
-    checkCudaErrors(cudaGetLastError());
-    checkCudaErrors(cudaDeviceSynchronize());
-    stop = clock();
-    double timer_seconds = ((double)(stop - start)) / CLOCKS_PER_SEC;
-    std::cerr << "took " << timer_seconds << " seconds.\n";
-
-    // Output FB as Image
-    std::cout << "P3\n" << nx << " " << ny << "\n255\n";
-    for (int j = ny-1; j >= 0; j--) {
-        for (int i = 0; i < nx; i++) {
-            size_t pixel_index = j*nx + i;
-            int ir = int(255.99*fb[pixel_index][0]);
-            int ig = int(255.99*fb[pixel_index][1]);
-            int ib = int(255.99*fb[pixel_index][2]);
-            std::cout << ir << " " << ig << " " << ib << "\n";
-        }
-    }
-
-    checkCudaErrors(cudaFree(fb));
 
     // Initialise GLFW and GLEW; and parse path from command line  
     GLFWwindow* window;
