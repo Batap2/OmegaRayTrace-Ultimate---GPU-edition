@@ -47,38 +47,38 @@ namespace MeshLoader{
             aiMesh* aiMesh = aiScene->mMeshes[i];
 
             // Now we can access the file's contents.
-            unsigned int sizeV = aiScene->mMeshes[i]->mNumVertices;
-            unsigned int sizeT = aiScene->mMeshes[i]->mNumFaces;
+            unsigned int sizeV = aiMesh->mNumVertices;
+            unsigned int sizeT = aiMesh->mNumFaces;
 
             newMesh->vertices.resize (sizeV);
             newMesh->triangle_indicies.resize (sizeT);
             newMesh->indicies.resize (sizeT*3);
             newMesh->normals.resize(sizeV);
 
-            newMesh->name = aiScene->mName.C_Str();
+            newMesh->name = aiMesh->mName.C_Str();
 
             for (unsigned int j = 0; j < sizeV; ++j)
             {
-                float x = aiScene->mMeshes[i]->mVertices[j].x;
-                float y = aiScene->mMeshes[i]->mVertices[j].y;
-                float z = aiScene->mMeshes[i]->mVertices[j].z;
+                float x = aiMesh->mVertices[j].x;
+                float y = aiMesh->mVertices[j].y;
+                float z = aiMesh->mVertices[j].z;
                 glm::vec3 pos(x,y,z);
                 newMesh->vertices[j] = pos;
             }
 
             for (unsigned int j = 0; j < sizeV; ++j)
             {
-                float x = aiScene->mMeshes[i]->mNormals[j].x;
-                float y = aiScene->mMeshes[i]->mNormals[j].y;
-                float z = aiScene->mMeshes[i]->mNormals[j].z;
+                float x = aiMesh->mNormals[j].x;
+                float y = aiMesh->mNormals[j].y;
+                float z = aiMesh->mNormals[j].z;
                 glm::vec3 normal(x,y,z);
                 newMesh->normals[j] = normal;
             }
 
             for (unsigned int j = 0; j < sizeT; ++j) {
-                unsigned int ind1 = aiScene->mMeshes[i]->mFaces[j].mIndices[0];
-                unsigned int ind2 = aiScene->mMeshes[i]->mFaces[j].mIndices[1];
-                unsigned int ind3 = aiScene->mMeshes[i]->mFaces[j].mIndices[2];
+                unsigned int ind1 = aiMesh->mFaces[j].mIndices[0];
+                unsigned int ind2 = aiMesh->mFaces[j].mIndices[1];
+                unsigned int ind3 = aiMesh->mFaces[j].mIndices[2];
 
                 newMesh->triangle_indicies[j].vertices[0] = ind1;
                 newMesh->triangle_indicies[j].vertices[1] = ind2;
@@ -91,20 +91,25 @@ namespace MeshLoader{
                 newMesh->indicies[offset + 2] = ind3;
             }
 
-            aiAABB aabb = aiScene->mMeshes[i]->mAABB;
+            aiAABB aabb = aiMesh->mAABB;
 
             newMesh->bbmin = glm::vec3(aabb.mMin.x, aabb.mMin.y, aabb.mMin.z);
             newMesh->bbmax = glm::vec3(aabb.mMax.x, aabb.mMax.y, aabb.mMax.z);
-
-            newMesh->openglInit();
-            scene_meshes.push_back(newMesh);
 
 
             // --------------- TEXTURE ---------------- //
 
             if (aiMesh->HasTextureCoords(0)) {
                 // Access texture coordinates
-                aiVector3D* textureCoords = aiMesh->mTextureCoords[0];
+
+
+                for(unsigned int texCoord = 0; texCoord < sizeV; ++texCoord)
+                {
+                    aiVector3D uv = aiMesh->mTextureCoords[0][texCoord];
+
+                    newMesh->uv.emplace_back(uv.x);
+                    newMesh->uv.emplace_back(uv.y);
+                }
 
                 // Access material
                 aiMaterial* material = aiScene->mMaterials[aiMesh->mMaterialIndex];
@@ -133,8 +138,12 @@ namespace MeshLoader{
                                 &width,
                                 &height,
                                 &channels,
-                                STBI_rgb_alpha
+                                STBI_rgb
                         );
+
+                        if(!imageData){
+                            std::cerr << "Failed to load embedded compressed texture\n";
+                        }
 
                         texture.height = height;
                         texture.width = width;
@@ -149,6 +158,8 @@ namespace MeshLoader{
                                 texture.data.push_back(imageData[pos+2]);
                             }
                         }
+
+                        stbi_image_free(imageData);
                     }
                     else
                     {
@@ -167,12 +178,14 @@ namespace MeshLoader{
                         }
                     }
 
+                    newMesh->material.diffuse_texture = texture;
                 }
             }
+
+            newMesh->openglInit();
+            scene_meshes.push_back(newMesh);
         }
 
-
-        // We're done. Everything will be cleaned up by the importer destructor
         return true;
     }
 }

@@ -31,7 +31,7 @@ struct Material {
     glm::vec3 diffuse_material;
     glm::vec3 specular_material;
 
-    std::vector<glm::vec3> diffuse_texture;
+    Texture diffuse_texture;
 
     double shininess;
     float index_medium;

@@ -178,7 +178,7 @@ void manageInput()
 }
 
 void display() {
-    glClearColor(0, 0, 0, 0);
+    glClearColor(0, 0.2, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     modelview = glm::lookAt(mainCamera.cameraPos,mainCamera.cameraPos + mainCamera.cameraDirection, mainCamera.cameraUp);
@@ -196,6 +196,7 @@ void display() {
     for(Mesh* meshP : scene_meshes)
     {
         glBindVertexArray(meshP->VAO);
+        glBindTexture(GL_TEXTURE_2D, meshP->diffuse_texture_id);
 
         glDrawElements(GL_TRIANGLES, meshP->indicies.size(), GL_UNSIGNED_INT, 0);
     }
@@ -280,9 +281,12 @@ int main(int argc, char* argv[]){
 
 
     SceneOperations::initSceneLights();
+    SceneOperations::openFile("data/cube3.fbx");
 
     ShaderUtils::reshape(window, window_width, window_height);
     ShaderUtils::sendLightsToShaders();
+
+    std::vector<Mesh*> scene_meshes_check = scene_meshes;
 
     while (!glfwWindowShouldClose(window))
     {

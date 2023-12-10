@@ -9,6 +9,7 @@ const int num_lights = 5;
 // Inputs passed in from the vertex shader
 in vec3 mynormal;
 in vec4 myvertex;
+in vec2 myuv;
 
 // Uniform variable modelview
 uniform mat4 modelview;
@@ -23,7 +24,8 @@ struct Light
 
 uniform int lights_number;
 uniform float lights[LIGHTS_MAX_SIZE * lightStructByteSize];
-//uniform vec3 lightPos[LIGHTS_MAX_SIZE]
+
+uniform sampler2D diffuse_texture;
 
 // Output of the fragment shader
 out vec4 fragColor;
@@ -37,10 +39,6 @@ vec3 phong(vec3 lightPos, vec3 viewPos, vec3 normal, vec3 lightColor, vec3 objec
     vec3 ambient = ambientStrength * objectColor;
     float diff = max(dot(normal, lightDir), 0.0);
     vec3 diffuse = diff * objectColor;
-
-
-    //return vec3(1,normal.y,normal.z);
-
 
     vec3 specular = vec3(0.0);
     if (diff > 0.0) {
@@ -62,7 +60,7 @@ void main (void){
     {
         int offset = i*lightStructByteSize;
 
-        vec3 colorFromTexture = vec3(1,1,1);
+        vec3 colorFromTexture = texture(diffuse_texture, myuv).rgb;
 
 
         vec3 lp = vec3(lights[offset+0], lights[offset+1], lights[offset+2]);
@@ -73,6 +71,7 @@ void main (void){
         finalColor += newCol;
 
         finalColor = min(finalColor, vec3(1,1,1));
+        //finalColor = texture(diffuse_texture, myuv).rgb;
     }
 
     fragColor = vec4(finalColor, 1.0f);

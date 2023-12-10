@@ -11,12 +11,6 @@
 #include "deps/glm/glm.hpp"
 #include "Material.h"
 
-struct UVCoord{
-    float u, v;
-    UVCoord(float _u, float _v) : u(_u), v(_v) {}
-    UVCoord() : u(0.0f), v(0.0f) {}
-};
-
 struct Tri{
     uint32_t vertices[3];
     Tri(uint32_t a, uint32_t b, uint32_t c){
@@ -35,14 +29,14 @@ class Mesh{
 private:
     GLuint vertex_array, vertex_buffer, normal_buffer, index_buffer;
 public:
-    GLuint VAO, VBO, EBO, NBO;
+    GLuint VAO, VBO, EBO, NBO, UVBO, diffuse_texture_id;
     std::string object_path, name;
 
     std::vector <glm::vec3> vertices;
     std::vector <glm::vec3> normals;
     std::vector<Tri> triangle_indicies;
     std::vector <unsigned int> indicies;
-    std::vector<UVCoord> uv;
+    std::vector<float> uv;
 
     Material material;
 
