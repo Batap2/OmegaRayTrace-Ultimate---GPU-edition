@@ -13,6 +13,8 @@
 
 #include "Mesh.h"
 #include "deps/glm/glm.hpp"
+#include "Material.h"
+#include "stb_image.h"
 
 namespace MeshLoader{
 
@@ -98,11 +100,8 @@ namespace MeshLoader{
             scene_meshes.push_back(newMesh);
 
 
-
-
             // --------------- TEXTURE ---------------- //
 
-            //Check if the mesh has textures
             if (aiMesh->HasTextureCoords(0)) {
                 // Access texture coordinates
                 aiVector3D* textureCoords = aiMesh->mTextureCoords[0];
@@ -118,10 +117,56 @@ namespace MeshLoader{
                     aiString texturePath;
                     material->GetTexture(aiTextureType_DIFFUSE, j, &texturePath);
 
-                    aiTexture* texture = importer.GetEmbeddedTexture(texturePath.C_Str());
+                    const aiTexture* aiTex = aiScene->GetEmbeddedTexture(texturePath.C_Str());
 
-                    // texturePath now contains the file path or name of the embedded texture
-                    // You can use this path to load or process the texture further
+                    Texture texture;
+
+                    // Si la texture est sous un format d'image compréssé
+                    // appelle stb_image.h pour décomprésser
+                    if(aiTex->mHeight == 0) {
+
+                        int width, height, channels;
+
+                        unsigned char* imageData = stbi_load_from_memory(
+                                reinterpret_cast<unsigned char*>(aiTex->pcData),
+                                aiTex->mWidth,
+                                &width,
+                                &height,
+                                &channels,
+                                STBI_rgb_alpha
+                        );
+
+                        texture.height = height;
+                        texture.width = width;
+
+                        for(int y = 0; y < height; ++y)
+                        {
+                            for(int x = 0; x < width; ++x)
+                            {
+                                int pos = (x*channels) + (y*channels) * width;
+                                texture.data.push_back(imageData[pos]);
+                                texture.data.push_back(imageData[pos+1]);
+                                texture.data.push_back(imageData[pos+2]);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        texture.height = aiTex->mHeight;
+                        texture.width = aiTex->mWidth;
+
+                        for(int y = 0; y < aiTex->mHeight; ++y)
+                        {
+                            for(int x = 0; x < aiTex->mWidth; ++x)
+                            {
+                                int pos = x + y * aiTex->mWidth;
+                                texture.data.push_back(aiTex->pcData[pos].r);
+                                texture.data.push_back(aiTex->pcData[pos].g);
+                                texture.data.push_back(aiTex->pcData[pos].b);
+                            }
+                        }
+                    }
+
                 }
             }
         }

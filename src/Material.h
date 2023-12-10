@@ -18,9 +18,9 @@ enum LightingType {
 };
 
 struct Texture{
-    int height, width;
-    std::vector<>
-}
+    unsigned int height, width;
+    std::vector<unsigned char> data;
+};
 
 
 struct Material {

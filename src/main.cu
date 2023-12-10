@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+
 #include <iostream>
 #include <string>
 
@@ -22,7 +24,6 @@
 
 // CUDA - Merging
 #include "GPURenderer.h"
-
 
 // Gestion des erreurs CUDA
 #define checkCudaErrors(val) check_cuda( (val), #val, __FILE__, __LINE__ )
