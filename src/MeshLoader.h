@@ -96,7 +96,6 @@ namespace MeshLoader{
             newMesh->bbmin = glm::vec3(aabb.mMin.x, aabb.mMin.y, aabb.mMin.z);
             newMesh->bbmax = glm::vec3(aabb.mMax.x, aabb.mMax.y, aabb.mMax.z);
 
-
             // --------------- TEXTURE ---------------- //
 
             if (aiMesh->HasTextureCoords(0)) {
@@ -181,6 +180,18 @@ namespace MeshLoader{
                     newMesh->material.diffuse_texture = texture;
                 }
             }
+
+            // --------------- MATERIAL ---------------- //
+            aiMaterial* aiMat = aiScene->mMaterials[aiMesh->mMaterialIndex];
+
+            aiMat->Get(AI_MATKEY_COLOR_AMBIENT, newMesh->material.ambient_material);
+            aiMat->Get(AI_MATKEY_COLOR_DIFFUSE, newMesh->material.diffuse_material);
+            aiMat->Get(AI_MATKEY_COLOR_SPECULAR, newMesh->material.specular_material);
+            aiMat->Get(AI_MATKEY_SHININESS, newMesh->material.shininess);
+            aiMat->Get(AI_MATKEY_METALLIC_FACTOR, newMesh->material.metallic);
+            aiMat->Get(AI_MATKEY_SHININESS_STRENGTH, newMesh->material.roughness);
+
+            // ----------------------------------------- //
 
             newMesh->openglInit();
             scene_meshes.push_back(newMesh);
