@@ -27,8 +27,8 @@
 #include <CL/cl2.hpp>
 #include "CL/cl_gl.h"
 
-#define NX 800
-#define NY 800
+#define NX 1920
+#define NY 1080
 
 
 //Fct qui appelle un programme de rendu en gérant les threads pour un device donné
@@ -202,9 +202,9 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
                 break;
             case GLFW_KEY_R:
                 cl::Buffer buffer(clContext, CL_MEM_READ_WRITE, gpuOutputImg_size);
-                renderImage(buffer, window_width, window_height, clQueue, clProgram, devices);
+                renderImage(buffer, (int)window_width, (int)window_height, clQueue, clProgram, devices);
                 clQueue.enqueueReadBuffer(buffer, CL_TRUE, 0, gpuOutputImg.size() * sizeof(float), gpuOutputImg.data());
-                writeImageToFile(gpuOutputImg, gpuOutputImg_size, window_width, window_height);
+                writeImageToFile(gpuOutputImg, gpuOutputImg_size, (int)window_width, (int)window_height);
                 break;
         }
     } else if (action == GLFW_RELEASE)
@@ -326,6 +326,32 @@ void display() {
         }
     } else
     {
+        cl::Buffer buffer(clContext, CL_MEM_READ_WRITE, gpuOutputImg_size);
+        renderImage(buffer, window_width, window_height, clQueue, clProgram, devices);
+        clQueue.enqueueReadBuffer(buffer, CL_TRUE, 0, gpuOutputImg.size() * sizeof(float), gpuOutputImg.data());
+
+        Texture newTex;
+        newTex.height = window_height;
+        newTex.width = window_width;
+
+        for (int y = 0; y < window_width; ++y) {
+            for (int x = 0; x < window_width; ++x) {
+                size_t pixel_index = y * 3 * window_width + x * 3;
+                float r = gpuOutputImg[pixel_index + 0] * 255.0f;
+                float g = gpuOutputImg[pixel_index + 1] * 255.0f;
+                float b = gpuOutputImg[pixel_index + 2] * 255.0f;
+                auto ir = static_cast<unsigned char>(r);
+                auto ig = static_cast<unsigned char>(g);
+                auto ib = static_cast<unsigned char>(b);
+                newTex.data.push_back(ir);
+                newTex.data.push_back(ig);
+                newTex.data.push_back(ib);
+                //std::cerr << r<< " " << g << " " << b << std::endl;
+            }
+        }
+
+        flat_screen.change_texture(newTex);
+
         glBindVertexArray(flat_screen.VAO);
         glBindTexture(GL_TEXTURE_2D, flat_screen.diffuse_texture_id);
         glDrawElements(GL_TRIANGLES, flat_screen.indicies.size(), GL_UNSIGNED_INT, 0);
@@ -338,7 +364,7 @@ int main(int argc, char* argv[]){
 
 //---------------------------- GPU PART ----------------------------------//
 
-    initializeOpenCL(clContext, clQueue, clProgram, gpuOutputImg, gpuOutputImg_size, NX, NY, devices);
+    initializeOpenCL(clContext, clQueue, clProgram, gpuOutputImg, gpuOutputImg_size, window_width, window_height, devices);
 
     //-------------------------------------------------------------//
 

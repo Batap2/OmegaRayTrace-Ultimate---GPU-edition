@@ -83,23 +83,23 @@ void Mesh::change_texture(Texture tex)
     //material.diffuse_texture = tex;
 
     int h,w,c;
-    unsigned char* imageData = stbi_load("data/tex.jpg", &w, &h, &c, 3);
+    //unsigned char* imageData = stbi_load("data/tex.jpg", &w, &h, &c, 3);
 
-    material.diffuse_texture.width = w;
-    material.diffuse_texture.height = h;
+    material.diffuse_texture.width = tex.width;
+    material.diffuse_texture.height = tex.height;
 
-    material.diffuse_texture.data.clear();
+    material.diffuse_texture.data = tex.data;
 
-    for(int y = 0; y < h; ++y)
-    {
-        for(int x = 0; x < w; ++x)
-        {
-            int pos = (x*c) + (y*c) * w;
-            material.diffuse_texture.data.push_back(imageData[pos]);
-            material.diffuse_texture.data.push_back(imageData[pos+1]);
-            material.diffuse_texture.data.push_back(imageData[pos+2]);
-        }
-    }
+//    for(int y = 0; y < h; ++y)
+//    {
+//        for(int x = 0; x < w; ++x)
+//        {
+//            int pos = (x*c) + (y*c) * w;
+//            material.diffuse_texture.data.push_back(imageData[pos]);
+//            material.diffuse_texture.data.push_back(imageData[pos+1]);
+//            material.diffuse_texture.data.push_back(imageData[pos+2]);
+//        }
+//    }
 
     glBindTexture(GL_TEXTURE_2D, diffuse_texture_id);
 
