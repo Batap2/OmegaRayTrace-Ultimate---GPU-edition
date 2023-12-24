@@ -66,10 +66,15 @@ namespace GUI{
 
         ImGui::Separator(); ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Render Mode"); ImGui::Separator();
         // ImGui::Text("Primitive object "); ImGui::SameLine();
-        ImGui::RadioButton("Smooth", &render_mode, 0); ImGui::SameLine();
-        ImGui::RadioButton("Lines", &render_mode, 1); ImGui::SameLine();
-        ImGui::RadioButton("Point Cloud", &render_mode, 2); ImGui::SameLine();
-        ImGui::RadioButton("Mesh", &render_mode, 3);
+        if(ImGui::RadioButton("Fast", &render_mode, 0)){
+            glUniform1i(render_modeLoc, render_mode);
+        }
+        ImGui::SameLine();
+
+        if(ImGui::RadioButton("RayTraced", &render_mode, 1)){
+            glUniform1i(render_modeLoc, render_mode);
+        }
+        ImGui::SameLine();
 
 
         ////////////////////////////////////////////////////////////////////////////////////////////////

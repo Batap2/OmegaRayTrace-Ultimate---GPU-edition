@@ -33,8 +33,7 @@ add_executable(viewer ${source_files}
     src/Plane.h
     src/Triangle.h
     src/Sphere.h
-    src/Square.h
-        src/CL/vec3.h)
+    src/Square.h)
 
 # Lier les bibliothèques nécessaires
 target_link_libraries(viewer glfw)

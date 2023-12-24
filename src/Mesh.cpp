@@ -3,6 +3,7 @@
 
 #include "transform.h"
 #include "globals.h"
+#include "stb_image.h"
 
 void Mesh::destroy_buffers(){
 	glDeleteVertexArrays(1, &vertex_array);
@@ -75,4 +76,47 @@ void Mesh::openglInit()
     );
     glGenerateMipmap(GL_TEXTURE_2D);
 
+}
+
+void Mesh::change_texture(Texture tex)
+{
+    //material.diffuse_texture = tex;
+
+    int h,w,c;
+    unsigned char* imageData = stbi_load("data/tex.jpg", &w, &h, &c, 3);
+
+    material.diffuse_texture.width = w;
+    material.diffuse_texture.height = h;
+
+    material.diffuse_texture.data.clear();
+
+    for(int y = 0; y < h; ++y)
+    {
+        for(int x = 0; x < w; ++x)
+        {
+            int pos = (x*c) + (y*c) * w;
+            material.diffuse_texture.data.push_back(imageData[pos]);
+            material.diffuse_texture.data.push_back(imageData[pos+1]);
+            material.diffuse_texture.data.push_back(imageData[pos+2]);
+        }
+    }
+
+    glBindTexture(GL_TEXTURE_2D, diffuse_texture_id);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB,
+                 material.diffuse_texture.width,
+                 material.diffuse_texture.height,
+                 0,
+                 GL_RGB,
+                 GL_UNSIGNED_BYTE,
+                 material.diffuse_texture.data.data()
+    );
+    glGenerateMipmap(GL_TEXTURE_2D);
 }

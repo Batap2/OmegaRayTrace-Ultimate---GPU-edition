@@ -22,6 +22,11 @@ struct Texture{
     std::vector<unsigned char> data;
 };
 
+struct FloatTexture{
+        unsigned int height, width;
+        std::vector<float> data;
+};
+
 
 struct Material {
     MaterialType mType;
@@ -32,6 +37,8 @@ struct Material {
     glm::vec3 specular_material;
 
     Texture diffuse_texture;
+
+    FloatTexture float_texture;
 
     double shininess;
     float index_medium;

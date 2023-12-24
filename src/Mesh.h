@@ -50,6 +50,8 @@ public:
     void openglInit();
 
     void destroy_buffers();
+
+    void change_texture(Texture tex);
 };
 
 #endif

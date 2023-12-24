@@ -25,16 +25,10 @@
 
 #include <CL/cl.h>
 #include <CL/cl2.hpp>
+#include "CL/cl_gl.h"
 
 #define NX 800
 #define NY 800
-
-cl::Context context;
-cl::CommandQueue queue;
-cl::Program program;
-std::vector<float> fb;
-size_t fb_size;
-std::vector<cl::Device> devices;
 
 
 //Fct qui appelle un programme de rendu en gérant les threads pour un device donné
@@ -56,7 +50,7 @@ void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, c
 }
 
 // Fct pour init l'environnement OPENCL et pour charger le programme de rendu
-void initializeOpenCL(cl::Context& context, cl::CommandQueue& queue, cl::Program& program, std::vector<float>& fb, size_t& fb_size, int nx, int ny, std::vector<cl::Device>& devices) {
+void initializeOpenCL(cl::Context& context, cl::CommandQueue& queue, cl::Program& program, std::vector<float>& img_buffer, size_t& img_buffer_size, int nx, int ny, std::vector<cl::Device>& devices) {
     // Initialize OpenCL
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
@@ -69,6 +63,16 @@ void initializeOpenCL(cl::Context& context, cl::CommandQueue& queue, cl::Program
     cl_context_properties properties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)(platforms[0])(), 0};
     context = cl::Context(CL_DEVICE_TYPE_GPU, properties);
 
+//    cl_context_properties props[ ] =
+//            {
+//                    CL_GL_CONTEXT_KHR, (cl_context_properties) glfwGetCurrentContext( ),
+//                    CL_WGL_HDC_KHR, (cl_context_properties) glX,
+//                    CL_CONTEXT_PLATFORM, (cl_context_properties) Platform,
+//                    0
+//            };
+//    cl_context Context = clCreateContext( props, 1, &Device, NULL, NULL, &status );
+//    PrintCLError( status, "clCreateContext: " );
+
     devices = context.getInfo<CL_CONTEXT_DEVICES>();
 
     if (devices.empty()) {
@@ -79,13 +83,13 @@ void initializeOpenCL(cl::Context& context, cl::CommandQueue& queue, cl::Program
     queue = cl::CommandQueue(context, devices[0]);
 
     // Create buffer
-    fb_size = 3 * nx * ny * sizeof(float);
-    fb.resize(3 * nx * ny, 0.0f);
+    img_buffer_size = 3 * nx * ny * sizeof(float);
+    img_buffer.resize(3 * nx * ny, 0.0f);
 
     // Load and compile OpenCL program
     std::ifstream kernelFile("src/kernel.cl");
     if (!kernelFile.is_open()) {
-        std::cerr << "Failed to open kernel file." << std::endl;
+        std::cerr << "Failed to open kernel file. You need to be in root folder" << std::endl;
         exit(1);
     }
 
@@ -160,7 +164,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
             case GLFW_KEY_ESCAPE: 
                 exit(0) ;
                 break ;
-            case GLFW_KEY_T:
+            case GLFW_KEY_Y:
                 mainCamera.cameraPos = eyeinit ;
                 mainCamera.cameraUp = upinit ;
                 amount = amountinit ;
@@ -189,11 +193,18 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
             case GLFW_KEY_TAB:
                 showMenus = !showMenus;
                 break;
+            case GLFW_KEY_T:
+                render_mode = (render_mode + 1)%2;
+                glUniform1i(render_modeLoc, render_mode);
+                break;
+            case GLFW_KEY_P:
+                flat_screen.change_texture(Texture());
+                break;
             case GLFW_KEY_R:
-                cl::Buffer buffer(context, CL_MEM_READ_WRITE, fb_size);
-                renderImage(buffer, NX, NY, queue, program, devices);
-                queue.enqueueReadBuffer(buffer, CL_TRUE, 0, fb.size() * sizeof(float), fb.data());
-                writeImageToFile(fb, fb_size, NX, NY);
+                cl::Buffer buffer(clContext, CL_MEM_READ_WRITE, gpuOutputImg_size);
+                renderImage(buffer, window_width, window_height, clQueue, clProgram, devices);
+                clQueue.enqueueReadBuffer(buffer, CL_TRUE, 0, gpuOutputImg.size() * sizeof(float), gpuOutputImg.data());
+                writeImageToFile(gpuOutputImg, gpuOutputImg_size, window_width, window_height);
                 break;
         }
     } else if (action == GLFW_RELEASE)
@@ -250,6 +261,8 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
         mainCamera.cameraDirection = glm::normalize(direction);
         mainCamera.cameraRight = glm::normalize(glm::cross(mainCamera.cameraDirection, upinit));
         mainCamera.cameraUp = glm::cross(mainCamera.cameraRight, mainCamera.cameraDirection);
+
+        std::cout << "(" << mainCamera.cameraPos.x << ", " << mainCamera.cameraPos.y << ", " << mainCamera.cameraPos.z << ")" << " | " << "(" << mainCamera.cameraDirection.x << ", " << mainCamera.cameraDirection.y << ", " << mainCamera.cameraDirection.z << ")\n";
     } else {
         lastX = xpos;
         lastY = ypos;
@@ -290,25 +303,34 @@ void display() {
     glClearColor(0, 0.2, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    modelview = glm::lookAt(mainCamera.cameraPos,mainCamera.cameraPos + mainCamera.cameraDirection, mainCamera.cameraUp);
-
-    glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
-    glUniformMatrix4fv(modelviewLoc, 1, GL_FALSE, &modelview[0][0]);
-
-    glUniform3fv(camPosLoc, 1, glm::value_ptr(mainCamera.cameraPos));
-
-    const GLfloat white[4] = {1, 1, 1, 1};
-    const GLfloat black[4] = {0, 0, 0, 0};
-
-    glUniformMatrix4fv(modelviewLoc, 1, GL_FALSE, &modelview[0][0]);
-
-    for(Mesh* meshP : scene_meshes)
+    if(render_mode == 0)
     {
-        glBindVertexArray(meshP->VAO);
-        glBindTexture(GL_TEXTURE_2D, meshP->diffuse_texture_id);
+        modelview = glm::lookAt(mainCamera.cameraPos,mainCamera.cameraPos + mainCamera.cameraDirection, mainCamera.cameraUp);
 
-        glDrawElements(GL_TRIANGLES, meshP->indicies.size(), GL_UNSIGNED_INT, 0);
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
+        glUniformMatrix4fv(modelviewLoc, 1, GL_FALSE, &modelview[0][0]);
+
+        glUniform3fv(camPosLoc, 1, glm::value_ptr(mainCamera.cameraPos));
+
+        const GLfloat white[4] = {1, 1, 1, 1};
+        const GLfloat black[4] = {0, 0, 0, 0};
+
+        glUniformMatrix4fv(modelviewLoc, 1, GL_FALSE, &modelview[0][0]);
+
+        for(Mesh* meshP : scene_meshes)
+        {
+            glBindVertexArray(meshP->VAO);
+            glBindTexture(GL_TEXTURE_2D, meshP->diffuse_texture_id);
+
+            glDrawElements(GL_TRIANGLES, meshP->indicies.size(), GL_UNSIGNED_INT, 0);
+        }
+    } else
+    {
+        glBindVertexArray(flat_screen.VAO);
+        glBindTexture(GL_TEXTURE_2D, flat_screen.diffuse_texture_id);
+        glDrawElements(GL_TRIANGLES, flat_screen.indicies.size(), GL_UNSIGNED_INT, 0);
     }
+
 
 }
 
@@ -316,11 +338,11 @@ int main(int argc, char* argv[]){
 
 //---------------------------- GPU PART ----------------------------------//
 
-    initializeOpenCL(context, queue, program, fb, fb_size, NX, NY, devices);
+    initializeOpenCL(clContext, clQueue, clProgram, gpuOutputImg, gpuOutputImg_size, NX, NY, devices);
 
     //-------------------------------------------------------------//
 
-    // Initialise GLFW and GLEW; and parse path from command line  
+    // Initialise GLFW and GLEW;
     GLFWwindow* window;
 
     if (!glfwInit()) return -1;
@@ -354,12 +376,14 @@ int main(int argc, char* argv[]){
 
 
     SceneOperations::initSceneLights();
-    SceneOperations::openFile("data/cube3.fbx");
+    SceneOperations::openFile("data/plane2.fbx");
+    SceneOperations::init_flat_screen();
 
     ShaderUtils::reshape(window, window_width, window_height);
     ShaderUtils::sendLightsToShaders();
 
     std::vector<Mesh*> scene_meshes_check = scene_meshes;
+
 
     while (!glfwWindowShouldClose(window))
     {

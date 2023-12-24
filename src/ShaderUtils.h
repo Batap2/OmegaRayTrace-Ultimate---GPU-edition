@@ -73,6 +73,7 @@ namespace ShaderUtils{
         projectionLoc = glGetUniformLocation(shaderprogram, "projection");
         modelviewLoc = glGetUniformLocation(shaderprogram, "modelview");
         camPosLoc = glGetUniformLocation(shaderprogram, "camPos");
+        render_modeLoc = glGetUniformLocation(shaderprogram, "render_mode");
     }
 
     void reshape(GLFWwindow* window, int width, int height){

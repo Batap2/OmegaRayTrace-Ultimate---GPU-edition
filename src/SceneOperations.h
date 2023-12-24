@@ -26,6 +26,54 @@ namespace SceneOperations
         scene_lights.push_back(l2);
     }
 
+    void init_flat_screen()
+    {
+        flat_screen.vertices.push_back(vec3(-1, 1, 0));
+        flat_screen.vertices.push_back(vec3(-1, -1, 0));
+        flat_screen.vertices.push_back(vec3(1, -1, 0));
+        flat_screen.vertices.push_back(vec3(1, 1, 0));
+
+        flat_screen.normals.push_back(vec3(0));
+        flat_screen.normals.push_back(vec3(0));
+        flat_screen.normals.push_back(vec3(0));
+        flat_screen.normals.push_back(vec3(0));
+
+        flat_screen.uv.push_back(0);
+        flat_screen.uv.push_back(1);
+
+        flat_screen.uv.push_back(0);
+        flat_screen.uv.push_back(0);
+
+        flat_screen.uv.push_back(1);
+        flat_screen.uv.push_back(0);
+
+        flat_screen.uv.push_back(1);
+        flat_screen.uv.push_back(1);
+
+        flat_screen.material.diffuse_texture.height = window_height;
+        flat_screen.material.diffuse_texture.width = window_width;
+
+        for(int x = 0; x < window_width; ++x)
+        {
+            for(int y = 0; y < window_height; ++y)
+            {
+                flat_screen.material.diffuse_texture.data.push_back(255);
+                flat_screen.material.diffuse_texture.data.push_back(255);
+                flat_screen.material.diffuse_texture.data.push_back(255);
+            }
+        }
+
+
+        flat_screen.indicies.push_back(0);
+        flat_screen.indicies.push_back(1);
+        flat_screen.indicies.push_back(2);
+        flat_screen.indicies.push_back(2);
+        flat_screen.indicies.push_back(3);
+        flat_screen.indicies.push_back(0);
+
+        flat_screen.openglInit();
+    }
+
     void destroyScene(){
         for (auto& lightPtr : scene_lights) {
             delete lightPtr;

@@ -24,6 +24,7 @@ struct Light
 
 uniform int lights_number;
 uniform float lights[LIGHTS_MAX_SIZE * lightStructByteSize];
+uniform int render_mode;
 
 uniform sampler2D diffuse_texture;
 
@@ -55,24 +56,31 @@ void main (void){
 
     vec3 finalColor = vec3(0,0,0);
 
-
-    for(int i = 0; i < lights_number; i++)
+    if(render_mode == 1)
     {
-        int offset = i*lightStructByteSize;
-
         vec3 colorFromTexture = texture(diffuse_texture, myuv).rgb;
+        finalColor = colorFromTexture;
+    } else
+    {
+        for(int i = 0; i < lights_number; i++)
+        {
+            int offset = i*lightStructByteSize;
+
+            vec3 colorFromTexture = texture(diffuse_texture, myuv).rgb;
 
 
-        vec3 lp = vec3(lights[offset+0], lights[offset+1], lights[offset+2]);
-        vec3 lightColor = vec3(lights[offset+3], lights[offset+4], lights[offset+5]);
+            vec3 lp = vec3(lights[offset+0], lights[offset+1], lights[offset+2]);
+            vec3 lightColor = vec3(lights[offset+3], lights[offset+4], lights[offset+5]);
 
-        vec3 newCol = phong(lp, camPos, mynormal, lightColor, colorFromTexture, myvertex, 0, 0.5, 32);
+            vec3 newCol = phong(lp, camPos, mynormal, lightColor, colorFromTexture, myvertex, 0, 0.5, 32);
 
-        finalColor += newCol;
+            finalColor += newCol;
 
-        finalColor = min(finalColor, vec3(1,1,1));
-        //finalColor = texture(diffuse_texture, myuv).rgb;
+            finalColor = min(finalColor, vec3(1,1,1));
+            //finalColor = texture(diffuse_texture, myuv).rgb;
+        }
     }
+
 
     fragColor = vec4(finalColor, 1.0f);
     //fragColor = vec4(1,1,1,1);

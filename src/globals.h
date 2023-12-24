@@ -7,6 +7,10 @@
 #include "camera.h"
 #include "deps/imgui-filebrowser/imfilebrowser.h"
 
+#include <CL/cl.h>
+#include <CL/cl2.hpp>
+#include "CL/cl_gl.h"
+
 // -------------- MENU APPEARANCE -------------- //
 inline float screenSeparation1 = 4;
 
@@ -40,7 +44,7 @@ inline mat4 projection, modelview, model, view;
 
 // -------------- SHADER & UNIFORM LOCATIONS -------------- //
 inline GLuint vertexshader, fragmentshader, shaderprogram;
-inline GLuint projectionLoc, modelviewLoc, modelLoc, viewLoc;
+inline GLuint projectionLoc, modelviewLoc, modelLoc, viewLoc, render_modeLoc;
 
 inline GLuint lightcol;
 inline GLuint lightpos;
@@ -79,6 +83,7 @@ inline Mesh mesh;
 
 // -------------- SCENE -------------- //
 
+inline Mesh flat_screen;
 
 inline Camera mainCamera;
 inline float cameraSpeed = 0.05f;
@@ -92,5 +97,14 @@ inline std::vector<Object3D*> scene_objects;
 inline bool showMenus = true;
 inline bool imguitest1;
 inline ImGui::FileBrowser fileDialog;
+
+// --------------- OPENCL -------------- //
+
+inline cl::Context clContext;
+inline cl::CommandQueue clQueue;
+inline cl::Program clProgram;
+inline std::vector<float> gpuOutputImg;
+inline size_t gpuOutputImg_size;
+inline std::vector<cl::Device> devices;
 
 #endif
