@@ -27,6 +27,7 @@ uniform float lights[LIGHTS_MAX_SIZE * lightStructByteSize];
 uniform int render_mode;
 
 uniform sampler2D diffuse_texture;
+uniform sampler2D float_texture;
 
 // Output of the fragment shader
 out vec4 fragColor;
@@ -58,7 +59,7 @@ void main (void){
 
     if(render_mode == 1)
     {
-        vec3 colorFromTexture = texture(diffuse_texture, myuv).rgb;
+        vec3 colorFromTexture = texture(float_texture, myuv).rgb;
         finalColor = colorFromTexture;
     } else
     {
@@ -77,7 +78,6 @@ void main (void){
             finalColor += newCol;
 
             finalColor = min(finalColor, vec3(1,1,1));
-            //finalColor = texture(diffuse_texture, myuv).rgb;
         }
     }
 

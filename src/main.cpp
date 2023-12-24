@@ -198,7 +198,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
                 glUniform1i(render_modeLoc, render_mode);
                 break;
             case GLFW_KEY_P:
-                flat_screen.change_texture(Texture());
+                flat_screen.change_texture(FloatTexture());
                 break;
             case GLFW_KEY_R:
                 cl::Buffer buffer(clContext, CL_MEM_READ_WRITE, gpuOutputImg_size);
@@ -320,8 +320,8 @@ void display() {
         for(Mesh* meshP : scene_meshes)
         {
             glBindVertexArray(meshP->VAO);
+            glActiveTexture(GL_TEXTURE0 + 0);
             glBindTexture(GL_TEXTURE_2D, meshP->diffuse_texture_id);
-
             glDrawElements(GL_TRIANGLES, meshP->indicies.size(), GL_UNSIGNED_INT, 0);
         }
     } else
@@ -330,30 +330,16 @@ void display() {
         renderImage(buffer, window_width, window_height, clQueue, clProgram, devices);
         clQueue.enqueueReadBuffer(buffer, CL_TRUE, 0, gpuOutputImg.size() * sizeof(float), gpuOutputImg.data());
 
-        Texture newTex;
+        FloatTexture newTex;
         newTex.height = window_height;
         newTex.width = window_width;
-
-        for (int y = 0; y < window_width; ++y) {
-            for (int x = 0; x < window_width; ++x) {
-                size_t pixel_index = y * 3 * window_width + x * 3;
-                float r = gpuOutputImg[pixel_index + 0] * 255.0f;
-                float g = gpuOutputImg[pixel_index + 1] * 255.0f;
-                float b = gpuOutputImg[pixel_index + 2] * 255.0f;
-                auto ir = static_cast<unsigned char>(r);
-                auto ig = static_cast<unsigned char>(g);
-                auto ib = static_cast<unsigned char>(b);
-                newTex.data.push_back(ir);
-                newTex.data.push_back(ig);
-                newTex.data.push_back(ib);
-                //std::cerr << r<< " " << g << " " << b << std::endl;
-            }
-        }
+        newTex.data = gpuOutputImg;
 
         flat_screen.change_texture(newTex);
 
         glBindVertexArray(flat_screen.VAO);
-        glBindTexture(GL_TEXTURE_2D, flat_screen.diffuse_texture_id);
+        glActiveTexture(GL_TEXTURE0 + 0);
+        glBindTexture(GL_TEXTURE_2D, flat_screen.float_texture_id);
         glDrawElements(GL_TRIANGLES, flat_screen.indicies.size(), GL_UNSIGNED_INT, 0);
     }
 

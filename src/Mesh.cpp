@@ -56,7 +56,14 @@ void Mesh::openglInit()
 
     // ----------------- TEXTURES ---------------- //
 
+    diffuse_texture_LOC = glGetUniformLocation(shaderprogram, "diffuse_texture");
+    float_texture_LOC = glGetUniformLocation(shaderprogram, "float_texture");
+
+    glUniform1i(diffuse_texture_LOC, 0);
+    glUniform1i(float_texture_LOC,  1);
+
     glGenTextures(1, &diffuse_texture_id);
+    glActiveTexture(GL_TEXTURE0 + 0);
     glBindTexture(GL_TEXTURE_2D, diffuse_texture_id);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -76,19 +83,39 @@ void Mesh::openglInit()
     );
     glGenerateMipmap(GL_TEXTURE_2D);
 
+    glGenTextures(1, &float_texture_id);
+    glActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, float_texture_id);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 GL_RGB,
+                 material.float_texture.width,
+                 material.float_texture.height,
+                 0,
+                 GL_RGB,
+                 GL_FLOAT,
+                 gpuOutputImg.data()
+    );
+    glGenerateMipmap(GL_TEXTURE_2D);
 }
 
-void Mesh::change_texture(Texture tex)
+void Mesh::change_texture(FloatTexture tex)
 {
     //material.diffuse_texture = tex;
 
     int h,w,c;
     //unsigned char* imageData = stbi_load("data/tex.jpg", &w, &h, &c, 3);
 
-    material.diffuse_texture.width = tex.width;
-    material.diffuse_texture.height = tex.height;
+    material.float_texture.width = tex.width;
+    material.float_texture.height = tex.height;
 
-    material.diffuse_texture.data = tex.data;
+    material.float_texture.data = tex.data;
 
 //    for(int y = 0; y < h; ++y)
 //    {
@@ -101,6 +128,7 @@ void Mesh::change_texture(Texture tex)
 //        }
 //    }
 
+    glActiveTexture(GL_TEXTURE0 + 1);
     glBindTexture(GL_TEXTURE_2D, diffuse_texture_id);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -111,12 +139,12 @@ void Mesh::change_texture(Texture tex)
     glTexImage2D(GL_TEXTURE_2D,
                  0,
                  GL_RGB,
-                 material.diffuse_texture.width,
-                 material.diffuse_texture.height,
+                 material.float_texture.width,
+                 material.float_texture.height,
                  0,
                  GL_RGB,
-                 GL_UNSIGNED_BYTE,
-                 material.diffuse_texture.data.data()
+                 GL_FLOAT,
+                 gpuOutputImg.data()
     );
     glGenerateMipmap(GL_TEXTURE_2D);
 }

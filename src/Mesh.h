@@ -29,7 +29,8 @@ class Mesh{
 private:
     GLuint vertex_array, vertex_buffer, normal_buffer, index_buffer;
 public:
-    GLuint VAO, VBO, EBO, NBO, UVBO, diffuse_texture_id;
+    GLuint VAO, VBO, EBO, NBO, UVBO, diffuse_texture_id, float_texture_id;
+    GLuint diffuse_texture_LOC, float_texture_LOC;
     std::string object_path, name;
 
     std::vector <glm::vec3> vertices;
@@ -51,7 +52,7 @@ public:
 
     void destroy_buffers();
 
-    void change_texture(Texture tex);
+    void change_texture(FloatTexture tex);
 };
 
 #endif
