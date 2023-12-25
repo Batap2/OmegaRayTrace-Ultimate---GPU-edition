@@ -30,13 +30,74 @@
 #define NX 1920
 #define NY 1080
 
+void extractMeshData(const Mesh& current_mesh, float* outVertices, unsigned int* outIndices, int& outNumTriangles) {
+    outNumTriangles = current_mesh.triangle_indicies.size();
+    std::cerr <<"Nbr triangle : "<< outNumTriangles <<std::endl;
+    // Extract vertices
+    std::cerr<<"Nbr of vertex : "<< current_mesh.vertices.size() <<std::endl;
+    for (size_t i = 0; i < current_mesh.vertices.size(); ++i) {
+        outVertices[i * 3] = current_mesh.vertices[i].x;
+        outVertices[i * 3 + 1] = current_mesh.vertices[i].y;
+        outVertices[i * 3 + 2] = current_mesh.vertices[i].z;
+    }
+
+    // Extract indices
+    for (size_t i = 0; i < current_mesh.indicies.size(); ++i) {
+        outIndices[i * 3] = current_mesh.indicies[i];
+        outIndices[i * 3 + 1] = current_mesh.indicies[i+1];
+        outIndices[i * 3 + 2] = current_mesh.indicies[i+2];
+    }
+}
+
+// Fonction pour afficher les triplets de vertices composant chaque triangle
+void printTriangles(const float* vertices, const unsigned int* indices, int numTriangles) {
+    for (int i = 0; i < numTriangles; ++i) {
+        int baseIndex = i * 3;
+        int vIndex1 = indices[baseIndex];
+        int vIndex2 = indices[baseIndex + 1];
+        int vIndex3 = indices[baseIndex + 2];
+
+        std::cout << "Triangle " << i + 1 << ":\n";
+        std::cout << "Vertex 1: (" << vertices[vIndex1 * 3] << ", " << vertices[vIndex1 * 3 + 1] << ", " << vertices[vIndex1 * 3 + 2] << ")\n";
+        std::cout << "Vertex 2: (" << vertices[vIndex2 * 3] << ", " << vertices[vIndex2 * 3 + 1] << ", " << vertices[vIndex2 * 3 + 2] << ")\n";
+        std::cout << "Vertex 3: (" << vertices[vIndex3 * 3] << ", " << vertices[vIndex3 * 3 + 1] << ", " << vertices[vIndex3 * 3 + 2] << ")\n";
+        std::cout << "\n";
+    }
+}
+
+void printVertices(const float* vertices, int numVertices) {
+    for (int i = 0; i < numVertices; i++) {
+        std::cout << "Vertex " << i << ": (" << vertices[i*3+0] << ", " << vertices[i*3+1] << ", " << vertices[i*3+2] << ")\n";
+    }
+}
 
 //Fct qui appelle un programme de rendu en gérant les threads pour un device donné
 void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, cl::Program &program, const cl::Device &device) {
+
+    //Envoi de la camera au GPU
+    cl_float* cameraData = mainCamera.getCameraData();
+    cl::Buffer cameraBuffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(cl_float) * 9, cameraData);
+    queue.enqueueWriteBuffer(cameraBuffer, CL_TRUE, 0, sizeof(cl_float) * 9, cameraData);
+
+    //Envoi des tab indices, vertices et nombre de tri au GPU
+    Mesh* meshTest = scene_objects[0]->mesh;
+    float* vertices = new float[meshTest->vertices.size() * 3];
+    unsigned int* indices = new unsigned int[meshTest->indicies.size() *3];
+    int numTriangles = 0;
+    cl::Buffer vertexBuffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * meshTest->vertices.size() * 3, vertices);
+    cl::Buffer indexBuffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * meshTest->indicies.size() * 3, indices);
+
+    extractMeshData(*meshTest, vertices, indices,numTriangles);
+    printTriangles(vertices,indices,numTriangles);
+    printVertices(vertices,4);
     cl::Kernel kernel(program, "render");
     kernel.setArg(0, buffer);
     kernel.setArg(1, max_x);
     kernel.setArg(2, max_y);
+    kernel.setArg(3,cameraBuffer);
+    kernel.setArg(4, vertexBuffer);  // Ajouter le buffer de vertices
+    kernel.setArg(5, indexBuffer);   // Ajouter le buffer d'indices
+    kernel.setArg(6, numTriangles);   // Ajouter le buffer d'indices
 
     cl::NDRange global(max_x, max_y);
     cl::NDRange local(8, 8);

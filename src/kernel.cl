@@ -48,6 +48,14 @@ float dot(Vec3 a, Vec3 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
+Vec3 cross(Vec3 a, Vec3 b) {
+    Vec3 result;
+    result.x = a.y * b.z - a.z * b.y;
+    result.y = a.z * b.x - a.x * b.z;
+    result.z = a.x * b.y - a.y * b.x;
+    return result;
+}
+
 
 typedef struct {
     Vec3 origin;
@@ -105,7 +113,7 @@ bool intersectSphere(Ray ray, Sphere sphere, float* t, float t_min, float* t_max
         // Retourne la plus petite valeur positive (plus proche de l'origine du rayon)
         *t = (root1 < root2) ? root1 : root2;
 
-        if(*t < *t_max)
+        if(*t < *t_max && *t > t_min)
         {
           *t_max = *t;
           HD->intersectionExists = true;
@@ -144,43 +152,133 @@ bool intersectPlane(Ray ray, Plane plane, float* t, float t_min, float* t_max, H
 }
 
 typedef struct {
+    Vec3 vertex1;
+    Vec3 vertex2;
+    Vec3 vertex3;
+} Triangle;
+
+
+bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float* t_max, HitData* HD) {
+    Vec3 d = ray.direction;
+    Vec3 o = ray.origin;
+
+    float u, v;
+    Vec3 hit_position;
+
+    Vec3 s0s1 = subtract(triangle.vertex2, triangle.vertex1);
+    Vec3 s0s2 = subtract(triangle.vertex3, triangle.vertex1);
+    Vec3 N = normalize(cross(s0s1, s0s2));
+    float denom = dot(N, N);
+
+    double D = dot(triangle.vertex1, N);
+
+    // 1) Check that the ray is not parallel to the triangle:
+    const float epsilon = 1e-6f;
+    if (length(cross(N, d)) < epsilon) {
+        return false;
+    }
+
+    // 2) Check that the triangle is "in front of" the ray:
+    double t_hit = (D - dot(o, N)) / dot(d, N);
+    hit_position = add(o, scale(d, t_hit));
+    double orientation = dot(d, N);
+    if (t_hit > 0 && t_hit >= t_min && t_hit < *t_max) {
+        // 3) Check that the intersection point is inside the triangle:
+        Vec3 C;
+
+        // Edge 0
+        Vec3 edge0 = subtract(triangle.vertex2, triangle.vertex1);
+        Vec3 vp0 = subtract(hit_position, triangle.vertex1);
+        C = cross(edge0, vp0);
+        if (dot(N, C) < 0 || dot(N, C) > denom) {
+            return false;
+        }
+
+        // Edge 1
+        Vec3 edge1 = subtract(triangle.vertex3, triangle.vertex2);
+        Vec3 vp1 = subtract(hit_position, triangle.vertex2);
+        C = cross(edge1, vp1);
+        u = dot(N, C);
+        if (u < 0 || u > denom) {
+            return false;
+        }
+
+        // Edge 2
+        Vec3 edge2 = subtract(triangle.vertex1, triangle.vertex3);
+        Vec3 vp2 = subtract(hit_position, triangle.vertex3);
+        C = cross(edge2, vp2);
+        v = dot(N, C);
+        if (v < 0 || v > denom) {
+            return false;
+        }
+
+        // We have an intersection
+        u /= denom;
+        v /= denom;
+
+        *t = t_hit;
+        *t_max = t_hit;
+        HD->intersectionExists = true;
+        HD->color = (Vec3){0.0, 0.0, 1.0};  // Set color for triangle intersection
+        return true;
+    }
+
+    return false;
+}
+
+typedef struct {
     Sphere spheres[100];
     int numSpheres;
 
     Plane planes[100];
     int numPlanes;
+
+    Triangle triangles[100];
+    int numTriangles;
 } Scene;
 
 
 
-
-__kernel void render(__global float* fb, int max_x, int max_y) {
+//Fonction principale du kernel -> Rendu par raytracing 'une image de la scène
+__kernel void render(__global float* fb, int max_x, int max_y,  __global float* cameraData,__global float* vertices,__global unsigned int* indices, int numTri) {
     int i = get_global_id(0);
     int j = get_global_id(1);
+
+   Vec3 cameraPos = (Vec3){cameraData[0], cameraData[1], cameraData[2]};
+   Vec3 cameraDirection = (Vec3){cameraData[3+0], cameraData[3+1], cameraData[3+2]};
+   Vec3 cameraRight = (Vec3){cameraData[6+0], cameraData[6+1], cameraData[6+2]};
+   Vec3 cameraUp = cross(cameraDirection, cameraRight);
+   float FOV = 60.;
+
+    float aspectRatio = (float)max_x / (float)max_y;
+    float tanFOV = tan(0.5 * radians(FOV));
 
     if ((i < max_x) && (j < max_y)) {
         int pixel_index = j * max_x * 3 + i * 3;
 
-        // Créez une instance de la structure Ray
+        //u et v (entre 0 et 1) relatif au screenspace
         Ray ray;
+        float u = (2.0 * ((float)i + 0.5) / (float)max_x - 1.0) * aspectRatio * tanFOV;
+        float v = (1.0 - 2.0 * ((float)j + 0.5) / (float)max_y) * tanFOV;
 
-        // Utilisez normalize pour normaliser le vecteur
-        ray.direction.x = 2.0 * ((float)i + 0.5) / (float)max_x - 1.0;
-        ray.direction.y = 1.0 - 2.0 * ((float)j + 0.5) / (float)max_y;
-        ray.direction.z = 0.2;  // Vous pouvez ajuster cette valeur selon vos besoins
-
-        // Définissez l'origine du rayon (vous pouvez laisser l'origine à (0, 0, 0) ou définir une origine différente si nécessaire)
-        ray.origin = (Vec3){0.0, 0.0, 0.0};
+        //Setup des coordonnées du rayon courant
+        ray.direction = normalize(add(scale(cameraRight, u), add(scale(cameraUp, v), cameraDirection)));
+        ray.origin = cameraPos;
 
 
         Scene scene;
                     scene.numSpheres = 1;
-                    scene.spheres[0].center = (Vec3){0.0, 0.0, -5.0};
-                    scene.spheres[0].radius = 3.0;
+                    scene.spheres[0].center = (Vec3){0.0, 0.0, -7.0};
+                    scene.spheres[0].radius = 1.0;
 
-                    scene.numPlanes = 1;
+                    scene.numPlanes = 0;
                     scene.planes[0].center = (Vec3){0.0, 5.0, 0.0};
                     scene.planes[0].normal = (Vec3){0.0, 1.0, 0.0};
+
+                    scene.numTriangles = 1;
+                    scene.triangles[0].vertex1 = (Vec3){0.0,0.0,-5.0};
+                    scene.triangles[0].vertex2 = (Vec3){-1.0,1.0,-5.0};
+                    scene.triangles[0].vertex3 = (Vec3){0.0,1.0,-5.0};
 
             // Testez l'intersection entre le rayon et la sphère
             float t;
@@ -205,6 +303,14 @@ __kernel void render(__global float* fb, int max_x, int max_y) {
                          fb[pixel_index + 2] = HD.color.z;
                          }
                    }
+            for (int tIndex = 0; tIndex < scene.numTriangles; tIndex++) {
+                            if (intersectTriangle(ray, scene.triangles[tIndex], &t, t_min, &t_max, &HD)) {
+                                // S'il y a une intersection, la couleur dépend de la distance
+                                fb[pixel_index + 0] = HD.color.x;
+                                fb[pixel_index + 1] = HD.color.y;
+                                fb[pixel_index + 2] = HD.color.z;
+                            }
+                    }
                     if(HD.intersectionExists == false)
                     {
                        fb[pixel_index + 0] = 0.0;
