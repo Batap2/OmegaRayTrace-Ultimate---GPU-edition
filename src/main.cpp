@@ -39,32 +39,133 @@ void extractMeshData(const Mesh& current_mesh, float* outVertices, unsigned int*
 
     // Extract indices
     for (size_t i = 0; i < current_mesh.indicies.size(); ++i) {
-        outIndices[i * 3] = current_mesh.indicies[i];
-        outIndices[i * 3 + 1] = current_mesh.indicies[i+1];
-        outIndices[i * 3 + 2] = current_mesh.indicies[i+2];
+        outIndices[i] = current_mesh.indicies[i];
     }
 }
 
-// Fonction pour afficher les triplets de vertices composant chaque triangle
-void printTriangles(const float* vertices, const unsigned int* indices, int numTriangles) {
-    for (int i = 0; i < numTriangles; ++i) {
-        int baseIndex = i * 3;
-        int vIndex1 = indices[baseIndex];
-        int vIndex2 = indices[baseIndex + 1];
-        int vIndex3 = indices[baseIndex + 2];
+// Function to check if a glm::vec3 already exists in a vector
+bool vec3Exists(const std::vector<glm::vec3>& vec, const glm::vec3& target)
+{
+    for (const auto& element : vec)
+    {
+        if (element == target)
+        {
+            return true; // Found the glm::vec3 in the vector
+        }
+    }
+    return false; // glm::vec3 not found in the vector
+}
 
-        std::cout << "Triangle " << i + 1 << ":\n";
-        std::cout << "Vertex 1: (" << vertices[vIndex1 * 3] << ", " << vertices[vIndex1 * 3 + 1] << ", " << vertices[vIndex1 * 3 + 2] << ")\n";
-        std::cout << "Vertex 2: (" << vertices[vIndex2 * 3] << ", " << vertices[vIndex2 * 3 + 1] << ", " << vertices[vIndex2 * 3 + 2] << ")\n";
-        std::cout << "Vertex 3: (" << vertices[vIndex3 * 3] << ", " << vertices[vIndex3 * 3 + 1] << ", " << vertices[vIndex3 * 3 + 2] << ")\n";
-        std::cout << "\n";
+// Function to push a glm::vec3 into a vector only if it doesn't already exist
+bool pushBackIfNotExists(std::vector<glm::vec3>& vec, const glm::vec3& element)
+{
+    if (!vec3Exists(vec, element))
+    {
+        vec.push_back(element);
+        return true; // Successfully pushed
+    }
+    return false; // Element already exists, not pushed
+}
+
+
+void convertVec3ToFloat(const std::vector<glm::vec3>& vec3Vector, std::vector<float>& floatVector)
+{
+    for (const auto& vec3 : vec3Vector)
+    {
+        floatVector.push_back(vec3.x);
+        floatVector.push_back(vec3.y);
+        floatVector.push_back(vec3.z);
     }
 }
 
-void printVertices(const float* vertices, int numVertices) {
-    for (int i = 0; i < numVertices; i++) {
-        std::cout << "Vertex " << i << ": (" << vertices[i*3+0] << ", " << vertices[i*3+1] << ", " << vertices[i*3+2] << ")\n";
+void extractSceneData()
+{
+    vertices_array.clear();
+    indices_array.clear();
+    splitMesh_array.clear();
+    splitMeshTri_array.clear();
+
+    size_t mesh_number = scene_meshes.size();
+    std::vector<glm::vec3> vertexChecklist;
+    std::cout<<"Nbr of meshes in the scene : "<< mesh_number<<"\n";
+    meshNbr = (int)mesh_number;
+    for(size_t i = 0; i < mesh_number; i++)
+    {
+        Mesh m = *scene_meshes[i];
+        size_t n_tri = m.triangle_indicies.size();
+        size_t n_id = m.triangle_indicies.size()*3;
+        size_t n_vertex_float = m.vertices.size()*3;
+        splitMeshTri_array.push_back(n_tri);
+
+        std::cout<<"Mesh: "<< i+1 <<"\n";
+        std::cout<<" Number of triangles : "<< n_tri<<std::endl;
+        std::cout<<" Number of indices : "<< n_id <<std::endl;
+        std::cout<<" Number of vertex float : "<< n_vertex_float<<std::endl;
+
+        unsigned int element_pushed =0;
+        for (size_t tri = 0; tri < n_tri; ++tri)//triangle
+        {
+            for (size_t id = 0; id < 3; ++id) // index sommet
+            {
+                unsigned int current_id = m.triangle_indicies[tri].vertices[id];
+                std::cout<< "   Current sommet = "<< current_id << std::endl;
+                indices_array.push_back(current_id);
+                glm::vec3 current_vertex = glm::vec3(m.vertices[current_id][0], m.vertices[current_id][1], m.vertices[current_id][2]);
+                if (pushBackIfNotExists(vertexChecklist, current_vertex))
+                {
+                    //vertices_array.push_back(m.vertices[current_id][0]);
+                    //vertices_array.push_back(m.vertices[current_id][1]);
+                    //vertices_array.push_back(m.vertices[current_id][2]);
+                    element_pushed+=3;
+                }
+
+
+            }
+        }
+
+        //std::cout<<"Elements succesfully pushed -> "<< element_pushed <<std::endl;
+        convertVec3ToFloat(m.vertices,vertices_array);
+        splitMesh_array.push_back(m.vertices.size());
+
     }
+    std::cout<<" Size of index array : "<< indices_array.size()<<std::endl;
+    std::cout<<" Size of vertex array : "<< vertices_array.size() << std::endl;
+    std::cout<<" Size of splitMesh array : "<< splitMesh_array.size() <<std::endl;
+    std::cout<<" Element of splitMesh array : "<< splitMesh_array[0] <<std::endl;
+}
+
+template <typename T>
+void printVector(const std::vector<T>& vec) {
+    std::cout << "[";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        std::cout << vec[i];
+        if (i < vec.size() - 1) {
+            std::cout << ", ";
+        }
+    }
+    std::cout << "]\n";
+}
+
+void initializeBuffers() {
+
+    extractSceneData();
+    printVector(vertices_array);
+    printVector(indices_array);
+
+    std::cout << "[";
+    for (size_t i = 0; i < scene_meshes[0]->vertices.size(); ++i) {
+        std::cout << scene_meshes[0]->vertices[i][0] <<"-"<< scene_meshes[0]->vertices[i][1] <<"-"<<scene_meshes[0]->vertices[i][2];
+        if (i < scene_meshes[0]->vertices.size() - 1) {
+            std::cout << ", ";
+        }
+    }
+    std::cout << "]\n";
+    //extractMeshData(*scene_meshes[0],vertices,indices,clTriNum);
+
+    vertexBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * vertices_array.size(),vertices_array.data());
+    indexBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * indices_array.size(), indices_array.data());
+    splitMeshBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMesh_array.size(), splitMesh_array.data());
+    splitMeshTriBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMeshTri_array.size(), splitMeshTri_array.data());
 }
 
 //Fct qui appelle un programme de rendu en gérant les threads pour un device donné
@@ -75,15 +176,6 @@ void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, c
     cl::Buffer cameraBuffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(cl_float) * 9, cameraData);
     queue.enqueueWriteBuffer(cameraBuffer, CL_TRUE, 0, sizeof(cl_float) * 9, cameraData);
 
-    //Envoi des tab indices, vertices et nombre de tri au GPU
-    Mesh* meshTest = scene_objects[0]->mesh;
-    float* vertices = new float[meshTest->vertices.size() * 3];
-    unsigned int* indices = new unsigned int[meshTest->indicies.size() *3];
-    int numTriangles = 0;
-    cl::Buffer vertexBuffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * meshTest->vertices.size() * 3, vertices);
-    cl::Buffer indexBuffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * meshTest->indicies.size() * 3, indices);
-
-    extractMeshData(*meshTest, vertices, indices,numTriangles);
 
     cl::Kernel kernel(program, "render");
     kernel.setArg(0, buffer);
@@ -92,7 +184,9 @@ void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, c
     kernel.setArg(3,cameraBuffer);
     kernel.setArg(4, vertexBuffer);  // Ajouter le buffer de vertices
     kernel.setArg(5, indexBuffer);   // Ajouter le buffer d'indices
-    kernel.setArg(6, numTriangles);   // Ajouter le buffer d'indices
+    kernel.setArg(6, meshNbr);   // Le nombre de triangle contenu dans la scene
+    kernel.setArg(7,splitMeshBuffer); // Ajouter le buffer
+    kernel.setArg(8,splitMeshTriBuffer); // Ajouter le buffer
 
     cl::NDRange global(max_x, max_y);
     cl::NDRange local(8, 8);
@@ -451,6 +545,7 @@ int main(int argc, char* argv[]){
 
     std::vector<Mesh*> scene_meshes_check = scene_meshes;
 
+    initializeBuffers();
 
     while (!glfwWindowShouldClose(window))
     {
