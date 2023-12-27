@@ -22,6 +22,9 @@ namespace SceneOperations
         l1->color = glm::vec3((float)255/255,(float)190/255,(float)136/255);
         l2->color = glm::vec3((float)198/255,(float)216/255,(float)255/255);
 
+        l1->intensity = 5;
+        l2->intensity = 5;
+
         scene_lights.push_back(l1);
         scene_lights.push_back(l2);
     }
@@ -91,21 +94,46 @@ namespace SceneOperations
             return -1;
         }
 
-        Light l;
+        auto *l = new Light();
 
-        scene_lights.push_back(&l);
+        scene_lights.push_back(l);
+
+        ShaderUtils::sendLightsToShaders();
 
         return 1;
     }
 
-    int removeLight()
+    int removeLight(int index)
     {
         if(scene_lights.size() == 0){
             std::cout << "there is no light\n";
             return -1;
         }
 
-        scene_lights.resize(scene_lights.size() - 1);
+        if(scene_lights.size() < index){
+            std::cout << "out of range\n";
+            return -1;
+        }
+        scene_lights.erase(scene_lights.begin()+index);
+
+        ShaderUtils::sendLightsToShaders();
+
+        return 1;
+    }
+
+    int removeMesh(int index)
+    {
+        if(scene_meshes.size() == 0){
+            std::cout << "there is no mesh\n";
+            return -1;
+        }
+
+        if(scene_meshes.size() < index){
+            std::cout << "out of range\n";
+            return -1;
+        }
+
+        scene_meshes.erase(scene_meshes.begin()+index);
 
         return 1;
     }

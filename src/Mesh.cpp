@@ -6,10 +6,15 @@
 #include "stb_image.h"
 
 void Mesh::destroy_buffers(){
-	glDeleteVertexArrays(1, &vertex_array);
-	glDeleteBuffers(1, &vertex_buffer);
-	glDeleteBuffers(1, &normal_buffer);
-	glDeleteBuffers(1, &index_buffer);
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &NBO);
+	glDeleteBuffers(1, &EBO);
+    glDeleteBuffers(1, &UVBO);
+    glDeleteBuffers(1, &ambiant_bo);
+    glDeleteBuffers(1, &diffuse_bo);
+    glDeleteBuffers(1, &specular_bo);
+    glDeleteBuffers(1, &mra_bo);
 }
 
 void Mesh::openglInit()
@@ -22,6 +27,11 @@ void Mesh::openglInit()
     glGenBuffers(1, &NBO);
     glGenBuffers(1, &EBO);
     glGenBuffers(1,&UVBO);
+    glGenBuffers(1,&ambiant_bo);
+    glGenBuffers(1,&diffuse_bo);
+    glGenBuffers(1,&specular_bo);
+    glGenBuffers(1,&mra_bo);
+    glGenBuffers(1,&useTexture_bo);
 
     // Bind VAO
     glBindVertexArray(VAO);
@@ -50,8 +60,11 @@ void Mesh::openglInit()
     glEnableVertexAttribArray(2); // This allows usage of layout location 2 in the vertex shader
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+    // ----------------- MATERIAL ---------------- //
+
+    send_material_to_shaders();
+
+
 
 
     // ----------------- TEXTURES ---------------- //
@@ -107,26 +120,10 @@ void Mesh::openglInit()
 
 void Mesh::change_texture(FloatTexture tex)
 {
-    //material.diffuse_texture = tex;
-
-    int h,w,c;
-    //unsigned char* imageData = stbi_load("data/tex.jpg", &w, &h, &c, 3);
-
     material.float_texture.width = tex.width;
     material.float_texture.height = tex.height;
 
     material.float_texture.data = tex.data;
-
-//    for(int y = 0; y < h; ++y)
-//    {
-//        for(int x = 0; x < w; ++x)
-//        {
-//            int pos = (x*c) + (y*c) * w;
-//            material.diffuse_texture.data.push_back(imageData[pos]);
-//            material.diffuse_texture.data.push_back(imageData[pos+1]);
-//            material.diffuse_texture.data.push_back(imageData[pos+2]);
-//        }
-//    }
 
     glActiveTexture(GL_TEXTURE0 + 1);
     glBindTexture(GL_TEXTURE_2D, diffuse_texture_id);
@@ -147,4 +144,77 @@ void Mesh::change_texture(FloatTexture tex)
                  gpuOutputImg.data()
     );
     glGenerateMipmap(GL_TEXTURE_2D);
+}
+
+void Mesh::send_material_to_shaders()
+{
+
+    if(textureBufferAlreadyCreated){
+        updateMaterial();
+        return;
+    }
+
+    // DIFFUSE
+    std::vector<glm::vec3> diffuse_vec;
+    for(int i = 0; i < vertices.size(); ++i){
+        diffuse_vec.push_back(material.diffuse_material);
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, diffuse_bo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), diffuse_vec.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(3); // This allows usage of layout location 1 in the vertex shader
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+
+    // MRA
+    glm::vec3 mra = material.getMRA();
+
+    std::vector<glm::vec3> mra_vec;
+    for(int i = 0; i < vertices.size(); ++i){
+        mra_vec.push_back(mra);
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, mra_bo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), mra_vec.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(4); // This allows usage of layout location 1 in the vertex shader
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+    // Send the useTexture parameter
+    std::vector<glm::vec3> useT_vec;
+    for(int i = 0; i < vertices.size(); ++i){
+        useT_vec.push_back(vec3(material.useTexture));
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, useTexture_bo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), useT_vec.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(5); // This allows usage of layout location 1 in the vertex shader
+    glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 3*sizeof(float), (void*)0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    textureBufferAlreadyCreated = true;
+}
+
+void Mesh::updateMaterial(){
+    // DIFFUSE
+    std::vector<glm::vec3> diffuse_vec;
+    for(int i = 0; i < vertices.size(); ++i){
+        diffuse_vec.push_back(material.diffuse_material);
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, diffuse_bo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertices.size(), diffuse_vec.data());
+
+    // MRA
+    glm::vec3 mra = material.getMRA();
+
+    std::vector<glm::vec3> mra_vec;
+    for(int i = 0; i < vertices.size(); ++i){
+        mra_vec.push_back(mra);
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, mra_bo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertices.size(), mra_vec.data());
 }

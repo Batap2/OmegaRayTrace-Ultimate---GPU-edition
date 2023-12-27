@@ -27,14 +27,10 @@
 #include <CL/cl2.hpp>
 #include "CL/cl_gl.h"
 
-#define NX 1920
-#define NY 1080
 
 void extractMeshData(const Mesh& current_mesh, float* outVertices, unsigned int* outIndices, int& outNumTriangles) {
     outNumTriangles = current_mesh.triangle_indicies.size();
-    std::cerr <<"Nbr triangle : "<< outNumTriangles <<std::endl;
-    // Extract vertices
-    std::cerr<<"Nbr of vertex : "<< current_mesh.vertices.size() <<std::endl;
+
     for (size_t i = 0; i < current_mesh.vertices.size(); ++i) {
         outVertices[i * 3] = current_mesh.vertices[i].x;
         outVertices[i * 3 + 1] = current_mesh.vertices[i].y;
@@ -88,8 +84,7 @@ void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, c
     cl::Buffer indexBuffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * meshTest->indicies.size() * 3, indices);
 
     extractMeshData(*meshTest, vertices, indices,numTriangles);
-    printTriangles(vertices,indices,numTriangles);
-    printVertices(vertices,4);
+
     cl::Kernel kernel(program, "render");
     kernel.setArg(0, buffer);
     kernel.setArg(1, max_x);
@@ -322,8 +317,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
         mainCamera.cameraDirection = glm::normalize(direction);
         mainCamera.cameraRight = glm::normalize(glm::cross(mainCamera.cameraDirection, upinit));
         mainCamera.cameraUp = glm::cross(mainCamera.cameraRight, mainCamera.cameraDirection);
-
-        std::cout << "(" << mainCamera.cameraPos.x << ", " << mainCamera.cameraPos.y << ", " << mainCamera.cameraPos.z << ")" << " | " << "(" << mainCamera.cameraDirection.x << ", " << mainCamera.cameraDirection.y << ", " << mainCamera.cameraDirection.z << ")\n";
+        
     } else {
         lastX = xpos;
         lastY = ypos;
@@ -361,7 +355,7 @@ void manageInput()
 }
 
 void display() {
-    glClearColor(0, 0.2, 0, 0);
+    glClearColor(skyColor.x, skyColor.y, skyColor.z, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if(render_mode == 0)
@@ -449,7 +443,7 @@ int main(int argc, char* argv[]){
 
 
     SceneOperations::initSceneLights();
-    SceneOperations::openFile("data/plane2.fbx");
+    SceneOperations::openFile("data/scene3.fbx");
     SceneOperations::init_flat_screen();
 
     ShaderUtils::reshape(window, window_width, window_height);
@@ -474,7 +468,6 @@ int main(int argc, char* argv[]){
     }
 
     SceneOperations::destroyScene();
-    mesh.destroy_buffers();
     glfwTerminate();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

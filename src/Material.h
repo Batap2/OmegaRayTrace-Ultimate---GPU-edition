@@ -5,6 +5,7 @@
 #ifndef OBJECT_VIEWER_MATERIAL_H
 #define OBJECT_VIEWER_MATERIAL_H
 
+#include <array>
 #include "deps/glm/glm.hpp"
 enum MaterialType {
     Material_Diffuse_Blinn_Phong ,
@@ -32,22 +33,26 @@ struct Material {
     MaterialType mType;
     LightingType lType;
 
+    float useTexture;
+
     glm::vec3 ambient_material;
     glm::vec3 diffuse_material;
     glm::vec3 specular_material;
+    
+    float ambiant_strength = 0.1;
+    float specular_strength = 0.2;
 
     Texture diffuse_texture;
 
     FloatTexture float_texture;
 
-    double shininess;
+    float shininess;
     float index_medium;
     float transparency;
 
     bool emissive = false;
 
     // ---------- LightingType_PBR ----------
-    glm::vec3 albedo;
     float metallic, roughness, ao;
 
     Material() {
@@ -56,8 +61,35 @@ struct Material {
         transparency = 0.0;
         index_medium = 1.0;
         ambient_material = glm::vec3(0.0f, 0.0f, 0.0f);
-        albedo = ambient_material;
+        ao = 10;
+        useTexture = 0;
+    }
 
+    std::array<float, 13> toArray()
+    {
+        std::array<float, 13> arr;
+
+        arr[0] = ambient_material[0];
+        arr[1] = ambient_material[1];
+        arr[2] = ambient_material[2];
+        arr[3] = diffuse_material[0];
+        arr[4] = diffuse_material[1];
+        arr[5] = diffuse_material[2];
+        arr[6] = specular_material[0];
+        arr[7] = specular_material[1];
+        arr[8] = specular_material[2];
+        arr[9] = shininess;
+        arr[10] = metallic;
+        arr[11] = roughness;
+        arr[12] = ao;
+
+        return arr;
+    }
+
+    // metallic, roughness, ao
+    glm::vec3 getMRA()
+    {
+        return glm::vec3(metallic,roughness,ao);
     }
 };
 #endif //OBJECT_VIEWER_MATERIAL_H

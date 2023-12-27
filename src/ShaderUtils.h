@@ -74,6 +74,8 @@ namespace ShaderUtils{
         modelviewLoc = glGetUniformLocation(shaderprogram, "modelview");
         camPosLoc = glGetUniformLocation(shaderprogram, "camPos");
         render_modeLoc = glGetUniformLocation(shaderprogram, "render_mode");
+
+
     }
 
     void reshape(GLFWwindow* window, int width, int height){
@@ -120,12 +122,55 @@ namespace ShaderUtils{
             lightsBuffer[offset+6] = l->intensity;
         }
 
-
         lightsBufferID = glGetUniformLocation(shaderprogram, "lights");
-        glUniform1fv(lightsBufferID, lightsMaxNumber * structSize, lightsBuffer);
-
         lights_numberID = glGetUniformLocation(shaderprogram, "lights_number");
+        glUniform1fv(lightsBufferID, lightsMaxNumber * structSize, lightsBuffer);
         glUniform1i(lights_numberID, scene_lights.size());
+    }
+
+    void sendMaterialsToShader()
+    {
+        if(scene_lights.size() > lightsMaxNumber){
+            std::cout << "max scene_lights number reached\n";
+            return;
+        }
+
+        // struct :
+        // [ambiant_color, diffuse_color, specular_color, shininess, metallic, roughness, ao]
+        // [3,3,3,1,1,1,1]
+        int structSize = 13;
+        GLfloat materialBuffer[objectMaxNumber * structSize];
+
+        for(int i = 0; i < scene_meshes.size(); ++i)
+        {
+            Material m = scene_meshes[i]->material;
+
+            int offset = i*structSize;
+
+            materialBuffer[offset] = m.ambient_material[0];
+            materialBuffer[offset+1] = m.ambient_material[1];
+            materialBuffer[offset+2] = m.ambient_material[2];
+
+            materialBuffer[offset+3] = m.diffuse_material[0];
+            materialBuffer[offset+4] = m.diffuse_material[1];
+            materialBuffer[offset+5] = m.diffuse_material[2];
+
+            materialBuffer[offset+6] = m.specular_material[0];
+            materialBuffer[offset+7] = m.specular_material[1];
+            materialBuffer[offset+8] = m.specular_material[2];
+
+            materialBuffer[offset+9] = m.shininess;
+            materialBuffer[offset+10] = m.metallic;
+            materialBuffer[offset+11] = m.roughness;
+            materialBuffer[offset+12] = m.ao;
+        }
+
+
+        materialBufferID = glGetUniformLocation(shaderprogram, "materials");
+        glUniform1fv(materialBufferID, objectMaxNumber * structSize, materialBuffer);
+
+        lights_numberID = glGetUniformLocation(shaderprogram, "materials_number");
+        glUniform1i(objectNumberID, scene_meshes.size());
     }
 }
 

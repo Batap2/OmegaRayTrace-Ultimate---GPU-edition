@@ -31,6 +31,8 @@ namespace MeshLoader{
                                                   aiProcess_DropNormals |
                                                   aiProcess_GenSmoothNormals);
 
+        //const aiScene* aiScene = importer.ReadFile(pFile,aiProcessPreset_TargetRealtime_Fast);
+
         // If the import failed, report it
         if (nullptr == aiScene) {
             std::cout << "Erreur MeshLoader" << std::endl;
@@ -178,6 +180,7 @@ namespace MeshLoader{
                     }
 
                     newMesh->material.diffuse_texture = texture;
+                    newMesh->material.useTexture = 1;
                 }
             }
 

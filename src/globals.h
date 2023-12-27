@@ -57,10 +57,11 @@ inline GLuint emissioncol;
 inline GLuint shininesscol;
 inline GLuint camPosLoc;
 
-inline GLuint lightsBufferID, lights_numberID;
+inline GLuint lightsBufferID, lights_numberID, materialBufferID, objectNumberID;
 
-// -------------- SHADER BUFFER SIZE -------------- //
+// -------------- SHADER -------------- //
 inline int lightsMaxNumber = 64;
+inline int objectMaxNumber = 64;
 
 inline enum { view2, translate, scale } transop;
 
@@ -78,8 +79,6 @@ inline GLfloat lightransf[4 * numLights];
 inline int render_mode = 0;
 inline float current_vp_width = window_width/screenSeparation1;
 inline float current_vp_height = window_height;
-// Global mesh
-inline Mesh mesh;
 
 // -------------- SCENE -------------- //
 
@@ -92,11 +91,18 @@ inline std::vector<Mesh*> scene_meshes;
 inline std::vector<Light*> scene_lights;
 inline std::vector<Object3D*> scene_objects;
 
+inline glm::vec3 skyColor(0.6,0.8,1);
+
 // -------------- IMGUI -------------- //
 
 inline bool showMenus = true;
 inline bool imguitest1;
 inline ImGui::FileBrowser fileDialog;
+inline int selected_object = 0;
+inline int selected_light = 0;
+inline ImGuiColorEditFlags colorEditFlag = (ImGuiColorEditFlags_NoOptions);
+inline glm::vec3 old_light_color;
+inline glm::vec3 old_mesh_color;
 
 // --------------- OPENCL -------------- //
 

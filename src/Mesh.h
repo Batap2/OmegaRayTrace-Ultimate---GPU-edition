@@ -27,9 +27,10 @@ struct Tri{
 
 class Mesh{
 private:
-    GLuint vertex_array, vertex_buffer, normal_buffer, index_buffer;
+    bool textureBufferAlreadyCreated;
 public:
     GLuint VAO, VBO, EBO, NBO, UVBO, diffuse_texture_id, float_texture_id;
+    GLuint ambiant_bo, diffuse_bo, specular_bo, mra_bo, useTexture_bo;
     GLuint diffuse_texture_LOC, float_texture_LOC;
     std::string object_path, name;
 
@@ -53,6 +54,10 @@ public:
     void destroy_buffers();
 
     void change_texture(FloatTexture tex);
+
+    void send_material_to_shaders();
+
+    void updateMaterial();
 };
 
 #endif

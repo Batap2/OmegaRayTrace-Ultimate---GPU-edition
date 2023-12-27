@@ -58,14 +58,13 @@ namespace GUI{
             ImGui::EndMenuBar();
         }
 
-
-        ImGui::Text("Application (%.1f FPS)", ImGui::GetIO().Framerate);
-        ImGui::Text(" ");
-
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
-        ImGui::Separator(); ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Render Mode"); ImGui::Separator();
-        // ImGui::Text("Primitive object "); ImGui::SameLine();
+        ImGui::Separator();
+        ImGui::Separator();
+        ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Render Mode");
+        ImGui::SameLine();
+        ImGui::Text("(%.1f FPS)", ImGui::GetIO().Framerate);
         if(ImGui::RadioButton("Fast", &render_mode, 0)){
             glUniform1i(render_modeLoc, render_mode);
         }
@@ -74,50 +73,140 @@ namespace GUI{
         if(ImGui::RadioButton("RayTraced", &render_mode, 1)){
             glUniform1i(render_modeLoc, render_mode);
         }
-        ImGui::SameLine();
-
-
-        ////////////////////////////////////////////////////////////////////////////////////////////////
-
-        ImGui::Separator(); ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Object Properties"); ImGui::Separator();
-        ImGui::Text("Objects :");
-        ImGui::Separator();
-
-
-        for(int i = 0; i < scene_meshes.size(); ++i)
-        {
-            ImGui::Button(scene_meshes[i]->name.c_str());
-        }
-
-        ImGui::Separator();
-
-        ImGui::Text(" ");
+        ImGui::Separator();ImGui::Separator();
+        ImGui::Text(" ");ImGui::Text(" ");
 
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
-        ImGui::Text(" ");
-        ImGui::Separator(); ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Camera"); ImGui::Separator();
-        if(ImGui::SliderFloat("Field of view2", &fovy, 0.0f, 180.0f)) {
+        ImGui::Separator();ImGui::Separator();
+        ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Camera & World");
+        ImGui::Separator();
+
+        if(ImGui::SliderFloat("Field of view", &fovy, 0.0f, 180.0f)) {
             ShaderUtils::reshape(window, window_width, window_height);
         }
-
 
         ImGui::SliderFloat("Frustum near plane", &zNear, 0.0f, 15.0f);
         ImGui::SliderFloat("Frustum far plane", &zFar, 0.0f, 150.0f);
         ImGui::Text(" ");
-        ImGui::SliderFloat3("Camera position ", &eye[0], -10.0f, 10.0f);
+        ImGui::InputFloat3("Camera position ", &mainCamera.cameraPos[0]);
+        ImGui::InputFloat3("Camera orientation ", &mainCamera.cameraDirection[0]);
+        ImGui::Text(" ");
+        ImGui::ColorEdit3("Sky Color", &skyColor[0]);
+        ImGui::Separator();ImGui::Separator();
+
+        ImGui::Text(" ");ImGui::Text(" ");
+
+        ImGui::Separator();ImGui::Separator();
+        ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Scene Objects");
+        ImGui::Separator();
+
+
+        ImGui::BeginChild("1", ImVec2(0,100));
+
+
+        if (ImGui::BeginPopupContextItem("objProperties"))
+        {
+            if(ImGui::ColorEdit3("Color", &scene_meshes[selected_object]->material.diffuse_material[0]), colorEditFlag)
+            {
+                if(old_mesh_color != scene_meshes[selected_object]->material.diffuse_material)
+                {
+                    scene_meshes[selected_object]->send_material_to_shaders();
+                    old_mesh_color = scene_meshes[selected_object]->material.diffuse_material;
+                }
+            }
+            if(ImGui::DragFloat("Metallic", &scene_meshes[selected_object]->material.metallic, 0.01, 0, 1))
+            {
+                scene_meshes[selected_object]->send_material_to_shaders();
+            }
+            if(ImGui::DragFloat("Roughness", &scene_meshes[selected_object]->material.roughness, 0.01, 0, 1))
+            {
+                scene_meshes[selected_object]->send_material_to_shaders();
+            }
+            if(ImGui::Button("Delete"))
+            {
+                SceneOperations::removeMesh(selected_object);
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+
+        }
+
+        for(int i = 0; i < scene_meshes.size(); ++i)
+        {
+
+            if(ImGui::Button(scene_meshes[i]->name.c_str()))
+            {
+                selected_object = i;
+                old_mesh_color = scene_meshes[selected_object]->material.diffuse_material;
+                ImGui::OpenPopup("objProperties");
+            }
+        }
+        ImGui::EndChild();
+
+        ImGui::Separator();ImGui::Separator();
+
+        ImGui::Text(" ");ImGui::Text(" ");
 
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
-        ImGui::Separator(); ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Lighting"); ImGui::Separator();
-        ImGui::Text("Most scene_lights are switched off by default, and the below");
-        ImGui::Text("sliders can play with the light positions and color intensities");
+        ImGui::Separator();ImGui::Separator();
 
-        ImGui::TextColored(ImVec4(1,1,0,1), "Important Stuff");
-        ImGui::BeginChild("Scrolling");
-        for (int n = 0; n < 50; n++)
-            ImGui::Text("%04d: Some text", n);
+        ImGui::TextColored({0.0f,1.0f,1.0f,1.0f}, "Lights");
+        ImGui::SameLine();
+        ImGui::Dummy(ImVec2(10,0));
+        ImGui::SameLine();
+        if(ImGui::Button("Add Light"))
+        {
+            SceneOperations::addLight();
+        }
+
+        ImGui::Separator();
+
+        ImGui::BeginChild("2", ImVec2(0,100));
+
+            if (ImGui::BeginPopupContextItem("lightsProperties"))
+            {
+                if(ImGui::DragFloat3("Position", &scene_lights[selected_light]->pos[0], 0.01))
+                {
+                    ShaderUtils::sendLightsToShaders();
+                }
+                if(ImGui::ColorEdit3("Color", &scene_lights[selected_light]->color[0]), colorEditFlag)
+                {
+                    if(old_light_color != scene_lights[selected_light]->color){
+                        ShaderUtils::sendLightsToShaders();
+                        old_light_color = scene_lights[selected_light]->color;
+                    }
+                }
+                if(ImGui::DragFloat("Intensity", &scene_lights[selected_light]->intensity, 0.01))
+                {
+                    ShaderUtils::sendLightsToShaders();
+                }
+
+                if(ImGui::Button("Delete"))
+                {
+                    SceneOperations::removeLight(selected_light);
+                    ImGui::CloseCurrentPopup();
+                }
+
+                ImGui::EndPopup();
+
+            }
+
+            for(int i = 0; i < scene_lights.size(); ++i)
+            {
+                std::string name = "Light " + std::to_string(i);
+                if(ImGui::Button(name.c_str()))
+                {
+                    selected_light = i;
+                    old_light_color = scene_lights[selected_light]->color;
+                    ImGui::OpenPopup("lightsProperties");
+                }
+            }
         ImGui::EndChild();
+
+        ImGui::Separator();ImGui::Separator();
 
         ImGui::PopStyleColor();
         ImGui::End();
