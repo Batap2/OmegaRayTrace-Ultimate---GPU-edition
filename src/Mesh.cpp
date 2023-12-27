@@ -161,7 +161,7 @@ void Mesh::send_material_to_shaders()
     materialsBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * materials_array.size(),materials_array.data());
 
     //---------------------------------------------------------------------------------------------------------------------//
-    
+
     if(textureBufferAlreadyCreated){
         updateMaterial();
         return;

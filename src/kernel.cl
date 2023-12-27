@@ -306,7 +306,7 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
         HD->intersectionExists = true;
         HD->position = add(ray.origin, scale(ray.direction, *t));
 		HD->normal = N;
-        HD->material = triangle.mat;
+        HD->material = testMat;
 		HD->objectType = TRIANGLE;
         return true;
     }
@@ -533,6 +533,7 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
 			unsigned int vertex_nbr = split_meshes[mesh_id];
 			unsigned int tri_nbr = split_meshes_tri[mesh_id];
 			unsigned int index_nbr = tri_nbr *3;
+
             Material current_mat;
             unsigned int mat_id = mesh_id*13;
             current_mat.ambiant_color = (Vec3){materials[mat_id],materials[mat_id+1],materials[mat_id+2]};
@@ -558,7 +559,7 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
 				scene.triangles[current_tri_id].vertex1 = s0;
 				scene.triangles[current_tri_id].vertex2 = s1;
 				scene.triangles[current_tri_id].vertex3 = s2;
-                scene.triangles[current_tri_id].mat = current_mat;
+                //scene.triangles[current_tri_id].mat = current_mat;
 				scene.numTriangles++;
 			}
 			offset_index += index_nbr;
