@@ -1,4 +1,12 @@
+float randomFloatInRange(unsigned long *seed, float min, float max) {
 
+    unsigned long multiplier = 48271L;
+    unsigned long modulus = 2147483647L;
+	
+	*seed = (multiplier * (*seed)) % modulus + 564651;
+    double scaledRandom = *seed / ((double)modulus + 1);
+    return (float)(scaledRandom * (max - min) + min);
+}
 
 
 typedef struct {
@@ -274,6 +282,12 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
         // Calculate intersection point
         hit_position = add(o, scale(d, t_hit));
 
+		Vec3 o_hit = subtract(hit_position, o);
+
+		if(dot(d, o_hit) <= 0){
+			return false;
+		}
+
         // 3) Check that the intersection point is inside the triangle:
         Vec3 C;
 
@@ -311,7 +325,7 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
         *t = t_hit;
         *t_max = t_hit;
         HD->intersectionExists = true;
-        HD->position = add(ray.origin, scale(ray.direction, *t));
+		HD->position = hit_position;
 		HD->normal = N;
         HD->material = testMat;
 		HD->objectType = TRIANGLE;
@@ -458,7 +472,7 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 	Vec3 finalColor = (Vec3){0.0f,0.0f,0.0f};
 
 	if(!HD.intersectionExists){
-		return (Vec3){0.0f,1.0f,0.0f};
+		return (Vec3){0.0f,0.0f,0.0f};
 	}
 
 	for(int bounce = 0; bounce < nbBounce; bounce++)
@@ -474,7 +488,7 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 
 		if(!HD.intersectionExists)
 		{
-			reflectedColor = (Vec3){1.0f,1.0f,1.0f};
+			reflectedColor = (Vec3){0.0f,1.0f,0.0f};
 		} else {
 			reflectedColor = computePhong(&HD, ray, camPos);
 		}
@@ -482,7 +496,8 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 
 		
 
-		finalColor = add(finalColor, reflectedColor);
+		//finalColor = add(finalColor, reflectedColor);
+		finalColor = reflectedColor;
 	}
 
 
@@ -514,7 +529,7 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
     if ((i < max_x) && (j < max_y)) {
         int pixel_index = j * max_x * 3 + i * 3;
 
-
+		
 		// Calcul des coordonnées du rayon
 		Ray ray;
 		float u = (2.0 * ((float)i + 0.5) / (float)max_x - 1.0) * aspectRatio *tanFOV;
@@ -585,12 +600,32 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
 		
 		int bounce = 1;
 	
-		Vec3 out_color = computeColor(&ray, cameraPos, bounce);
+		//Vec3 out_color = computeColor(&ray, cameraPos, bounce);
 
-		fb[pixel_index + 0] = out_color.x;
-		fb[pixel_index + 1] = out_color.y;
-		fb[pixel_index + 2] = out_color.z;
+		unsigned long randomSeed = (unsigned long)pixel_index;
 
-		
+        randomSeed = randomSeed * randomSeed * randomSeed * randomSeed * i * j;
+
+        //randomSeed = (unsigned long)pow(2,(float)randomSeed);
+
+		float r = randomFloatInRange(&randomSeed, 0.0f, 1.0f);
+
+		float g = randomFloatInRange(&randomSeed, 0.0f, 1.0f);
+
+		float b = randomFloatInRange(&randomSeed, 0.0f, 1.0f);
+
+
+        float rand = (r+g+b)/3;
+
+		//Vec3 out_color = 
+
+		// fb[pixel_index + 0] = out_color.x;
+		// fb[pixel_index + 1] = out_color.y;
+		// fb[pixel_index + 2] = out_color.z;
+
+		fb[pixel_index + 0] = rand;
+		fb[pixel_index + 1] = rand;
+		fb[pixel_index + 2] = rand;
+
     }
 }
