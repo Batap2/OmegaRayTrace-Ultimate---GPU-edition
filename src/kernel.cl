@@ -629,3 +629,8 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
 
     }
 }
+
+/*__kernel void getRandomIntInGPU(int CPURandomInt)
+{
+    GPURandomInt = CPURandomInt;
+}*/
