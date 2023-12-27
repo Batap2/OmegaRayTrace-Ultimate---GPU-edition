@@ -506,7 +506,7 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 }
 
 
-
+int GPURandomInt;
 
 //Fonction principale du kernel -> Rendu par raytracing 'une image de la scène
 __kernel void render(__global float* fb, int max_x, int max_y,  __global float* cameraData,__global float* vertices,__global unsigned int* indices, int numMesh,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri)
@@ -630,7 +630,7 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
     }
 }
 
-/*__kernel void getRandomIntInGPU(int CPURandomInt)
+__kernel void getRandomIntInGPU(int CPURandomInt)
 {
     GPURandomInt = CPURandomInt;
-}*/
+}
