@@ -1,4 +1,6 @@
 
+
+
 typedef struct {
     float x;
     float y;
@@ -56,6 +58,35 @@ Vec3 cross(Vec3 a, Vec3 b) {
     return result;
 }
 
+typedef struct {
+    unsigned int height, width;
+    unsigned char * data;
+} Texture;
+
+typedef struct {
+
+    Texture texture;
+
+    float useTexture;
+    float isEmissive;
+    float isTransparent;
+
+    Vec3 ambiant_color;
+    Vec3 diffuse_color;
+    Vec3 specular_color;
+
+    float emissiveIntensity;
+    float shininess;
+    float IOR;
+    float transparency;
+
+    float metallic, roughness, ao;
+
+} Material;
+
+Material testMat;
+Material testMat2;
+
 
 typedef struct {
     Vec3 origin;
@@ -74,6 +105,13 @@ Vec3 pointAtParameter(Ray ray, float t) {
     return add(ray.origin, scale(ray.direction, t));
 }
 
+enum ObjectType
+{
+	SPHERE,
+	PLANE,
+	TRIANGLE,
+};
+
 typedef struct
 {
     bool intersectionExists;
@@ -81,7 +119,8 @@ typedef struct
     Vec3 normal;           // ajout normal
     Vec3 position;         // ajout position
     Vec3 bounce_direction; // Ajout bounce direction
-    Vec3 color;
+	Material material;
+	enum ObjectType objectType;
 } HitData;
 
 
@@ -117,7 +156,8 @@ bool intersectSphere(Ray ray, Sphere sphere, float* t, float t_min, float* t_max
         {
           *t_max = *t;
           HD->intersectionExists = true;
-          HD->color = (Vec3){1.0,0.0,0.0};
+          HD->material = testMat2;
+		  HD->objectType = SPHERE;
           return true;
         }
     }
@@ -143,7 +183,8 @@ bool intersectPlane(Ray ray, Plane plane, float* t, float t_min, float* t_max, H
         if (*t >= t_min && *t < *t_max) {
             *t_max = *t;
             HD->intersectionExists = true;
-            HD->color = (Vec3){0.0,1.0,0.0};
+            HD->material = testMat;
+			HD->objectType = PLANE;
             return true;  // Il y a une intersection avec le plan
         }
     }
@@ -223,11 +264,48 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
         *t = t_hit;
         *t_max = t_hit;
         HD->intersectionExists = true;
-        HD->color = (Vec3){0.0, 0.0, 1.0};  // Set color for triangle intersection
+        HD->material = testMat;
+		HD->objectType = TRIANGLE;
         return true;
     }
 
     return false;
+}
+
+typedef struct {
+	Vec3 color;
+	Vec3 pos;
+
+	float intensity;
+} Light;
+
+const int LIGHT_MAX_NUMBER = 32;
+Light lights[LIGHT_MAX_NUMBER];
+int lightNumber = 0;
+
+void addLight(Vec3 pos, Vec3 color, float intensity) {
+
+	if(lightNumber == LIGHT_MAX_NUMBER){
+		return;
+	}
+
+    lights[lightNumber].color = color;
+    lights[lightNumber].pos = pos;
+    lights[lightNumber].intensity = intensity;
+
+	lightNumber++;
+}
+
+void removeLight(int index) {
+    if (index < 0 || index >= lightNumber) {
+        return;
+    }
+
+    for (int i = index; i < lightNumber - 1; ++i) {
+        lights[i] = lights[i + 1];
+    }
+
+    lightNumber--;
 }
 
 
@@ -242,61 +320,114 @@ typedef struct {
     int numTriangles;
 } Scene;
 
-typedef struct {
-    unsigned int height, width;
-    unsigned char * data;
-} Texture;
+Scene *mainScene;
 
-typedef struct {
 
-    Texture texture;
+HitData shootRay(Vec3 origin, Vec3 direction)
+{
+	Ray ray = createRay(origin, direction);
 
-    float useTexture;
-    float isEmissive;
-    float isTransparent;
+	float t;
+	float t_min = 0.01;
+	float t_max = FLT_MAX;
+	HitData HD;
+	HD.intersectionExists = false;
 
-    Vec3 ambiant_color;
-    Vec3 diffuse_color;
-    Vec3 specular_color;
+	for (int s = 0; s < mainScene->numSpheres; s++) {
+			if (intersectSphere(ray, mainScene->spheres[s], &t, t_min, &t_max, &HD)) {}
+			}
+	for (int p = 0; p < mainScene->numPlanes; p++) {
+		if (intersectPlane(ray, mainScene->planes[0], &t, t_min, &t_max, &HD)) {}
+		}
+	for (int tIndex = 0; tIndex < mainScene->numTriangles; tIndex++) {
+		if (intersectTriangle(ray, mainScene->triangles[tIndex], &t, t_min, &t_max, &HD)) {}
+	}
 
-    float emissiveIntensity;
-    float shininess;
-    float IOR;
-    float transparency;
+	return HD;
+}
 
-    float metallic, roughness, ao;
 
-} Material;
+// --------------------------------------------------- PHONGI -------------------------------------------------------
+
+Vec3 computePhong(HitData *HD, Ray *ray){
+
+	Vec3 color;
+
+	// for(int light_index = 0; light_index < lightNumber; ++light_index){
+		
+	// 	Light l = lights[light_index];
+		
+	// 	// center to Light vector
+	// 	Vec3 L = l.pos - intersection.intersection;
+	// 	L.normalize();
+
+	// 	// ------------ Diffuse ------------ //
+
+	// 	float dot = Vec3::dot(L, intersection.normal);
+
+	// 	if(dot < 0){
+	// 		continue;
+	// 	}
+
+	// 	Vec3 diffuse = Vec3::compProduct(l.material, intersection.object->material.diffuse_material) * abs(dot);
+
+	// 	// ------------ Specular ------------ //
+
+	// 	Vec3 R = 2 * (Vec3::dot(intersection.normal, L) * intersection.normal) - L;
+	// 	Vec3 V = ray.origin() - intersection.intersection;
+	// 	R.normalize();
+	// 	V.normalize();
+
+	// 	// le "*1" est pour le coefficient spéculaire qui n'a pas été définit dans les propriétés du materiaux
+	// 	Vec3 specular = Vec3::compProduct(l.material, intersection.object->material.specular_material) * 1 * pow((Vec3::dot(R,V)), intersection.object->material.shininess);
+
+	// 	color += 0.1 * intersection.object->material.ambient_material + diffuse + specular;
+	// }
+	
+	return color;
+}
+
+
+// ------------------------------------------------------------------------------------------------------------------
+
 
 
 // --------------------------------------------------- PBR -------------------------------------------------------
 
-Vec3 computePBR(Material mat)
+Vec3 computePBR(HitData *HD, Ray *ray)
 {
-    Vec3 returnColor = (Vec3){mat.diffuse_color.x,mat.diffuse_color.y,mat.diffuse_color.z};
+    // Vec3 returnColor = (Vec3){mat.diffuse_color.x,mat.diffuse_color.y,mat.diffuse_color.z};
 
 
-    return returnColor;
+    // return returnColor;
 }
 
 
 // ---------------------------------------------------------------------------------------------------------------
 
-
+Vec3 computeColor(HitData *HD, Ray *ray)
+{
+	//return computePhong(HD, ray);
+	return HD->material.diffuse_color;
+}
 
 
 
 
 //Fonction principale du kernel -> Rendu par raytracing 'une image de la scène
-__kernel void render(__global float* fb, int max_x, int max_y,  __global float* cameraData,__global float* vertices,__global unsigned int* indices, int numMesh,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri) {
-    int i = get_global_id(0);
-    int j = get_global_id(1);
+__kernel void render(__global float* fb, int max_x, int max_y,  __global float* cameraData,__global float* vertices,__global unsigned int* indices, int numMesh,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri)
+{
+	int i = get_global_id(0);
+	int j = get_global_id(1);
 
-   Vec3 cameraPos = (Vec3){cameraData[0], cameraData[1], cameraData[2]};
-   Vec3 cameraDirection = (Vec3){cameraData[3+0], cameraData[3+1], cameraData[3+2]};
-   Vec3 cameraRight = (Vec3){cameraData[6+0], cameraData[6+1], cameraData[6+2]};
-   Vec3 cameraUp = cross(cameraDirection, cameraRight);
-   float FOV = 60.;
+	// TODO : importe la skycolor
+	Vec3 skyColor = (Vec3){0.0f,0.0f,0.0f};
+
+	Vec3 cameraPos = (Vec3){cameraData[0], cameraData[1], cameraData[2]};
+	Vec3 cameraDirection = (Vec3){cameraData[3+0], cameraData[3+1], cameraData[3+2]};
+	Vec3 cameraRight = (Vec3){cameraData[6+0], cameraData[6+1], cameraData[6+2]};
+	Vec3 cameraUp = cross(cameraDirection, cameraRight);
+	float FOV = 60.;
 
     float aspectRatio = (float)max_x / (float)max_y;
     float tanFOV = tan(0.5 * radians(FOV));
@@ -305,111 +436,86 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
         int pixel_index = j * max_x * 3 + i * 3;
 
 
-   // Calcul des coordonnées du rayon
-   Ray ray;
-   float u = (2.0 * ((float)i + 0.5) / (float)max_x - 1.0) * aspectRatio *tanFOV;
-   float v = (1.0 - 2.0 * ((float)j + 0.5) / (float)max_y)* tanFOV;
+		// Calcul des coordonnées du rayon
+		Ray ray;
+		float u = (2.0 * ((float)i + 0.5) / (float)max_x - 1.0) * aspectRatio *tanFOV;
+		float v = (1.0 - 2.0 * ((float)j + 0.5) / (float)max_y)* tanFOV;
 
-   ray.direction = normalize(add(scale(cameraRight, u), add(scale(cameraUp, v), cameraDirection)));
-   ray.origin = cameraPos;
+		ray.direction = normalize(add(scale(cameraRight, u), add(scale(cameraUp, v), cameraDirection)));
+		ray.origin = cameraPos;
 
+		Scene scene;
 
-        Scene scene;
-                    scene.numSpheres = 1;
-                    int x = 0;
-                    scene.spheres[0].center = (Vec3){-0.4f,0.7f,0.0f};
-                    scene.spheres[0].radius = 0.5;
-
-
-                    scene.numPlanes = 0;
-                    scene.planes[0].center = (Vec3){0.0, 5.0, 0.0};
-                    scene.planes[0].normal = (Vec3){0.0, 1.0, 0.0};
+		scene.numSpheres = 1;
+		int x = 0;
+		scene.spheres[0].center = (Vec3){-0.4f,0.7f,0.0f};
+		scene.spheres[0].radius = 0.5;
 
 
-                    scene.numTriangles = 0;
-                    unsigned int offset_vertex = 0;
-                    unsigned int offset_index = 0;
-                    int mesh_num = numMesh;
-                    for(int mesh_id = 0; mesh_id < mesh_num; mesh_id++)
-                    {
-                        unsigned int vertex_nbr = split_meshes[mesh_id];
-                        unsigned int tri_nbr = split_meshes_tri[mesh_id];
-                        unsigned int index_nbr = tri_nbr *3;
+		scene.numPlanes = 0;
+		scene.planes[0].center = (Vec3){0.0, 5.0, 0.0};
+		scene.planes[0].normal = (Vec3){0.0, 1.0, 0.0};
 
-                        for(int tri = 0; tri < tri_nbr; tri++)
-                        {
-                            int current_id = offset_index + tri*3 ;
-                            int id0 = current_id;
-                            int id1 = current_id + 1;
-                            int id2 = current_id + 2;
 
-                            Vec3 s0 = (Vec3){vertices[(offset_vertex+indices[id0])*3+0],vertices[(offset_vertex+indices[id0])*3+1],vertices[(offset_vertex+indices[id0])*3+2]};
-                            Vec3 s1 = (Vec3){vertices[(offset_vertex+indices[id1])*3+0],vertices[(offset_vertex+indices[id1])*3+1],vertices[(offset_vertex+indices[id1])*3+2]};
-                            Vec3 s2 = (Vec3){vertices[(offset_vertex+indices[id2])*3+0],vertices[(offset_vertex+indices[id2])*3+1],vertices[(offset_vertex+indices[id2])*3+2]};
+		scene.numTriangles = 0;
+		unsigned int offset_vertex = 0;
+		unsigned int offset_index = 0;
+		int mesh_num = numMesh;
 
-                            scene.triangles[tri + offset_index/3].vertex1 = s0;
-                            scene.triangles[tri + offset_index/3].vertex2 = s1;
-                            scene.triangles[tri + offset_index/3].vertex3 = s2;
-                            scene.numTriangles++;
-                        }
-                        offset_index += index_nbr;
-                        offset_vertex += vertex_nbr;
-                    }
+		for(int mesh_id = 0; mesh_id < mesh_num; mesh_id++)
+		{
+			unsigned int vertex_nbr = split_meshes[mesh_id];
+			unsigned int tri_nbr = split_meshes_tri[mesh_id];
+			unsigned int index_nbr = tri_nbr *3;
 
-            Material testMat;
-            testMat.diffuse_color = (Vec3){1.0f,0.2f,0.2f};
-            testMat.metallic = 0.0f;
-            testMat.roughness = 0.5f;
+			for(int tri = 0; tri < tri_nbr; tri++)
+			{
+				int current_id = offset_index + tri*3 ;
+				int id0 = current_id;
+				int id1 = current_id + 1;
+				int id2 = current_id + 2;
 
-			Material testMat2;
-            testMat2.diffuse_color = (Vec3){0.5f,1.0f,0.2f};
-            testMat2.metallic = 0.0f;
-            testMat2.roughness = 0.5f;
+				Vec3 s0 = (Vec3){vertices[(offset_vertex+indices[id0])*3+0],vertices[(offset_vertex+indices[id0])*3+1],vertices[(offset_vertex+indices[id0])*3+2]};
+				Vec3 s1 = (Vec3){vertices[(offset_vertex+indices[id1])*3+0],vertices[(offset_vertex+indices[id1])*3+1],vertices[(offset_vertex+indices[id1])*3+2]};
+				Vec3 s2 = (Vec3){vertices[(offset_vertex+indices[id2])*3+0],vertices[(offset_vertex+indices[id2])*3+1],vertices[(offset_vertex+indices[id2])*3+2]};
 
-            // Testez l'intersection entre le rayon et la sphère
-            float t;
-            float t_min = 0.01;
-            float t_max = FLT_MAX;
-            HitData HD;
-            HD.intersectionExists = false;
-            for (int s = 0; s < scene.numSpheres; s++) {
-                if (intersectSphere(ray, scene.spheres[s], &t, t_min, &t_max, &HD)) {
-                    // S'il y a une intersection, la couleur dépend de la distance
-                    // Copiez les valeurs de couleur dans le tableau fb
-                    
-                    Vec3 out_color = computePBR(testMat2); 
-                    
-                    fb[pixel_index + 0] = out_color.x;
-                    fb[pixel_index + 1] = out_color.y;
-                    fb[pixel_index + 2] = out_color.z;
-                    }
-                }
-            for (int p = 0; p < scene.numPlanes; p++) {
-                if (intersectPlane(ray, scene.planes[0], &t, t_min, &t_max, &HD)) {
-                    // S'il y a une intersection, la couleur dépend de la distance
-                    Vec3 out_color = computePBR(testMat); 
-                        
-                    fb[pixel_index + 0] = out_color.x;
-                    fb[pixel_index + 1] = out_color.y;
-                    fb[pixel_index + 2] = out_color.z;
-                    }
-                }
-            for (int tIndex = 0; tIndex < scene.numTriangles; tIndex++) {
-                if (intersectTriangle(ray, scene.triangles[tIndex], &t, t_min, &t_max, &HD)) {
-                    // S'il y a une intersection, la couleur dépend de la distance
-                    Vec3 out_color = computePBR(testMat); 
-            
-                    fb[pixel_index + 0] = out_color.x;
-                    fb[pixel_index + 1] = out_color.y;
-                    fb[pixel_index + 2] = out_color.z;
-                }
-            }
+				scene.triangles[tri + offset_index/3].vertex1 = s0;
+				scene.triangles[tri + offset_index/3].vertex2 = s1;
+				scene.triangles[tri + offset_index/3].vertex3 = s2;
+				scene.numTriangles++;
+			}
+			offset_index += index_nbr;
+			offset_vertex += vertex_nbr;
+		}
 
-            if(HD.intersectionExists == false)
-            {
-                fb[pixel_index + 0] = 0.0;
-                fb[pixel_index + 1] = 0.0;
-                fb[pixel_index + 2] = 0.0;
-            }
+		mainScene = &scene;
+
+
+		testMat.diffuse_color = (Vec3){1.0f,0.2f,0.2f};
+		testMat.metallic = 0.0f;
+		testMat.roughness = 0.5f;
+
+		testMat2.diffuse_color = (Vec3){0.5f,1.0f,0.2f};
+		testMat2.metallic = 0.0f;
+		testMat2.roughness = 0.5f;
+
+		addLight((Vec3){-0.75f,1.0f,1.2f}, (Vec3){1.0f,0.8f,0.55f}, 1);
+		addLight((Vec3){0.75f,1.0f,1.2f}, (Vec3){0.85f,0.95f,1.0f}, 1);
+
+
+		HitData HD = shootRay(ray.origin, ray.direction);
+	
+		Vec3 out_color = computeColor(&HD, &ray);
+
+		fb[pixel_index + 0] = out_color.x;
+		fb[pixel_index + 1] = out_color.y;
+		fb[pixel_index + 2] = out_color.z;
+
+		if(HD.intersectionExists == false)
+		{
+			fb[pixel_index + 0] = 0.0;
+			fb[pixel_index + 1] = 0.0;
+			fb[pixel_index + 2] = 0.0;
+		}
     }
 }
