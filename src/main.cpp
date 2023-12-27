@@ -317,7 +317,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
         mainCamera.cameraDirection = glm::normalize(direction);
         mainCamera.cameraRight = glm::normalize(glm::cross(mainCamera.cameraDirection, upinit));
         mainCamera.cameraUp = glm::cross(mainCamera.cameraRight, mainCamera.cameraDirection);
-        
+
     } else {
         lastX = xpos;
         lastY = ypos;
@@ -443,7 +443,7 @@ int main(int argc, char* argv[]){
 
 
     SceneOperations::initSceneLights();
-    SceneOperations::openFile("data/scene3.fbx");
+    SceneOperations::openFile("data/scene_color.fbx");
     SceneOperations::init_flat_screen();
 
     ShaderUtils::reshape(window, window_width, window_height);

@@ -6,7 +6,7 @@ layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 texCoord;
 layout (location = 3) in vec3 in_m_diffuse;
 layout (location = 4) in vec4 in_m_mra;
-layout (location = 5) in vec3 in_useTexture;
+layout (location = 5) in vec3 in_tex_emissive_transparent;
 
 
 // Uniform variables
@@ -23,7 +23,7 @@ out vec3 m_ambiant;
 out vec3 m_diffuse;
 out vec3 m_specular;
 out vec4 m_mra;
-out vec3 useTexture;
+out vec3 tex_emissive_transparent;
 
 void main(){
 
@@ -40,5 +40,5 @@ void main(){
 
 	m_diffuse = in_m_diffuse;
 	m_mra = in_m_mra;
-	useTexture = in_useTexture;
+	tex_emissive_transparent = in_tex_emissive_transparent;
 }

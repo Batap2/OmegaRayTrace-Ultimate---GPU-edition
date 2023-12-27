@@ -185,15 +185,37 @@ namespace MeshLoader{
             }
 
             // --------------- MATERIAL ---------------- //
+
+            Material mat = Material();
             aiMaterial* aiMat = aiScene->mMaterials[aiMesh->mMaterialIndex];
 
-            aiMat->Get(AI_MATKEY_COLOR_AMBIENT, newMesh->material.ambient_material);
-            aiMat->Get(AI_MATKEY_COLOR_DIFFUSE, newMesh->material.diffuse_material);
-            aiMat->Get(AI_MATKEY_COLOR_SPECULAR, newMesh->material.specular_material);
-            aiMat->Get(AI_MATKEY_SHININESS, newMesh->material.shininess);
-            aiMat->Get(AI_MATKEY_METALLIC_FACTOR, newMesh->material.metallic);
-            aiMat->Get(AI_MATKEY_SHININESS_STRENGTH, newMesh->material.roughness);
+            aiColor3D aiDiff, aiAmb, aiSpec, aiEmissive;
+            float aiOpacity, aiShininess, aiIOR, aiShininessStrength, aiRoughness, aiMetallic, aiEmissiveIntensity;
 
+            aiMat->Get(AI_MATKEY_COLOR_AMBIENT, aiAmb);
+            aiMat->Get(AI_MATKEY_COLOR_DIFFUSE, aiDiff);
+            aiMat->Get(AI_MATKEY_COLOR_SPECULAR, aiSpec);
+            aiMat->Get(AI_MATKEY_SHININESS, aiShininess);
+            aiMat->Get(AI_MATKEY_METALLIC_FACTOR, aiMetallic);
+            aiMat->Get(AI_MATKEY_SHININESS_STRENGTH, aiShininessStrength);
+            aiMat->Get(AI_MATKEY_REFRACTI, aiIOR);
+            aiMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, aiRoughness);
+            aiMat->Get(AI_MATKEY_EMISSIVE_INTENSITY, aiEmissiveIntensity);
+
+            mat.ambient_material = vec3(aiAmb.r, aiAmb.g, aiAmb.b);
+            mat.diffuse_material = vec3(aiDiff.r, aiDiff.g, aiDiff.b);
+            mat.specular_material = vec3(aiSpec.r, aiSpec.g, aiSpec.b);
+            mat.IOR = aiIOR;
+            mat.metallic = aiMetallic;
+            mat.roughness = aiShininessStrength;
+            mat.shininess = aiShininess;
+            mat.emissive_intensity = aiEmissiveIntensity;
+            if(aiEmissiveIntensity > 0)
+            {
+                mat.isEmissive = 1;
+            }
+
+            newMesh->material = mat;
             // ----------------------------------------- //
 
             newMesh->openglInit();

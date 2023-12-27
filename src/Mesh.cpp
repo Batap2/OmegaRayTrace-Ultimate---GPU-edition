@@ -178,10 +178,10 @@ void Mesh::send_material_to_shaders()
     glEnableVertexAttribArray(4); // This allows usage of layout location 1 in the vertex shader
     glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
-    // Send the useTexture parameter
+    // Send useTexture, isEmissive and isTransparent parameters
     std::vector<glm::vec3> useT_vec;
     for(int i = 0; i < vertices.size(); ++i){
-        useT_vec.push_back(vec3(material.useTexture));
+        useT_vec.push_back(vec3(material.useTexture, material.isEmissive, material.isTransparent));
     }
     glBindBuffer(GL_ARRAY_BUFFER, useTexture_bo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), useT_vec.data(), GL_STATIC_DRAW);
@@ -214,6 +214,15 @@ void Mesh::updateMaterial(){
     for(int i = 0; i < vertices.size(); ++i){
         mra_vec.push_back(mra);
     }
+
+    // USETEX, EMISSIVE, TRANSPARENT
+    std::vector<glm::vec3> useT_vec;
+    for(int i = 0; i < vertices.size(); ++i){
+        useT_vec.push_back(vec3(material.useTexture, material.isEmissive, material.isTransparent));
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, useTexture_bo);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertices.size(), useT_vec.data());
+
 
     glBindBuffer(GL_ARRAY_BUFFER, mra_bo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertices.size(), mra_vec.data());

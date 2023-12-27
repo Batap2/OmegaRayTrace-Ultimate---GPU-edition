@@ -123,6 +123,37 @@ namespace GUI{
             {
                 scene_meshes[selected_object]->send_material_to_shaders();
             }
+            if(ImGui::DragFloat("Emissive Intensity", &scene_meshes[selected_object]->material.emissive_intensity, 0.01, 0, 50))
+            {
+                scene_meshes[selected_object]->send_material_to_shaders();
+            }
+
+
+            if(scene_meshes[selected_object]->material.isEmissive){
+                emissiveClick = true;
+            } else {
+                emissiveClick = false;
+            }
+
+            if(scene_meshes[selected_object]->material.isTransparent){
+                transparentClick = true;
+            } else {
+                transparentClick = false;
+            }
+
+            if(ImGui::Checkbox("Emissive", &emissiveClick)){
+                if(emissiveClick != scene_meshes[selected_object]->material.isEmissive){
+                    scene_meshes[selected_object]->material.isEmissive = emissiveClick;
+                    scene_meshes[selected_object]->send_material_to_shaders();
+                }
+            }
+            if(ImGui::Checkbox("Transparent", &transparentClick)){
+                if(transparentClick != scene_meshes[selected_object]->material.isTransparent){
+                    scene_meshes[selected_object]->material.isTransparent = transparentClick;
+                    scene_meshes[selected_object]->send_material_to_shaders();
+                }
+            }
+
             if(ImGui::Button("Delete"))
             {
                 SceneOperations::removeMesh(selected_object);

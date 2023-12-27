@@ -34,23 +34,25 @@ struct Material {
     LightingType lType;
 
     float useTexture;
+    float isEmissive;
+    float isTransparent;
 
     glm::vec3 ambient_material;
     glm::vec3 diffuse_material;
+
     glm::vec3 specular_material;
-    
+
     float ambiant_strength = 0.1;
     float specular_strength = 0.2;
+    float emissive_intensity;
 
     Texture diffuse_texture;
 
     FloatTexture float_texture;
-
     float shininess;
-    float index_medium;
-    float transparency;
+    float IOR;
 
-    bool emissive = false;
+    float transparency;
 
     // ---------- LightingType_PBR ----------
     float metallic, roughness, ao;
@@ -59,10 +61,12 @@ struct Material {
         mType = Material_Diffuse_Blinn_Phong;
         lType = LightingType_Phong;
         transparency = 0.0;
-        index_medium = 1.0;
+        IOR = 1.0;
         ambient_material = glm::vec3(0.0f, 0.0f, 0.0f);
         ao = 10;
         useTexture = 0;
+        isEmissive = 0;
+        isTransparent = 0;
     }
 
     std::array<float, 13> toArray()

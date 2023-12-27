@@ -103,6 +103,7 @@ inline int selected_light = 0;
 inline ImGuiColorEditFlags colorEditFlag = (ImGuiColorEditFlags_NoOptions);
 inline glm::vec3 old_light_color;
 inline glm::vec3 old_mesh_color;
+inline bool emissiveClick, transparentClick;
 
 // --------------- OPENCL -------------- //
 

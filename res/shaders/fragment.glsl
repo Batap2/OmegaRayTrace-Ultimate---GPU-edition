@@ -10,7 +10,7 @@ in vec2 myuv;
 
 in vec3 m_diffuse;
 in vec4 m_mra;
-in vec3 useTexture;
+in vec3 tex_emissive_transparent;
 
 // Uniform variable modelview
 uniform mat4 modelview;
@@ -118,65 +118,71 @@ void main (void){
 
         vec3 albedo;
 
-        if(useTexture.r != 0){
+        if(tex_emissive_transparent.r != 0){
             albedo = texture(diffuse_texture, myuv).rgb;
         } else {
             albedo = m_diffuse;
         }
 
-        float metallic = m_mra[0];
-        float roughness = m_mra[1];
-        float ao = m_mra[3];
+        if(tex_emissive_transparent.g != 0){
+            finalColor = m_diffuse;
+        } else
+        {
+            float metallic = m_mra[0];
+            float roughness = m_mra[1];
+            float ao = m_mra[3];
 
-        vec3 resultPBR = vec3(0.0);
+            vec3 resultPBR = vec3(0.0);
 
-        // Calcul de F0, le coefficient de reflexion d'une surface parfaitement orthogonale a une lumière
-        // encore une fois, valeur arbitraire pour simplifier. 0.04 est une valeur correct pour du metal.
-        vec3 F0 = vec3(0.04);
-        F0      = mix(F0, albedo, metallic);
+            // Calcul de F0, le coefficient de reflexion d'une surface parfaitement orthogonale a une lumière
+            // encore une fois, valeur arbitraire pour simplifier. 0.04 est une valeur correct pour du metal.
+            vec3 F0 = vec3(0.04);
+            F0      = mix(F0, albedo, metallic);
 
-        for(int i = 0; i < lights_number; i++){
+            for(int i = 0; i < lights_number; i++){
 
-            int offset = i*lightStructSize;
+                int offset = i*lightStructSize;
 
-            vec3 lightPos = vec3(lights[offset+0], lights[offset+1], lights[offset+2]);
-            vec3 lightColor = vec3(lights[offset+3], lights[offset+4], lights[offset+5]);
-            float lightIntensity = lights[offset+6];
+                vec3 lightPos = vec3(lights[offset+0], lights[offset+1], lights[offset+2]);
+                vec3 lightColor = vec3(lights[offset+3], lights[offset+4], lights[offset+5]);
+                float lightIntensity = lights[offset+6];
 
-            vec3 lightDir = normalize(lightPos - vec3(myvertex));
-            vec3 Halfway = normalize(viewDir + lightDir);
+                vec3 lightDir = normalize(lightPos - vec3(myvertex));
+                vec3 Halfway = normalize(viewDir + lightDir);
 
-            // Calcul de la radiance
-            float distanceFromL = length(lightDir);
-            float attenuation = 1/(distanceFromL*distanceFromL)*lightIntensity;
-            vec3 radiance = lightColor * attenuation;
+                // Calcul de la radiance
+                float distanceFromL = length(lightDir);
+                float attenuation = 1/(distanceFromL*distanceFromL)*lightIntensity;
+                vec3 radiance = lightColor * attenuation;
 
-            // Modele de reflectance de Cook-Torrance
-            float NDF = DistributionGGX(N, Halfway, roughness);
-            float G   = GeometrySmith(N, viewDir, lightDir, roughness);
-            vec3 F    = fresnelSchlick(max(dot(Halfway, viewDir), 0.0), F0);
+                // Modele de reflectance de Cook-Torrance
+                float NDF = DistributionGGX(N, Halfway, roughness);
+                float G   = GeometrySmith(N, viewDir, lightDir, roughness);
+                vec3 F    = fresnelSchlick(max(dot(Halfway, viewDir), 0.0), F0);
 
-            // Composante spéculaire, KS: valeur de Fresnel de la composante spéculaire, KD: l'énergie non reflétée par le spéculaire
-            vec3 kS = F;
-            vec3 kD = vec3(1.0) - kS;
-            kD *= 1.0 - metallic;
+                // Composante spéculaire, KS: valeur de Fresnel de la composante spéculaire, KD: l'énergie non reflétée par le spéculaire
+                vec3 kS = F;
+                vec3 kD = vec3(1.0) - kS;
+                kD *= 1.0 - metallic;
 
-            // calcul du BRDF
-            vec3 numerator    = NDF * G * F;
-            float denominator = 4.0 * max(dot(N, viewDir), 0.0) * max(dot(N, lightDir), 0.0) + 0.0001;
-            vec3 specularPBR     = numerator / denominator;
+                // calcul du BRDF
+                vec3 numerator    = NDF * G * F;
+                float denominator = 4.0 * max(dot(N, viewDir), 0.0) * max(dot(N, lightDir), 0.0) + 0.0001;
+                vec3 specularPBR     = numerator / denominator;
 
-            // somme des calculs de PBR, Lambert Diffuse
-            float NdotL = max(dot(N, lightDir), 0.0);
-            resultPBR += (kD * albedo / PI + specularPBR) * radiance * NdotL;
+                // somme des calculs de PBR, Lambert Diffuse
+                float NdotL = max(dot(N, lightDir), 0.0);
+                resultPBR += (kD * albedo / PI + specularPBR) * radiance * NdotL;
+            }
+
+            vec3 ambientPBR = vec3(0.03) * albedo * ao;
+            vec3 colorPBR = ambientPBR + resultPBR;
+
+            vec3 pbrColor = resultPBR + ambientPBR;
+
+            finalColor = pbrColor;
         }
 
-        vec3 ambientPBR = vec3(0.03) * albedo * ao;
-        vec3 colorPBR = ambientPBR + resultPBR;
-
-        vec3 pbrColor = resultPBR + ambientPBR;
-
-        finalColor = pbrColor;
     }
 
 
