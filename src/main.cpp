@@ -78,6 +78,26 @@ void convertVec3ToFloat(const std::vector<glm::vec3>& vec3Vector, std::vector<fl
     }
 }
 
+
+void updateMaterialBuffer()
+{
+    materials_array.clear();
+    size_t mesh_number = scene_meshes.size();
+    for(size_t i = 0; i < mesh_number; i++) {
+        std::array<float,13> current_mat_data = scene_meshes[i]->material.getMaterialData();
+        for(int j = 0; j < 13;j++)
+        {
+            float current_mat_elem = current_mat_data[j];
+            materials_array.push_back(current_mat_elem);
+        }
+    }
+    std::cout<<"Number of elements in materials array : "<< materials_array.size()<<std::endl;
+    std::cout<<"Number of meshes by using materials array : "<< materials_array.size() / 13 <<std::endl;
+    materialsBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * materials_array.size(),materials_array.data());
+
+}
+
+
 void extractSceneData()
 {
     vertices_array.clear();
@@ -151,7 +171,6 @@ void initializeBuffers() {
     extractSceneData();
     printVector(vertices_array);
     printVector(indices_array);
-
     std::cout << "[";
     for (size_t i = 0; i < scene_meshes[0]->vertices.size(); ++i) {
         std::cout << scene_meshes[0]->vertices[i][0] <<"-"<< scene_meshes[0]->vertices[i][1] <<"-"<<scene_meshes[0]->vertices[i][2];
@@ -160,12 +179,13 @@ void initializeBuffers() {
         }
     }
     std::cout << "]\n";
-    //extractMeshData(*scene_meshes[0],vertices,indices,clTriNum);
-
+    //updateMaterialBuffer();
     vertexBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * vertices_array.size(),vertices_array.data());
     indexBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * indices_array.size(), indices_array.data());
     splitMeshBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMesh_array.size(), splitMesh_array.data());
     splitMeshTriBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMeshTri_array.size(), splitMeshTri_array.data());
+
+
 }
 
 //Fct qui appelle un programme de rendu en gérant les threads pour un device donné
@@ -187,6 +207,7 @@ void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, c
     kernel.setArg(6, meshNbr);   // Le nombre de triangle contenu dans la scene
     kernel.setArg(7,splitMeshBuffer); // Ajouter le buffer
     kernel.setArg(8,splitMeshTriBuffer); // Ajouter le buffer
+    kernel.setArg(9,materialsBuffer);
 
     cl::NDRange global(max_x, max_y);
     cl::NDRange local(8, 8);

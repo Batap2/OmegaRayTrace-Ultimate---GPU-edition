@@ -69,7 +69,7 @@ struct Material {
         isTransparent = 0;
     }
 
-    std::array<float, 13> toArray()
+    std::array<float, 13> getMaterialData()
     {
         std::array<float, 13> arr;
 

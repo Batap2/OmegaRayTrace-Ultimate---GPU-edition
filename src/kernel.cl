@@ -122,6 +122,7 @@ Material testMat;
 Material testMat2;
 
 
+
 typedef struct {
     Vec3 origin;
     Vec3 direction;
@@ -162,6 +163,7 @@ typedef struct
 typedef struct {
     Vec3 center;
     float radius;
+    Material mat;
 } Sphere;
 
 // Fonction pour tester l'intersection entre un rayon et une sphère
@@ -206,6 +208,7 @@ bool intersectSphere(Ray ray, Sphere sphere, float* t, float t_min, float* t_max
 typedef struct {
     Vec3 normal;
     Vec3 center;
+    Material mat;
 } Plane;
 
 bool intersectPlane(Ray ray, Plane plane, float* t, float t_min, float* t_max, HitData* HD) {
@@ -232,6 +235,7 @@ typedef struct {
     Vec3 vertex1;
     Vec3 vertex2;
     Vec3 vertex3;
+    Material mat;
 } Triangle;
 
 
@@ -302,7 +306,7 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
         HD->intersectionExists = true;
         HD->position = add(ray.origin, scale(ray.direction, *t));
 		HD->normal = N;
-        HD->material = testMat;
+        HD->material = triangle.mat;
 		HD->objectType = TRIANGLE;
         return true;
     }
@@ -475,8 +479,9 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 
 
 
+
 //Fonction principale du kernel -> Rendu par raytracing 'une image de la scène
-__kernel void render(__global float* fb, int max_x, int max_y,  __global float* cameraData,__global float* vertices,__global unsigned int* indices, int numMesh,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri)
+__kernel void render(__global float* fb, int max_x, int max_y,  __global float* cameraData,__global float* vertices,__global unsigned int* indices, int numMesh,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri,__global float* materials)
 {
 	int i = get_global_id(0);
 	int j = get_global_id(1);
@@ -528,6 +533,15 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
 			unsigned int vertex_nbr = split_meshes[mesh_id];
 			unsigned int tri_nbr = split_meshes_tri[mesh_id];
 			unsigned int index_nbr = tri_nbr *3;
+            Material current_mat;
+            unsigned int mat_id = mesh_id*13;
+            current_mat.ambiant_color = (Vec3){materials[mat_id],materials[mat_id+1],materials[mat_id+2]};
+            current_mat.diffuse_color = (Vec3){materials[mat_id+3],materials[mat_id+4],materials[mat_id+5]};
+            current_mat.specular_color = (Vec3){materials[mat_id+6],materials[mat_id+7],materials[mat_id+8]};
+            current_mat.shininess = materials[mat_id+9];
+            current_mat.metallic = materials[mat_id+10];
+            current_mat.roughness = materials[mat_id+11];
+            current_mat.ao = materials[mat_id+12];
 
 			for(int tri = 0; tri < tri_nbr; tri++)
 			{
@@ -540,9 +554,11 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
 				Vec3 s1 = (Vec3){vertices[(offset_vertex+indices[id1])*3+0],vertices[(offset_vertex+indices[id1])*3+1],vertices[(offset_vertex+indices[id1])*3+2]};
 				Vec3 s2 = (Vec3){vertices[(offset_vertex+indices[id2])*3+0],vertices[(offset_vertex+indices[id2])*3+1],vertices[(offset_vertex+indices[id2])*3+2]};
 
-				scene.triangles[tri + offset_index/3].vertex1 = s0;
-				scene.triangles[tri + offset_index/3].vertex2 = s1;
-				scene.triangles[tri + offset_index/3].vertex3 = s2;
+                int current_tri_id =tri + offset_index/3;
+				scene.triangles[current_tri_id].vertex1 = s0;
+				scene.triangles[current_tri_id].vertex2 = s1;
+				scene.triangles[current_tri_id].vertex3 = s2;
+                scene.triangles[current_tri_id].mat = current_mat;
 				scene.numTriangles++;
 			}
 			offset_index += index_nbr;

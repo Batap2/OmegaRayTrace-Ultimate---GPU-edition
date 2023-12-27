@@ -65,8 +65,6 @@ void Mesh::openglInit()
     send_material_to_shaders();
 
 
-
-
     // ----------------- TEXTURES ---------------- //
 
     diffuse_texture_LOC = glGetUniformLocation(shaderprogram, "diffuse_texture");
@@ -148,7 +146,22 @@ void Mesh::change_texture(FloatTexture tex)
 
 void Mesh::send_material_to_shaders()
 {
+    //-------------------------------- UPDATING THE MATERIALS OPENCL BUFFER ----------------------------------------------//
+    materials_array.clear();
+    size_t mesh_number = scene_meshes.size();
+    for(size_t i = 0; i < mesh_number; i++) {
+        std::array<float,13> current_mat_data = scene_meshes[i]->material.getMaterialData();
+        for(int j = 0; j < 13;j++)
+        {
+            float current_mat_elem = current_mat_data[j];
+            materials_array.push_back(current_mat_elem);
+        }
+    }
 
+    materialsBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * materials_array.size(),materials_array.data());
+
+    //---------------------------------------------------------------------------------------------------------------------//
+    
     if(textureBufferAlreadyCreated){
         updateMaterial();
         return;
@@ -196,6 +209,9 @@ void Mesh::send_material_to_shaders()
     glBindVertexArray(0);
 
     textureBufferAlreadyCreated = true;
+
+    //////////////////////////// SEND UPDATED MATERIALS TO KERNEL.CL ////////////////////////
+
 }
 
 void Mesh::updateMaterial(){
@@ -226,4 +242,6 @@ void Mesh::updateMaterial(){
 
     glBindBuffer(GL_ARRAY_BUFFER, mra_bo);
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(glm::vec3) * vertices.size(), mra_vec.data());
+
+
 }
