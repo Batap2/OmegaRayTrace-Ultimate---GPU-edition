@@ -242,6 +242,49 @@ typedef struct {
     int numTriangles;
 } Scene;
 
+typedef struct {
+    unsigned int height, width;
+    unsigned char * data;
+} Texture;
+
+typedef struct {
+
+    Texture texture;
+
+    float useTexture;
+    float isEmissive;
+    float isTransparent;
+
+    Vec3 ambiant_color;
+    Vec3 diffuse_color;
+    Vec3 specular_color;
+
+    float emissiveIntensity;
+    float shininess;
+    float IOR;
+    float transparency;
+
+    float metallic, roughness, ao;
+
+} Material;
+
+
+// --------------------------------------------------- PBR -------------------------------------------------------
+
+Vec3 computePBR(Material mat)
+{
+    Vec3 returnColor = (Vec3){mat.diffuse_color.x,mat.diffuse_color.y,mat.diffuse_color.z};
+
+
+    return returnColor;
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------
+
+
+
+
 
 
 //Fonction principale du kernel -> Rendu par raytracing 'une image de la scène
@@ -272,16 +315,10 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
 
 
         Scene scene;
-                    scene.numSpheres = 0;
+                    scene.numSpheres = 1;
                     int x = 0;
-                    scene.spheres[0].center = (Vec3){vertices[(4+indices[6])*3+0],vertices[(4+indices[6])*3+1],vertices[(4+indices[6])*3+2]};
-                    scene.spheres[0].radius = 0.01;
-
-                                        scene.spheres[1].center = (Vec3){vertices[6+indices[x*3+1]*3+0],vertices[6+indices[x*3+1]*3+1],vertices[6+indices[x*3+1]*3+2]};
-                                        scene.spheres[1].radius = 0.01;
-
-                                                            scene.spheres[2].center = (Vec3){vertices[6+indices[x*3+2]*3+0],vertices[6+indices[x*3+2]*3+1],vertices[6+indices[x*3+2]*3+2]};
-                                                            scene.spheres[2].radius = 0.01;
+                    scene.spheres[0].center = (Vec3){-0.4f,0.7f,0.0f};
+                    scene.spheres[0].radius = 0.5;
 
 
                     scene.numPlanes = 0;
@@ -319,6 +356,16 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
                         offset_vertex += vertex_nbr;
                     }
 
+            Material testMat;
+            testMat.diffuse_color = (Vec3){1.0f,0.2f,0.2f};
+            testMat.metallic = 0.0f;
+            testMat.roughness = 0.5f;
+
+			Material testMat2;
+            testMat2.diffuse_color = (Vec3){0.5f,1.0f,0.2f};
+            testMat2.metallic = 0.0f;
+            testMat2.roughness = 0.5f;
+
             // Testez l'intersection entre le rayon et la sphère
             float t;
             float t_min = 0.01;
@@ -326,36 +373,43 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
             HitData HD;
             HD.intersectionExists = false;
             for (int s = 0; s < scene.numSpheres; s++) {
-                    if (intersectSphere(ray, scene.spheres[s], &t, t_min, &t_max, &HD)) {
-                        // S'il y a une intersection, la couleur dépend de la distance
-                        // Copiez les valeurs de couleur dans le tableau fb
-                        fb[pixel_index + 0] = HD.color.x;
-                        fb[pixel_index + 1] = HD.color.y;
-                        fb[pixel_index + 2] = HD.color.z;
-                        }
+                if (intersectSphere(ray, scene.spheres[s], &t, t_min, &t_max, &HD)) {
+                    // S'il y a une intersection, la couleur dépend de la distance
+                    // Copiez les valeurs de couleur dans le tableau fb
+                    
+                    Vec3 out_color = computePBR(testMat2); 
+                    
+                    fb[pixel_index + 0] = out_color.x;
+                    fb[pixel_index + 1] = out_color.y;
+                    fb[pixel_index + 2] = out_color.z;
                     }
+                }
             for (int p = 0; p < scene.numPlanes; p++) {
-                   if (intersectPlane(ray, scene.planes[0], &t, t_min, &t_max, &HD)) {
-                       // S'il y a une intersection, la couleur dépend de la distance
-                         fb[pixel_index + 0] = HD.color.x;
-                         fb[pixel_index + 1] = HD.color.y;
-                         fb[pixel_index + 2] = HD.color.z;
-                         }
-                   }
+                if (intersectPlane(ray, scene.planes[0], &t, t_min, &t_max, &HD)) {
+                    // S'il y a une intersection, la couleur dépend de la distance
+                    Vec3 out_color = computePBR(testMat); 
+                        
+                    fb[pixel_index + 0] = out_color.x;
+                    fb[pixel_index + 1] = out_color.y;
+                    fb[pixel_index + 2] = out_color.z;
+                    }
+                }
             for (int tIndex = 0; tIndex < scene.numTriangles; tIndex++) {
-                            if (intersectTriangle(ray, scene.triangles[tIndex], &t, t_min, &t_max, &HD)) {
-                                // S'il y a une intersection, la couleur dépend de la distance
-                                fb[pixel_index + 0] = HD.color.x;
-                                fb[pixel_index + 1] = HD.color.y;
-                                fb[pixel_index + 2] = HD.color.z;
-                            }
-                    }
+                if (intersectTriangle(ray, scene.triangles[tIndex], &t, t_min, &t_max, &HD)) {
+                    // S'il y a une intersection, la couleur dépend de la distance
+                    Vec3 out_color = computePBR(testMat); 
+            
+                    fb[pixel_index + 0] = out_color.x;
+                    fb[pixel_index + 1] = out_color.y;
+                    fb[pixel_index + 2] = out_color.z;
+                }
+            }
 
-                    if(HD.intersectionExists == false)
-                    {
-                       fb[pixel_index + 0] = 0.0;
-                       fb[pixel_index + 1] = 0.0;
-                       fb[pixel_index + 2] = 0.0;
-                    }
+            if(HD.intersectionExists == false)
+            {
+                fb[pixel_index + 0] = 0.0;
+                fb[pixel_index + 1] = 0.0;
+                fb[pixel_index + 2] = 0.0;
+            }
     }
 }

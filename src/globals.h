@@ -23,7 +23,7 @@ inline vec3 eye;
 inline vec3 up;
 
 
-inline vec3 eyeinit(0.0, 0.0, 5.0);
+inline vec3 eyeinit(0.0, 0.2, 4.0);
 inline vec3 upinit(0.0, 1.0, 0.0);
 inline vec3 center(0.0, 0.0, 0.0);
 inline int mouse_mode    = 1;
@@ -36,7 +36,7 @@ inline float zFar        = 99.0f;
 inline float zNear       = 0.1f;
 inline bool firstMouse = true;
 inline float yaw   = -90.0f;
-inline float pitch =  -20.0f;
+inline float pitch =  0.0f;
 inline float lastX =  window_width / 2.0;
 inline float lastY =  window_height / 2.0;
 

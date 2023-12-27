@@ -537,11 +537,13 @@ int main(int argc, char* argv[]){
 
 
     SceneOperations::initSceneLights();
-    SceneOperations::openFile("data/3cube_color.fbx");
+    SceneOperations::openFile("data/cornel.fbx");
     SceneOperations::init_flat_screen();
 
     ShaderUtils::reshape(window, window_width, window_height);
     ShaderUtils::sendLightsToShaders();
+
+    mainCamera.cameraPos = vec3(0,0.2,4);
 
     std::vector<Mesh*> scene_meshes_check = scene_meshes;
 

@@ -16,8 +16,8 @@ namespace SceneOperations
         auto* l1 = new Light();
         auto* l2 = new Light();
 
-        l1->pos = glm::vec3(5,0,2);
-        l2->pos = glm::vec3(-5,0,2);
+        l1->pos = glm::vec3(-0.75,1,1.2);
+        l2->pos = glm::vec3(0.75,1,1.2);
 
         l1->color = glm::vec3((float)255/255,(float)190/255,(float)136/255);
         l2->color = glm::vec3((float)198/255,(float)216/255,(float)255/255);
