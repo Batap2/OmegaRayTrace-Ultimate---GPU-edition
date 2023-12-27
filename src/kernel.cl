@@ -169,20 +169,23 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
     Vec3 s0s2 = subtract(triangle.vertex3, triangle.vertex1);
     Vec3 N = normalize(cross(s0s1, s0s2));
     float denom = dot(N, N);
+    float area2 = sqrt(denom);
 
     double D = dot(triangle.vertex1, N);
+    float dotN_Raydir = dot(N, d);
 
     // 1) Check that the ray is not parallel to the triangle:
     const float epsilon = 1e-6f;
-    if (length(cross(N, d)) < epsilon) {
+    if (fabs(dotN_Raydir) < epsilon) {
         return false;
     }
 
     // 2) Check that the triangle is "in front of" the ray:
-    double t_hit = (D - dot(o, N)) / dot(d, N);
-    hit_position = add(o, scale(d, t_hit));
-    double orientation = dot(d, N);
+    float t_hit = (D - dot(o, N)) / dotN_Raydir;
     if (t_hit > 0 && t_hit >= t_min && t_hit < *t_max) {
+        // Calculate intersection point
+        hit_position = add(o, scale(d, t_hit));
+
         // 3) Check that the intersection point is inside the triangle:
         Vec3 C;
 
@@ -190,7 +193,8 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
         Vec3 edge0 = subtract(triangle.vertex2, triangle.vertex1);
         Vec3 vp0 = subtract(hit_position, triangle.vertex1);
         C = cross(edge0, vp0);
-        if (dot(N, C) < 0 || dot(N, C) > denom) {
+        u = dot(N, C);
+        if (u < 0) {
             return false;
         }
 
@@ -198,8 +202,8 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
         Vec3 edge1 = subtract(triangle.vertex3, triangle.vertex2);
         Vec3 vp1 = subtract(hit_position, triangle.vertex2);
         C = cross(edge1, vp1);
-        u = dot(N, C);
-        if (u < 0 || u > denom) {
+        v = dot(N, C);
+        if (v < 0) {
             return false;
         }
 
@@ -207,14 +211,14 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
         Vec3 edge2 = subtract(triangle.vertex1, triangle.vertex3);
         Vec3 vp2 = subtract(hit_position, triangle.vertex3);
         C = cross(edge2, vp2);
-        v = dot(N, C);
-        if (v < 0 || v > denom) {
+        u = dot(N, C);
+        if (u < 0) {
             return false;
         }
 
         // We have an intersection
-        u /= denom;
-        v /= denom;
+        u /= area2;
+        v /= area2;
 
         *t = t_hit;
         *t_max = t_hit;
@@ -226,6 +230,7 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
     return false;
 }
 
+
 typedef struct {
     Sphere spheres[100];
     int numSpheres;
@@ -233,14 +238,14 @@ typedef struct {
     Plane planes[100];
     int numPlanes;
 
-    Triangle triangles[100];
+    Triangle triangles[200];
     int numTriangles;
 } Scene;
 
 
 
 //Fonction principale du kernel -> Rendu par raytracing 'une image de la scène
-__kernel void render(__global float* fb, int max_x, int max_y,  __global float* cameraData,__global float* vertices,__global unsigned int* indices, int numTri) {
+__kernel void render(__global float* fb, int max_x, int max_y,  __global float* cameraData,__global float* vertices,__global unsigned int* indices, int numMesh,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri) {
     int i = get_global_id(0);
     int j = get_global_id(1);
 
@@ -256,29 +261,63 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
     if ((i < max_x) && (j < max_y)) {
         int pixel_index = j * max_x * 3 + i * 3;
 
-        //u et v (entre 0 et 1) relatif au screenspace
-        Ray ray;
-        float u = (2.0 * ((float)i + 0.5) / (float)max_x - 1.0) * aspectRatio * tanFOV;
-        float v = (1.0 - 2.0 * ((float)j + 0.5) / (float)max_y) * tanFOV;
 
-        //Setup des coordonnées du rayon courant
-        ray.direction = normalize(add(scale(cameraRight, u), add(scale(cameraUp, v), cameraDirection)));
-        ray.origin = cameraPos;
+   // Calcul des coordonnées du rayon
+   Ray ray;
+   float u = (2.0 * ((float)i + 0.5) / (float)max_x - 1.0) * aspectRatio *tanFOV;
+   float v = (1.0 - 2.0 * ((float)j + 0.5) / (float)max_y)* tanFOV;
+
+   ray.direction = normalize(add(scale(cameraRight, u), add(scale(cameraUp, v), cameraDirection)));
+   ray.origin = cameraPos;
 
 
         Scene scene;
-                    scene.numSpheres = 1;
-                    scene.spheres[0].center = (Vec3){0.0, 0.0, -7.0};
-                    scene.spheres[0].radius = 1.0;
+                    scene.numSpheres = 0;
+                    int x = 0;
+                    scene.spheres[0].center = (Vec3){vertices[(4+indices[6])*3+0],vertices[(4+indices[6])*3+1],vertices[(4+indices[6])*3+2]};
+                    scene.spheres[0].radius = 0.01;
+
+                                        scene.spheres[1].center = (Vec3){vertices[6+indices[x*3+1]*3+0],vertices[6+indices[x*3+1]*3+1],vertices[6+indices[x*3+1]*3+2]};
+                                        scene.spheres[1].radius = 0.01;
+
+                                                            scene.spheres[2].center = (Vec3){vertices[6+indices[x*3+2]*3+0],vertices[6+indices[x*3+2]*3+1],vertices[6+indices[x*3+2]*3+2]};
+                                                            scene.spheres[2].radius = 0.01;
+
 
                     scene.numPlanes = 0;
                     scene.planes[0].center = (Vec3){0.0, 5.0, 0.0};
                     scene.planes[0].normal = (Vec3){0.0, 1.0, 0.0};
 
-                    scene.numTriangles = 1;
-                    scene.triangles[0].vertex1 = (Vec3){0.0,0.0,-5.0};
-                    scene.triangles[0].vertex2 = (Vec3){-1.0,1.0,-5.0};
-                    scene.triangles[0].vertex3 = (Vec3){0.0,1.0,-5.0};
+
+                    scene.numTriangles = 0;
+                    unsigned int offset_vertex = 0;
+                    unsigned int offset_index = 0;
+                    int mesh_num = numMesh;
+                    for(int mesh_id = 0; mesh_id < mesh_num; mesh_id++)
+                    {
+                        unsigned int vertex_nbr = split_meshes[mesh_id];
+                        unsigned int tri_nbr = split_meshes_tri[mesh_id];
+                        unsigned int index_nbr = tri_nbr *3;
+
+                        for(int tri = 0; tri < tri_nbr; tri++)
+                        {
+                            int current_id = offset_index + tri*3 ;
+                            int id0 = current_id;
+                            int id1 = current_id + 1;
+                            int id2 = current_id + 2;
+
+                            Vec3 s0 = (Vec3){vertices[(offset_vertex+indices[id0])*3+0],vertices[(offset_vertex+indices[id0])*3+1],vertices[(offset_vertex+indices[id0])*3+2]};
+                            Vec3 s1 = (Vec3){vertices[(offset_vertex+indices[id1])*3+0],vertices[(offset_vertex+indices[id1])*3+1],vertices[(offset_vertex+indices[id1])*3+2]};
+                            Vec3 s2 = (Vec3){vertices[(offset_vertex+indices[id2])*3+0],vertices[(offset_vertex+indices[id2])*3+1],vertices[(offset_vertex+indices[id2])*3+2]};
+
+                            scene.triangles[tri + offset_index/3].vertex1 = s0;
+                            scene.triangles[tri + offset_index/3].vertex2 = s1;
+                            scene.triangles[tri + offset_index/3].vertex3 = s2;
+                            scene.numTriangles++;
+                        }
+                        offset_index += index_nbr;
+                        offset_vertex += vertex_nbr;
+                    }
 
             // Testez l'intersection entre le rayon et la sphère
             float t;
@@ -311,6 +350,7 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
                                 fb[pixel_index + 2] = HD.color.z;
                             }
                     }
+
                     if(HD.intersectionExists == false)
                     {
                        fb[pixel_index + 0] = 0.0;

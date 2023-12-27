@@ -106,5 +106,14 @@ inline cl::Program clProgram;
 inline std::vector<float> gpuOutputImg;
 inline size_t gpuOutputImg_size;
 inline std::vector<cl::Device> devices;
+inline cl::Buffer vertexBuffer;
+inline cl::Buffer indexBuffer;
+inline cl::Buffer splitMeshBuffer;
+inline cl::Buffer splitMeshTriBuffer;
+inline int meshNbr;
+inline std::vector<float> vertices_array;
+inline std::vector<unsigned int> indices_array;
+inline std::vector<unsigned int> splitMesh_array;
+inline std::vector<unsigned int> splitMeshTri_array;
 
 #endif
