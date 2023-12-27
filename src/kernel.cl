@@ -58,6 +58,40 @@ Vec3 cross(Vec3 a, Vec3 b) {
     return result;
 }
 
+Vec3 multiply(Vec3 a, Vec3 b)
+{
+	a.x = a.x * b.x;
+	a.y = a.y * b.y;
+	a.z = a.z * b.z;
+	return a;
+}
+
+Vec3 negate(Vec3 vec){
+	vec.x = -vec.x;
+	vec.y = -vec.y;
+	vec.z = -vec.z;
+	return vec;
+}
+
+Vec3 reflect(Vec3 vec, Vec3 normal)
+{
+    float dotProduct = vec.x * normal.x + vec.y * normal.y + vec.z * normal.z;
+
+    Vec3 reflectedVec;
+    reflectedVec.x = vec.x - 2 * dotProduct * normal.x;
+    reflectedVec.y = vec.y - 2 * dotProduct * normal.y;
+    reflectedVec.z = vec.z - 2 * dotProduct * normal.z;
+
+    return reflectedVec;
+}
+
+Vec3 clampMin(Vec3 a, float clamp){
+	a.x = min(a.x, clamp);
+	a.y = min(a.y, clamp);
+	a.z = min(a.z, clamp);
+	return a;
+}
+
 typedef struct {
     unsigned int height, width;
     unsigned char * data;
@@ -132,13 +166,13 @@ typedef struct {
 
 // Fonction pour tester l'intersection entre un rayon et une sphère
 bool intersectSphere(Ray ray, Sphere sphere, float* t, float t_min, float* t_max, HitData* HD) {
-    // Vecteur depuis l'origine du rayon jusqu'au centre de la sphère
-    Vec3 oc = subtract(ray.origin, sphere.center);
+
+    Vec3 co = subtract(ray.origin, sphere.center);
 
     // Coefficients de l'équation quadratique
     float a = dot(ray.direction, ray.direction);
-    float b = 2.0 * dot(oc, ray.direction);
-    float c = dot(oc, oc) - sphere.radius * sphere.radius;
+    float b = 2.0 * dot(co, ray.direction);
+    float c = dot(co, co) - sphere.radius * sphere.radius;
 
     // Calcul du discriminant
     float discriminant = b * b - 4.0 * a * c;
@@ -154,11 +188,13 @@ bool intersectSphere(Ray ray, Sphere sphere, float* t, float t_min, float* t_max
 
         if(*t < *t_max && *t > t_min)
         {
-          *t_max = *t;
-          HD->intersectionExists = true;
-          HD->material = testMat2;
-		  HD->objectType = SPHERE;
-          return true;
+			*t_max = *t;
+			HD->intersectionExists = true;
+			HD->position = add(ray.origin, scale(ray.direction, *t));
+			HD->normal = normalize(subtract(HD->position, sphere.center));
+			HD->material = testMat2;
+			HD->objectType = SPHERE;
+			return true;
         }
     }
 
@@ -264,6 +300,8 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
         *t = t_hit;
         *t_max = t_hit;
         HD->intersectionExists = true;
+        HD->position = add(ray.origin, scale(ray.direction, *t));
+		HD->normal = N;
         HD->material = testMat;
 		HD->objectType = TRIANGLE;
         return true;
@@ -349,42 +387,38 @@ HitData shootRay(Vec3 origin, Vec3 direction)
 
 // --------------------------------------------------- PHONGI -------------------------------------------------------
 
-Vec3 computePhong(HitData *HD, Ray *ray){
+Vec3 computePhong(HitData *HD, Ray *ray, Vec3 camPos){
 
-	Vec3 color;
+	Vec3 result = (Vec3){0.0f,0.0f,0.0f};
 
-	// for(int light_index = 0; light_index < lightNumber; ++light_index){
-		
-	// 	Light l = lights[light_index];
-		
-	// 	// center to Light vector
-	// 	Vec3 L = l.pos - intersection.intersection;
-	// 	L.normalize();
+	for(int light_i = 0; light_i < lightNumber; ++light_i)
+	{
+		Light light = lights[light_i];
 
-	// 	// ------------ Diffuse ------------ //
+		float shininess = 400;
+		float specularStrength = 1;
 
-	// 	float dot = Vec3::dot(L, intersection.normal);
+		Vec3 lightDir = normalize(subtract(light.pos, HD->position));
+		Vec3 viewDir = normalize(subtract(camPos, HD->position));
+		Vec3 reflectDir = reflect(negate(lightDir), HD->normal);
 
-	// 	if(dot < 0){
-	// 		continue;
-	// 	}
+		Vec3 ambient = scale(HD->material.diffuse_color, 0.0f);
+		float diff = max(dot(HD->normal, lightDir), 0.0f);
+		Vec3 diffuse = scale(scale(HD->material.diffuse_color, diff), light.intensity);
 
-	// 	Vec3 diffuse = Vec3::compProduct(l.material, intersection.object->material.diffuse_material) * abs(dot);
+		Vec3 specular = (Vec3){0.0f,0.0f,0.0f};
+		if (diff > 0.0) {
+			Vec3 halfwayDir = normalize(add(lightDir,viewDir));
+			float spec = pow(max(dot(HD->normal, halfwayDir), 0.0f), shininess);
+			specular = scale(scale(light.color, specularStrength * spec), light.intensity);
+		}
 
-	// 	// ------------ Specular ------------ //
+		Vec3 newColor = multiply(light.color ,add(add(diffuse, specular), ambient));
+		result = add(result, newColor);
+	}
 
-	// 	Vec3 R = 2 * (Vec3::dot(intersection.normal, L) * intersection.normal) - L;
-	// 	Vec3 V = ray.origin() - intersection.intersection;
-	// 	R.normalize();
-	// 	V.normalize();
-
-	// 	// le "*1" est pour le coefficient spéculaire qui n'a pas été définit dans les propriétés du materiaux
-	// 	Vec3 specular = Vec3::compProduct(l.material, intersection.object->material.specular_material) * 1 * pow((Vec3::dot(R,V)), intersection.object->material.shininess);
-
-	// 	color += 0.1 * intersection.object->material.ambient_material + diffuse + specular;
-	// }
+    return clampMin(result,1.0f);
 	
-	return color;
 }
 
 
@@ -405,10 +439,37 @@ Vec3 computePBR(HitData *HD, Ray *ray)
 
 // ---------------------------------------------------------------------------------------------------------------
 
-Vec3 computeColor(HitData *HD, Ray *ray)
+Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 {
-	//return computePhong(HD, ray);
-	return HD->material.diffuse_color;
+
+	HitData HD = shootRay(ray->origin, ray->direction);
+	Vec3 finalColor = computePhong(&HD, ray, camPos);
+
+	for(int bounce = 0; bounce < nbBounce; bounce++)
+	{
+		if(!HD.intersectionExists)
+		{
+			return (Vec3){0.0f,0.3f,0.0f};
+		}
+
+		Ray reflectedRay;
+		reflectedRay.direction = reflect(ray->direction, HD.normal);
+		reflectedRay.origin = HD.position;
+
+		HD = shootRay(reflectedRay.origin, reflectedRay.direction);
+		
+		Vec3 reflectedColor = computePhong(&HD, ray, camPos);
+		reflectedColor = (Vec3){0.0f,1.0f,0.0f};
+
+		add(finalColor, reflectedColor);
+	}
+
+	if(!HD.intersectionExists){
+		return (Vec3){0.0f,0.0f,0.0f};
+	}
+
+	
+	return finalColor;
 }
 
 
@@ -448,8 +509,8 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
 
 		scene.numSpheres = 1;
 		int x = 0;
-		scene.spheres[0].center = (Vec3){-0.4f,0.7f,0.0f};
-		scene.spheres[0].radius = 0.5;
+		scene.spheres[0].center = (Vec3){0.6f,-0.7f,1.0f};
+		scene.spheres[0].radius = 0.3f;
 
 
 		scene.numPlanes = 0;
@@ -499,23 +560,19 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
 		testMat2.metallic = 0.0f;
 		testMat2.roughness = 0.5f;
 
-		addLight((Vec3){-0.75f,1.0f,1.2f}, (Vec3){1.0f,0.8f,0.55f}, 1);
-		addLight((Vec3){0.75f,1.0f,1.2f}, (Vec3){0.85f,0.95f,1.0f}, 1);
+		addLight((Vec3){-0.75f,1.0f,1.2f}, (Vec3){1.0f,0.8f,0.55f}, 0.1f);
+		//addLight((Vec3){0.75f,1.0f,1.2f}, (Vec3){0.85f,0.95f,1.0f}, 0.1f);
 
 
-		HitData HD = shootRay(ray.origin, ray.direction);
+		
+		int bounce = 0;
 	
-		Vec3 out_color = computeColor(&HD, &ray);
+		Vec3 out_color = computeColor(&ray, cameraPos, bounce);
 
 		fb[pixel_index + 0] = out_color.x;
 		fb[pixel_index + 1] = out_color.y;
 		fb[pixel_index + 2] = out_color.z;
 
-		if(HD.intersectionExists == false)
-		{
-			fb[pixel_index + 0] = 0.0;
-			fb[pixel_index + 1] = 0.0;
-			fb[pixel_index + 2] = 0.0;
-		}
+		
     }
 }
