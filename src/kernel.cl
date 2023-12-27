@@ -66,6 +66,13 @@ Vec3 multiply(Vec3 a, Vec3 b)
 	return a;
 }
 
+Vec3 divide(Vec3 a, float b){
+	a.x = a.x/b;
+	a.y = a.y/b;
+	a.z = a.z/b;
+	return a;
+}
+
 Vec3 negate(Vec3 vec){
 	vec.x = -vec.x;
 	vec.y = -vec.y;
@@ -82,7 +89,7 @@ Vec3 reflect(Vec3 vec, Vec3 normal)
     reflectedVec.y = vec.y - 2 * dotProduct * normal.y;
     reflectedVec.z = vec.z - 2 * dotProduct * normal.z;
 
-    return reflectedVec;
+    return normalize(reflectedVec);
 }
 
 Vec3 clampMin(Vec3 a, float clamp){
@@ -90,6 +97,10 @@ Vec3 clampMin(Vec3 a, float clamp){
 	a.y = min(a.y, clamp);
 	a.z = min(a.z, clamp);
 	return a;
+}
+
+Vec3 randomizeVec(Vec3 a, float maxAngle){
+	
 }
 
 typedef struct {
@@ -366,7 +377,7 @@ HitData shootRay(Vec3 origin, Vec3 direction)
 	Ray ray = createRay(origin, direction);
 
 	float t;
-	float t_min = 0.01;
+	float t_min = 0.000001f;
 	float t_max = FLT_MAX;
 	HitData HD;
 	HD.intersectionExists = false;
@@ -443,33 +454,40 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 {
 
 	HitData HD = shootRay(ray->origin, ray->direction);
-	Vec3 finalColor = computePhong(&HD, ray, camPos);
+	//Vec3 finalColor = computePhong(&HD, ray, camPos);
+	Vec3 finalColor = (Vec3){0.0f,0.0f,0.0f};
+
+	if(!HD.intersectionExists){
+		return (Vec3){0.0f,1.0f,0.0f};
+	}
 
 	for(int bounce = 0; bounce < nbBounce; bounce++)
 	{
-		if(!HD.intersectionExists)
-		{
-			return (Vec3){0.0f,0.3f,0.0f};
-		}
 
 		Ray reflectedRay;
 		reflectedRay.direction = reflect(ray->direction, HD.normal);
 		reflectedRay.origin = HD.position;
-
+				
 		HD = shootRay(reflectedRay.origin, reflectedRay.direction);
+
+		Vec3 reflectedColor;
+
+		if(!HD.intersectionExists)
+		{
+			reflectedColor = (Vec3){1.0f,1.0f,1.0f};
+		} else {
+			reflectedColor = computePhong(&HD, ray, camPos);
+		}
+
+
 		
-		Vec3 reflectedColor = computePhong(&HD, ray, camPos);
-		reflectedColor = (Vec3){0.0f,1.0f,0.0f};
 
-		add(finalColor, reflectedColor);
+		finalColor = add(finalColor, reflectedColor);
 	}
 
-	if(!HD.intersectionExists){
-		return (Vec3){0.0f,0.0f,0.0f};
-	}
 
 	
-	return finalColor;
+	return divide(finalColor, nbBounce);
 }
 
 
@@ -565,7 +583,7 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
 
 
 		
-		int bounce = 0;
+		int bounce = 1;
 	
 		Vec3 out_color = computeColor(&ray, cameraPos, bounce);
 
