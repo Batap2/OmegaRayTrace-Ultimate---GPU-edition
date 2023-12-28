@@ -190,6 +190,10 @@ __kernel void render(__global float* fb, int max_x, int max_y)
 	int i = get_global_id(0);
 	int j = get_global_id(1);
 
+    unsigned int randomSeedInit = GPURandomInt;
+	randomSeedInit = randomSeedInit * i*i*j*j;
+	randomSeed = &randomSeedInit;
+
     if ((i < max_x) && (j < max_y)) {
         int pixel_index = j * max_x * 3 + i * 3;
 
@@ -200,7 +204,7 @@ __kernel void render(__global float* fb, int max_x, int max_y)
 		//addLight((Vec3){0.75f,1.0f,1.2f}, (Vec3){0.85f,0.95f,1.0f}, 0.1f);
 
 		
-		int bounce = 0;
+		int bounce = 1;
 	
 		Vec3 out_color = computeColor(&ray, mainCamera.cameraPos, bounce);
 
@@ -208,4 +212,9 @@ __kernel void render(__global float* fb, int max_x, int max_y)
 		fb[pixel_index + 1] = out_color.y;
 		fb[pixel_index + 2] = out_color.z;
     }
+}
+
+__kernel void getRandomIntInGPU(unsigned int CPURandomInt)
+{
+    GPURandomInt = CPURandomInt;
 }

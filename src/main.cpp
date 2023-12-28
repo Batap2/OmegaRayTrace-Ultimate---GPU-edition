@@ -148,6 +148,9 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
         mainCamera.cameraRight = glm::normalize(glm::cross(mainCamera.cameraDirection, upinit));
         mainCamera.cameraUp = glm::cross(mainCamera.cameraRight, mainCamera.cameraDirection);
         updateCL_Camera(window_width,window_height,clQueue,clProgram,devices[0]);
+
+        render_number = 0;
+
     } else {
         lastX = xpos;
         lastY = ypos;
@@ -227,10 +230,14 @@ void display() {
         renderImage(buffer, window_width, window_height, clQueue, clProgram, devices);
         clQueue.enqueueReadBuffer(buffer, CL_TRUE, 0, gpuOutputImg.size() * sizeof(float), gpuOutputImg.data());
 
+        render_number++;
+
+        ShaderUtils::concatRender(gpuOutputImg);
+
         FloatTexture newTex;
         newTex.height = window_height;
         newTex.width = window_width;
-        newTex.data = gpuOutputImg;
+        newTex.data = actual_render;
 
         flat_screen.change_texture(newTex);
 

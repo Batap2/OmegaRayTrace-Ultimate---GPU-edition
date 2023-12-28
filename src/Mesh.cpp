@@ -139,7 +139,7 @@ void Mesh::change_texture(FloatTexture tex)
                  0,
                  GL_RGB,
                  GL_FLOAT,
-                 gpuOutputImg.data()
+                 tex.data.data()
     );
     glGenerateMipmap(GL_TEXTURE_2D);
 }
