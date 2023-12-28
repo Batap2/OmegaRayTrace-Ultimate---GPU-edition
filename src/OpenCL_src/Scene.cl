@@ -1,3 +1,4 @@
+
 typedef struct {
     Sphere spheres[100];
     int numSpheres;
@@ -104,8 +105,7 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 	for(int bounce = 0; bounce < nbBounce; bounce++)
 	{
 
-		//HD.normal = randomizeInHemiSphere_fast(HD.normal, HD.material.roughness);
-
+		HD.normal = randomizeInHemiSphere_fast(HD.normal, HD.material.roughness);
 		Ray reflectedRay;
 		reflectedRay.direction = reflect(ray->direction, HD.normal);
 		reflectedRay.origin = HD.position;

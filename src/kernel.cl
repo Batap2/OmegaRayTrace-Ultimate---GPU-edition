@@ -2,13 +2,13 @@
 #include "src/OpenCL_src/Material.cl"
 #include "src/OpenCL_src/Ray.cl"
 #include "src/OpenCL_src/HitData.cl"
+#include "src/OpenCL_src/Random.cl"
 #include "src/OpenCL_src/Sphere.cl"
 #include "src/OpenCL_src/Triangle.cl"
 #include "src/OpenCL_src/Plane.cl"
 #include "src/OpenCL_src/Light.cl"
 #include "src/OpenCL_src/Scene.cl"
 #include "src/OpenCL_src/Camera.cl"
-#include "src/OpenCL_src/Random.cl"
 
 // GLOBAL VARIABLE NAME
 
