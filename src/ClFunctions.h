@@ -111,7 +111,23 @@ void updateskyColorBuffer()
     skyColorBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * 3, &skyColor);
 }
 
+void updateLightBuffer()
+{
+    lights_array.clear();
+    lightNbr = (int)scene_lights.size();
+    for(size_t i = 0; i < lightNbr; i++) {
+        std::vector<float> current_light_data = scene_lights[i]->getLightData();
+        for(int j = 0; j < 11;j++)
+        {
+            float current_light_elem = current_light_data[j];
+            lights_array.push_back(current_light_elem);
+        }
+    }
+    std::cout<<"Number of elements in lights array : "<< lights_array.size()<<std::endl;
+    std::cout<<"Number of lights : "<< lights_array.size() / 11 <<std::endl;
+    lightsBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * lights_array.size(),lights_array.data());
 
+}
 
 //-----------------------------------------DATA EXTRACTOR FROM SCENE ---------------------------------------------------//
 
@@ -181,6 +197,7 @@ void initializeBuffers() {
 
     updateMaterialBuffer();
     updateskyColorBuffer();
+    updateLightBuffer();
     vertexBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * vertices_array.size(),vertices_array.data());
     indexBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * indices_array.size(), indices_array.data());
     splitMeshBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMesh_array.size(), splitMesh_array.data());
@@ -219,7 +236,8 @@ void load(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, co
     load_kernel.setArg(7, indexBuffer);   // Ajouter le buffer d'indices
     load_kernel.setArg(8,splitMeshBuffer); // Ajouter le buffer
     load_kernel.setArg(9,splitMeshTriBuffer); // Ajouter le buffer
-
+    load_kernel.setArg(10,lightsBuffer);
+    load_kernel.setArg(11,lightNbr);
     //Executing loading in kernel.cl
     queue.enqueueNDRangeKernel(load_kernel, cl::NullRange, global, local);
     cl_int kernelError = queue.finish();
@@ -309,11 +327,38 @@ void updateCL_Materials(int max_x, int max_y,cl::CommandQueue &queue, cl::Progra
     }
 }
 
+//To update Lights on the GPU
+void updateCL_Lights(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, const cl::Device &device)
+{
+
+    updateLightBuffer();
+    std::cout<<"Lights NBR " << lightNbr<<std::endl;
+
+    //Range and window
+    cl::NDRange global(max_x, max_y);
+    cl::NDRange local(8, 8);
+    cl::Kernel Lights_kernel(program, "updateLights");
+
+    //Setting up arguments for loading
+    Lights_kernel.setArg(0,max_x);
+    Lights_kernel.setArg(1,max_y);
+    Lights_kernel.setArg(2,lightNbr);
+    Lights_kernel.setArg(3,lightsBuffer);
+
+
+    //Executing loading in kernel.cl
+    queue.enqueueNDRangeKernel(Lights_kernel, cl::NullRange, global, local);
+    cl_int kernelError = queue.finish();
+    if (kernelError != CL_SUCCESS) {
+        std::cerr << "OpenCL kernel execution error: " << kernelError << std::endl;
+        exit(1);
+    }
+}
+
 
 
 //To render a frame by raytracing on GPU
 void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, cl::Program &program, const cl::Device &device) {
-
     cl::Kernel kernel(program, "render");
     kernel.setArg(0, buffer);
     kernel.setArg(1, max_x);
@@ -401,7 +446,7 @@ void renderImage(cl::Buffer& buffer, int nx, int ny, cl::CommandQueue& queue, cl
     clock_t end_time = clock();
     double duration = double(end_time - start_time) / CLOCKS_PER_SEC;
 
-    std::cerr << "Rendering time: " << duration << " seconds" << std::endl;
+    //std::cerr << "Rendering time: " << duration << " seconds" << std::endl;
 }
 
 

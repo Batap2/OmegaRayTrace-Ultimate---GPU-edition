@@ -207,6 +207,8 @@ namespace GUI{
         if(ImGui::Button("Add Light"))
         {
             SceneOperations::addLight();
+            updateCL_Lights(window_width,window_height,clQueue,clProgram,devices[0]);
+
         }
 
         ImGui::Separator();
@@ -218,22 +220,29 @@ namespace GUI{
                 if(ImGui::DragFloat3("Position", &scene_lights[selected_light]->pos[0], 0.01))
                 {
                     ShaderUtils::sendLightsToShaders();
+                    updateCL_Lights(window_width,window_height,clQueue,clProgram,devices[0]);
+
                 }
                 if(ImGui::ColorEdit3("Color", &scene_lights[selected_light]->color[0]), colorEditFlag)
                 {
                     if(old_light_color != scene_lights[selected_light]->color){
                         ShaderUtils::sendLightsToShaders();
+                        updateCL_Lights(window_width,window_height,clQueue,clProgram,devices[0]);
+
                         old_light_color = scene_lights[selected_light]->color;
                     }
                 }
                 if(ImGui::DragFloat("Intensity", &scene_lights[selected_light]->intensity, 0.01))
                 {
                     ShaderUtils::sendLightsToShaders();
+                    updateCL_Lights(window_width,window_height,clQueue,clProgram,devices[0]);
+
                 }
 
                 if(ImGui::Button("Delete"))
                 {
                     SceneOperations::removeLight(selected_light);
+                    updateCL_Lights(window_width,window_height,clQueue,clProgram,devices[0]);
                     ImGui::CloseCurrentPopup();
                 }
 

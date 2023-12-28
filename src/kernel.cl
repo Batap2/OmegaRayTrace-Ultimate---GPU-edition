@@ -70,8 +70,25 @@ __kernel void updateMaterials(int max_x, int max_y, int mesh_nbr, __global float
     }
 }
 
+//To update lights
+__kernel void updateLights(int max_x, int max_y, int light_nbr, __global float* lightsData) {
+    int i = get_global_id(0);
+    int j = get_global_id(1);
+
+    if (i == 0 && j == 3) {
+        lightNumber = light_nbr;
+            for(int light_id =0; light_id< light_nbr; light_id++) // a décommenter, c'est juste trop abusé l'intensité lumineuse de deux lights
+            {
+                unsigned int l_id = light_id*11;
+                lights[light_id].color = (Vec3){lightsData[l_id+8],lightsData[l_id+9],lightsData[l_id+10]};
+                lights[light_id].pos= (Vec3){lightsData[l_id+2],lightsData[l_id+3],lightsData[l_id+4]};
+                lights[light_id].intensity=lightsData[l_id+6];
+            }
+    }
+}
+
 //To load all data requiered to initialize the kernel
-__kernel void loading(int max_x, int max_y,__global float* cameraData,__global float* SkyColor, int mesh_nbr,__global float* materialsData,__global float* vertices,__global unsigned int* indices,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri)
+__kernel void loading(int max_x, int max_y,__global float* cameraData,__global float* SkyColor, int mesh_nbr,__global float* materialsData,__global float* vertices,__global unsigned int* indices,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri,__global float * lightsData,int light_nbr)
 {
     int i = get_global_id(0);
     int j = get_global_id(1);
@@ -150,6 +167,17 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
         }
 
     }
+    if(i==3 && j==0)
+    {
+        for(int light_id =0; light_id< light_nbr; light_id++) // a décommenter, c'est juste trop abusé l'intensité lumineuse de deux lights
+        {
+            unsigned int l_id = light_id*11;
+            Vec3 color = (Vec3){lightsData[l_id+8],lightsData[l_id+9],lightsData[l_id+10]};
+            Vec3 pos= (Vec3){lightsData[l_id+2],lightsData[l_id+3],lightsData[l_id+4]};
+            float intensity = lightsData[l_id+6];
+            addLight(pos,color,intensity);
+        }
+    }
 
 }
 
@@ -166,7 +194,7 @@ __kernel void render(__global float* fb, int max_x, int max_y)
 		// Calcul des coordonnées du rayon
 		Ray ray = getRayfromCamera(mainCamera,i,j,max_x,max_y);
 
-		addLight((Vec3){-0.75f,1.0f,1.2f}, (Vec3){1.0f,0.8f,0.55f}, 0.1f);
+		//addLight((Vec3){-0.75f,1.0f,1.2f}, (Vec3){1.0f,0.8f,0.55f}, 0.1f);
 		//addLight((Vec3){0.75f,1.0f,1.2f}, (Vec3){0.85f,0.95f,1.0f}, 0.1f);
 
 		
@@ -177,7 +205,5 @@ __kernel void render(__global float* fb, int max_x, int max_y)
 		fb[pixel_index + 0] = out_color.x;
 		fb[pixel_index + 1] = out_color.y;
 		fb[pixel_index + 2] = out_color.z;
-
-		
     }
 }

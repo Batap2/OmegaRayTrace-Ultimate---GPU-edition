@@ -40,8 +40,8 @@ public:
         std::vector<float> lightData;
 
         // Ajouter les données de la lumière au vecteur
-        lightData.push_back(static_cast<float>(type));
-        lightData.push_back(static_cast<float>(isInCamSpace));
+        type == LightType_Spherical ? lightData.push_back(0.0) : lightData.push_back(1.0) ;
+        isInCamSpace? lightData.push_back(1.0) : lightData.push_back(0.0) ;
         lightData.push_back(pos.x);
         lightData.push_back(pos.y);
         lightData.push_back(pos.z);
