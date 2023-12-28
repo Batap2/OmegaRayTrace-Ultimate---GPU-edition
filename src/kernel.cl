@@ -145,8 +145,8 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
         mainScene2.numTriangles = 0;
 
         //Adding spheres and his matereial
-        int mat_created_id = createMaterial(materials[2].ambiant_color,materials[2].diffuse_color,materials[2].specular_color,materials[2].shininess,materials[2].metallic,materials[2].roughness,materials[2].ao);
-        addSphere((Vec3){0.,0.,0}, 0.5,mat_created_id);
+        int mat_created_id = createMaterial(materials[2].ambiant_color,materials[2].diffuse_color,materials[2].specular_color,materials[2].shininess,0,0,materials[2].ao);
+        addSphere((Vec3){0.5f,-0.1f,1.0f}, 0.3,mat_created_id);
 
         unsigned int offset_vertex = 0;
         unsigned int offset_index = 0;
@@ -215,7 +215,7 @@ __kernel void render(__global float* fb, int max_x, int max_y)
 		//addLight((Vec3){0.75f,1.0f,1.2f}, (Vec3){0.85f,0.95f,1.0f}, 0.1f);
 
 		
-		int bounce = 1;
+		int bounce = 2;
 	
 		Vec3 out_color = computeColor(&ray, mainCamera.cameraPos, bounce);
 

@@ -21,6 +21,13 @@ Vec3 normalize(Vec3 v) {
     return v;
 }
 
+Vec3 addFloat(Vec3 a, float b){
+    a.x = a.x + b;
+    a.y = a.y + b;
+    a.z = a.z + b;
+    return a;
+}
+
 Vec3 add(Vec3 a, Vec3 b) {
     Vec3 result;
     result.x = a.x + b.x;
@@ -99,6 +106,14 @@ Vec3 clampMin(Vec3 a, float clamp){
 	return a;
 }
 
+Vec3 lerp(Vec3 a, Vec3 b, float value) {
+    Vec3 interpolated_vec;
+    interpolated_vec.x = a.x + (b.x - a.x) * value;
+    interpolated_vec.y = a.y + (b.y - a.y) * value;
+    interpolated_vec.z = a.z + (b.z - a.z) * value;
+    return interpolated_vec;
+}
+
 //-----------------------------------------RANDOM---------------------------------------------------------//
 
 
@@ -133,7 +148,8 @@ Vec3 randomizeInHemiSphere(Vec3 normal, float roughness) {
 
 Vec3 randomizeInHemiSphere_fast(Vec3 normal, float roughness)
 {
-	Vec3 randomVec = (Vec3){randomFloat(0.0f,roughness), randomFloat(0.0f,roughness), randomFloat(0.0f,roughness)};
+	
+    Vec3 randomVec = (Vec3){randomFloat(-roughness,roughness), randomFloat(-roughness,roughness), randomFloat(-roughness,roughness)};
 
 	randomVec = add(randomVec, normal);
 	return normalize( add(randomVec, scale(normal, 0.1f) ));

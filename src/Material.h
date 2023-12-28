@@ -42,9 +42,9 @@ struct Material {
 
     glm::vec3 specular_material;
 
-    float ambiant_strength = 0.1;
-    float specular_strength = 0.2;
-    float emissive_intensity;
+    float ambiant_strength = 0.1f;
+    float specular_strength = 0.2f;
+    float emissive_intensity = 0.0f;
 
     Texture diffuse_texture;
 
