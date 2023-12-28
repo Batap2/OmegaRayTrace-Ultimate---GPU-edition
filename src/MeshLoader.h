@@ -185,8 +185,6 @@ namespace MeshLoader{
             }
 
             // --------------- MATERIAL ---------------- //
-
-            Material mat = Material();
             aiMaterial* aiMat = aiScene->mMaterials[aiMesh->mMaterialIndex];
 
             aiColor3D aiDiff, aiAmb, aiSpec, aiEmissive;
@@ -202,20 +200,19 @@ namespace MeshLoader{
             aiMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, aiRoughness);
             aiMat->Get(AI_MATKEY_EMISSIVE_INTENSITY, aiEmissiveIntensity);
 
-            mat.ambient_material = vec3(aiAmb.r, aiAmb.g, aiAmb.b);
-            mat.diffuse_material = vec3(aiDiff.r, aiDiff.g, aiDiff.b);
-            mat.specular_material = vec3(aiSpec.r, aiSpec.g, aiSpec.b);
-            mat.IOR = aiIOR;
-            mat.metallic = aiMetallic;
-            mat.roughness = aiShininessStrength;
-            mat.shininess = aiShininess;
-            mat.emissive_intensity = aiEmissiveIntensity;
+            newMesh->material.ambient_material = vec3(aiAmb.r, aiAmb.g, aiAmb.b);
+            newMesh->material.diffuse_material = vec3(aiDiff.r, aiDiff.g, aiDiff.b);
+            newMesh->material.specular_material = vec3(aiSpec.r, aiSpec.g, aiSpec.b);
+            newMesh->material.IOR = aiIOR;
+            newMesh->material.metallic = aiMetallic;
+            newMesh->material.roughness = aiShininessStrength;
+            newMesh->material.shininess = aiShininess;
+            newMesh->material.emissive_intensity = aiEmissiveIntensity;
             if(aiEmissiveIntensity > 0)
             {
-                mat.isEmissive = 1;
+                newMesh->material.isEmissive = 1;
             }
 
-            newMesh->material = mat;
             // ----------------------------------------- //
 
             newMesh->openglInit();

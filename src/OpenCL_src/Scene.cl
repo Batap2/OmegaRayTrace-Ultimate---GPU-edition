@@ -219,6 +219,7 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 			reflectedColor = computePBR(&HD, ray, camPos);
 		}
 
+		reflectedColor = scale(reflectedColor, 1/(float)nbBounce);
 
 		reflectedColor = scale(reflectedColor, reflexionImportance);
 
@@ -230,8 +231,6 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 	if(nbBounce == 0){
 		return finalColor;
 	}
-	//return (Vec3){1.0f,0.0f,0.0f};
 	
-	
-	return divide(finalColor, nbBounce);
+	return finalColor;
 }
