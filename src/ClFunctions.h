@@ -129,6 +129,39 @@ void updateLightBuffer()
 
 }
 
+
+void updateTextureBuffer()
+{
+    textures_array.clear();
+    size_t mesh_number = scene_meshes.size();
+
+    for (size_t i = 0; i < mesh_number; i++) {
+        Mesh * m = scene_meshes[i];
+        if ((bool)m->material.useTexture) {
+            unsigned int w = m->material.diffuse_texture.width;
+            unsigned int h = m->material.diffuse_texture.height;
+            std::vector<unsigned char> data = m->material.diffuse_texture.data;
+            cl::ImageFormat format(CL_RGBA, CL_UNORM_INT8);
+            cl::Image2D texture_image(
+                    clContext,
+                    CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                    format,
+                    w,
+                    h,
+                    0,
+                    data.data()
+            );
+            textures_array.push_back(texture_image);
+        } else {
+            textures_array.push_back(cl::Image2D());
+        }
+    }
+
+    std::cout << "Number of elements in textures array: " << textures_array.size() << std::endl;
+    std::cout << "Number of meshes by using textures array: " << mesh_number << std::endl;
+
+}
+
 //-----------------------------------------DATA EXTRACTOR FROM SCENE ---------------------------------------------------//
 
 
@@ -198,6 +231,7 @@ void initializeBuffers() {
     updateMaterialBuffer();
     updateskyColorBuffer();
     updateLightBuffer();
+    updateTextureBuffer();
     vertexBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * vertices_array.size(),vertices_array.data());
     indexBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * indices_array.size(), indices_array.data());
     splitMeshBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMesh_array.size(), splitMesh_array.data());
