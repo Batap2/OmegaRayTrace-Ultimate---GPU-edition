@@ -20,3 +20,5 @@ Ray getRayfromCamera(Camera camera, int i, int j, int max_x, int max_y)
 		ray.origin = camera.cameraPos;
 		return ray;
 }
+
+Camera mainCamera;

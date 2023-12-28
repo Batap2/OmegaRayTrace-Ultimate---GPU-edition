@@ -109,7 +109,7 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 		reflectedRay.origin = HD.position;
 
 		HD = shootRay(reflectedRay.origin, reflectedRay.direction);
-		
+
 		Vec3 reflectedColor = computePhong(&HD, ray, camPos);
 		reflectedColor = (Vec3){0.0f,1.0f,0.0f};
 
@@ -120,6 +120,6 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 		return skyColor;
 	}
 
-	
+
 	return finalColor;
 }

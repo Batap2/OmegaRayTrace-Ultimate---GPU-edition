@@ -368,6 +368,11 @@ void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, c
     cl::NDRange global(max_x, max_y);
     cl::NDRange local(8, 8);
 
+    unsigned int random_int = rand(); // Random int value
+    cl::Kernel randInt(program,"getRandomIntInGPU");
+    randInt.setArg(0,random_int);
+    queue.enqueueNDRangeKernel(randInt, cl::NullRange, global, local);
+
     queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, local);
     cl_int kernelError = queue.finish();
     if (kernelError != CL_SUCCESS) {

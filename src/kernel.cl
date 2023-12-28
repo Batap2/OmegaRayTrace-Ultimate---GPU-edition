@@ -8,10 +8,11 @@
 #include "src/OpenCL_src/Light.cl"
 #include "src/OpenCL_src/Scene.cl"
 #include "src/OpenCL_src/Camera.cl"
+#include "src/OpenCL_src/Random.cl"
 
-// GLOBAL VARIABLE
+// GLOBAL VARIABLE NAME
 
-Camera mainCamera;
+//Camera mainCamera;
 //Scene *mainScene;
 //const int LIGHT_MAX_NUMBER = 32;
 //Light lights[LIGHT_MAX_NUMBER];
@@ -19,6 +20,7 @@ Camera mainCamera;
 // Vec3 skyColor;
 //const int MESH_MAX_NUMBER = 1000;
 //Material materials[MESH_MAX_NUMBER];
+//unsigned int GPURandomInt;
 
 //To update the camera
 __kernel void updateCamera(int max_x, int max_y,__global float* cameraData)
