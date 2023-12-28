@@ -172,6 +172,14 @@ namespace ShaderUtils{
         lights_numberID = glGetUniformLocation(shaderprogram, "materials_number");
         glUniform1i(objectNumberID, scene_meshes.size());
     }
+
+    void concatRender(std::vector<float> & new_render){
+        for(int n = 0; n < actual_render.size(); ++n){
+            float importance = 1/(float)render_number;
+            actual_render[n] = (1-importance) * actual_render[n] + importance * new_render[n];
+            //actual_render[n] = 0.8 * actual_render[n] + 0.2 * new_render[n];
+        }
+    }
 }
 
 #endif //OBJECT_VIEWER_SHADERUTILS_H

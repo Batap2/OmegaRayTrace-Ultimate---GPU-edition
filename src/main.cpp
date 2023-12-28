@@ -180,8 +180,7 @@ void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, c
     cl::NDRange global(max_x, max_y);
     cl::NDRange local(8, 8);
 
-    int random_int = rand(); // Random int value
-    std::cout<<"Random value CPU : "<< random_int<<std::endl;
+    unsigned int random_int = rand(); // Random int value
     cl::Kernel randInt(program,"getRandomIntInGPU");
     randInt.setArg(0,random_int);
     queue.enqueueNDRangeKernel(randInt, cl::NullRange, global, local);
@@ -420,6 +419,8 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
         mainCamera.cameraRight = glm::normalize(glm::cross(mainCamera.cameraDirection, upinit));
         mainCamera.cameraUp = glm::cross(mainCamera.cameraRight, mainCamera.cameraDirection);
 
+        render_number = 0;
+
     } else {
         lastX = xpos;
         lastY = ypos;
@@ -487,10 +488,14 @@ void display() {
         renderImage(buffer, window_width, window_height, clQueue, clProgram, devices);
         clQueue.enqueueReadBuffer(buffer, CL_TRUE, 0, gpuOutputImg.size() * sizeof(float), gpuOutputImg.data());
 
+        render_number++;
+
+        ShaderUtils::concatRender(gpuOutputImg);
+
         FloatTexture newTex;
         newTex.height = window_height;
         newTex.width = window_width;
-        newTex.data = gpuOutputImg;
+        newTex.data = actual_render;
 
         flat_screen.change_texture(newTex);
 

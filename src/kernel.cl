@@ -1,10 +1,12 @@
-float randomFloatInRange(unsigned long *seed, float min, float max) {
+unsigned int *randomSeed;
+
+float randomFloat(float min, float max) {
 
     unsigned long multiplier = 48271L;
     unsigned long modulus = 2147483647L;
 	
-	*seed = (multiplier * (*seed)) % modulus + 564651;
-    double scaledRandom = *seed / ((double)modulus + 1);
+	*randomSeed= (multiplier * (*randomSeed)) % modulus + 564651;
+    double scaledRandom = *randomSeed / ((double)modulus + 1);
     return (float)(scaledRandom * (max - min) + min);
 }
 
@@ -107,8 +109,41 @@ Vec3 clampMin(Vec3 a, float clamp){
 	return a;
 }
 
-Vec3 randomizeVec(Vec3 a, float maxAngle){
-	
+Vec3 randomizeInHemiSphere(Vec3 normal, float roughness) {
+    float r1 = randomFloat(0.0f, 1.0f);
+    float r2 = randomFloat(0.0f, 1.0f);
+
+    float phi = 2 * M_PI * r1; // Angle around the hemisphere
+    float cos_theta = pow(1 - r2, 1.0f / (roughness + 1));
+    float sin_theta = sqrt(1 - cos_theta * cos_theta);
+
+    // Construct a coordinate system using the normal vector
+    Vec3 tangent = (Vec3){0.0f,0.0f,0.0f};
+	Vec3 bitangent = (Vec3){0.0f,0.0f,0.0f};
+
+    if (fabs(normal.x) > 0.1f)
+        tangent = (Vec3){normal.y, -normal.x, 0.0f};
+    else
+        tangent = (Vec3){0.0f, normal.z, -normal.y};
+
+    tangent = (Vec3){normal.y, -normal.x, 0.0f};
+    bitangent = (Vec3){normal.z * tangent.x, normal.z * tangent.y, -normal.x * tangent.x - normal.y * tangent.y};
+
+    // Convert spherical coordinates to Cartesian coordinates
+    Vec3 randomVec;
+    randomVec.x = sin_theta * cos(phi) * tangent.x + sin_theta * sin(phi) * bitangent.x + cos_theta * normal.x;
+    randomVec.y = sin_theta * cos(phi) * tangent.y + sin_theta * sin(phi) * bitangent.y + cos_theta * normal.y;
+    randomVec.z = sin_theta * cos(phi) * tangent.z + sin_theta * sin(phi) * bitangent.z + cos_theta * normal.z;
+
+    return randomVec;
+}
+
+Vec3 randomizeInHemiSphere_fast(Vec3 normal, float roughness)
+{
+	Vec3 randomVec = (Vec3){randomFloat(0.0f,roughness), randomFloat(0.0f,roughness), randomFloat(0.0f,roughness)};
+
+	randomVec = add(randomVec, normal);
+	return normalize( add(randomVec, scale(normal, 0.1f) ));
 }
 
 typedef struct {
@@ -157,6 +192,7 @@ Vec3 pointAtParameter(Ray ray, float t) {
     // Équation O + t*D
     return add(ray.origin, scale(ray.direction, t));
 }
+
 
 enum ObjectType
 {
@@ -468,8 +504,7 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 {
 
 	HitData HD = shootRay(ray->origin, ray->direction);
-	//Vec3 finalColor = computePhong(&HD, ray, camPos);
-	Vec3 finalColor = (Vec3){0.0f,0.0f,0.0f};
+	Vec3 finalColor = computePhong(&HD, ray, camPos);
 
 	if(!HD.intersectionExists){
 		return (Vec3){0.0f,0.0f,0.0f};
@@ -478,9 +513,12 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 	for(int bounce = 0; bounce < nbBounce; bounce++)
 	{
 
+		HD.normal = randomizeInHemiSphere_fast(HD.normal, HD.material.roughness);
+
 		Ray reflectedRay;
 		reflectedRay.direction = reflect(ray->direction, HD.normal);
 		reflectedRay.origin = HD.position;
+
 				
 		HD = shootRay(reflectedRay.origin, reflectedRay.direction);
 
@@ -488,16 +526,16 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 
 		if(!HD.intersectionExists)
 		{
-			reflectedColor = (Vec3){0.0f,1.0f,0.0f};
+			reflectedColor = (Vec3){0.0f,0.0f,0.0f};
 		} else {
 			reflectedColor = computePhong(&HD, ray, camPos);
 		}
 
 
-		
+		reflectedColor = scale(reflectedColor, 1 - HD.material.roughness);
 
-		//finalColor = add(finalColor, reflectedColor);
-		finalColor = reflectedColor;
+		finalColor = add(finalColor, reflectedColor);
+		//finalColor = reflectedColor;
 	}
 
 
@@ -506,13 +544,17 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 }
 
 
-int GPURandomInt;
+unsigned int GPURandomInt;
 
 //Fonction principale du kernel -> Rendu par raytracing 'une image de la scène
 __kernel void render(__global float* fb, int max_x, int max_y,  __global float* cameraData,__global float* vertices,__global unsigned int* indices, int numMesh,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri)
 {
 	int i = get_global_id(0);
 	int j = get_global_id(1);
+
+	unsigned int randomSeedInit = GPURandomInt;
+	randomSeedInit = randomSeedInit * i*i*j*j;
+	randomSeed = &randomSeedInit;
 
 	// TODO : importe la skycolor
 	Vec3 skyColor = (Vec3){0.0f,0.0f,0.0f};
@@ -587,11 +629,11 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
 
 		testMat.diffuse_color = (Vec3){1.0f,0.2f,0.2f};
 		testMat.metallic = 0.0f;
-		testMat.roughness = 0.5f;
+		testMat.roughness = 0.6f;
 
-		testMat2.diffuse_color = (Vec3){0.5f,1.0f,0.2f};
+		testMat2.diffuse_color = (Vec3){0.0f,0.0f,0.0f};
 		testMat2.metallic = 0.0f;
-		testMat2.roughness = 0.5f;
+		testMat2.roughness = 0.25f;
 
 		addLight((Vec3){-0.75f,1.0f,1.2f}, (Vec3){1.0f,0.8f,0.55f}, 0.1f);
 		//addLight((Vec3){0.75f,1.0f,1.2f}, (Vec3){0.85f,0.95f,1.0f}, 0.1f);
@@ -600,37 +642,15 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
 		
 		int bounce = 1;
 	
-		//Vec3 out_color = computeColor(&ray, cameraPos, bounce);
+		Vec3 out_color = computeColor(&ray, cameraPos, bounce);
 
-		unsigned long randomSeed = (unsigned long)pixel_index;
-
-        randomSeed = randomSeed * randomSeed * randomSeed * randomSeed * i * j;
-
-        //randomSeed = (unsigned long)pow(2,(float)randomSeed);
-
-		float r = randomFloatInRange(&randomSeed, 0.0f, 1.0f);
-
-		float g = randomFloatInRange(&randomSeed, 0.0f, 1.0f);
-
-		float b = randomFloatInRange(&randomSeed, 0.0f, 1.0f);
-
-
-        float rand = (r+g+b)/3;
-
-		//Vec3 out_color = 
-
-		// fb[pixel_index + 0] = out_color.x;
-		// fb[pixel_index + 1] = out_color.y;
-		// fb[pixel_index + 2] = out_color.z;
-
-		fb[pixel_index + 0] = rand;
-		fb[pixel_index + 1] = rand;
-		fb[pixel_index + 2] = rand;
-
+		fb[pixel_index + 0] = out_color.x;
+		fb[pixel_index + 1] = out_color.y;
+		fb[pixel_index + 2] = out_color.z;
     }
 }
 
-__kernel void getRandomIntInGPU(int CPURandomInt)
+__kernel void getRandomIntInGPU(unsigned int CPURandomInt)
 {
     GPURandomInt = CPURandomInt;
 }
