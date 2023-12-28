@@ -25,13 +25,23 @@ bool intersectSphere(Ray ray, Sphere sphere, float* t, float t_min, float* t_max
         float root2 = (-b + sqrt(discriminant)) / (2.0 * a);
 
         // Retourne la plus petite valeur positive (plus proche de l'origine du rayon)
-        *t = (root1 < root2) ? root1 : root2;
+
+        float t2 = 0;
+
+        if(root1 < root2){
+            *t = root1;
+            t2 = root2;
+        } else {
+            *t = root2;
+            t2 = root1;
+        }
 
         if(*t < *t_max && *t > t_min)
         {
 			*t_max = *t;
 			HD->intersectionExists = true;
 			HD->position = add(ray.origin, scale(ray.direction, *t));
+            HD->position2 = add(ray.origin, scale(ray.direction, *t));
 			HD->normal = normalize(subtract(HD->position, sphere.center));
 			HD->material = materials[sphere.mat];
 			HD->objectType = SPHERE;

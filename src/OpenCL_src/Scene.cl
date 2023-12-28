@@ -223,10 +223,9 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 			Vec3 emissiveColor = scale(HD.material.diffuse_color, HD.material.emissiveIntensity);
 			
 
+			Vec3 mixedColor_emissive = lerp(scale(previousColor, HD.material.emissiveIntensity), emissiveColor, 0.5f);
 
-			Vec3 mixedColor = lerp(scale(previousColor, HD.material.emissiveIntensity), emissiveColor, 0.5f);
-
-			finalColor = add(finalColor, mixedColor);
+			finalColor = add(finalColor, mixedColor_emissive);
 		}
 
 		ray2.origin = HD.position;
