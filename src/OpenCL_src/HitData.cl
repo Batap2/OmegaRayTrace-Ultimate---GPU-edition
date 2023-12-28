@@ -11,6 +11,7 @@ typedef struct
     float t;
     Vec3 normal;
     Vec3 position;
+    Vec3 position2;
 	Material material;
 	enum ObjectType objectType;
 } HitData;

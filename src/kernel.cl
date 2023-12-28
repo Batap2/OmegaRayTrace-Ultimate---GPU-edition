@@ -64,7 +64,7 @@ __kernel void updateMaterials(int max_x, int max_y, int mesh_nbr, __global float
         material_nbr = mesh_nbr;
         for(int mesh_id =0; mesh_id < mesh_nbr; mesh_id++)
         {
-            unsigned int mat_id = mesh_id*13;
+            unsigned int mat_id = mesh_id*14;
             materials[mesh_id].ambiant_color = (Vec3){materialsData[mat_id],materialsData[mat_id+1],materialsData[mat_id+2]};
             materials[mesh_id].diffuse_color = (Vec3){materialsData[mat_id+3],materialsData[mat_id+4],materialsData[mat_id+5]};
             materials[mesh_id].specular_color = (Vec3){materialsData[mat_id+6],materialsData[mat_id+7],materialsData[mat_id+8]};
@@ -72,6 +72,7 @@ __kernel void updateMaterials(int max_x, int max_y, int mesh_nbr, __global float
             materials[mesh_id].metallic = materialsData[mat_id+10];
             materials[mesh_id].roughness = materialsData[mat_id+11];
             materials[mesh_id].ao = materialsData[mat_id+12];
+            materials[mesh_id].emissiveIntensity = materialsData[mat_id+13];
         }
     }
 }
@@ -125,7 +126,7 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
         for(int mesh_id =0; mesh_id < mesh_nbr; mesh_id++)
         {
 
-            unsigned int mat_id = mesh_id*13;
+            unsigned int mat_id = mesh_id*14;
             materials[mesh_id].ambiant_color = (Vec3){materialsData[mat_id],materialsData[mat_id+1],materialsData[mat_id+2]};
             materials[mesh_id].diffuse_color = (Vec3){materialsData[mat_id+3],materialsData[mat_id+4],materialsData[mat_id+5]};
             materials[mesh_id].specular_color = (Vec3){materialsData[mat_id+6],materialsData[mat_id+7],materialsData[mat_id+8]};
@@ -133,6 +134,7 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
             materials[mesh_id].metallic = materialsData[mat_id+10];
             materials[mesh_id].roughness = materialsData[mat_id+11];
             materials[mesh_id].ao = materialsData[mat_id+12];
+            materials[mesh_id].emissiveIntensity = materialsData[mat_id+13];
         }
     }
 

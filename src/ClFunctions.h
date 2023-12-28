@@ -99,9 +99,10 @@ void updateMaterialBuffer()
             float current_mat_elem = current_mat_data[j];
             materials_array.push_back(current_mat_elem);
         }
+        materials_array.push_back(scene_meshes[i]->material.emissive_intensity);
     }
     std::cout<<"Number of elements in materials array : "<< materials_array.size()<<std::endl;
-    std::cout<<"Number of meshes by using materials array : "<< materials_array.size() / 13 <<std::endl;
+    std::cout<<"Number of meshes by using materials array : "<< materials_array.size() / 14 <<std::endl;
     materialsBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * materials_array.size(),materials_array.data());
 
 }
