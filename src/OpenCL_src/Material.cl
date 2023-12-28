@@ -2,7 +2,30 @@
 typedef struct {
     unsigned int height, width;
     unsigned char * data;
+    int offset_tex;
 } Texture;
+
+const int TEXTURE_MAX_NUMBER = 300000000;
+unsigned char textures[TEXTURE_MAX_NUMBER];
+
+Vec3 getPixelColor(Texture tex, float u, float v) {
+    int width = (int)textures[tex.offset_tex];
+    int height = (int)textures[tex.offset_tex+1];
+   int x = (int)(u * width);
+    int y = (int)(v * height);
+
+    x = clamp(x, 0, (int)width - 1);
+    y = clamp(y, 0, (int)height - 1);
+
+   int pixelIndex =tex.offset_tex +2 + (y * width + x) * 3;
+
+    float red = (float)textures[pixelIndex] / 255.0f;
+    float green = (float)textures[pixelIndex + 1] / 255.0f;
+    float blue = (float)textures[pixelIndex + 2] / 255.0f;
+    Vec3 result = ((Vec3){red, green, blue});
+    return result;
+    //return (Vec3){0.,0.,0.};
+}
 
 typedef struct {
 

@@ -132,33 +132,68 @@ void updateLightBuffer()
 
 void updateTextureBuffer()
 {
-    textures_array.clear();
-    size_t mesh_number = scene_meshes.size();
+    texturesData_array.clear();
+    texturesId_array.clear();
+    textureNbr = 0;
+    std::vector<std::vector<unsigned char>> dataValid;
+    std::vector<int> offset_array;
+    offset_array.push_back(0);
+    //For all meshes
+    for (size_t i = 0; i < scene_meshes.size(); i++) {
 
-    for (size_t i = 0; i < mesh_number; i++) {
         Mesh * m = scene_meshes[i];
+        int tex_id = -1;
+        //If it has a texture to use
         if ((bool)m->material.useTexture) {
-            unsigned int w = m->material.diffuse_texture.width;
-            unsigned int h = m->material.diffuse_texture.height;
+            unsigned char w = m->material.diffuse_texture.width;
+            unsigned char h = m->material.diffuse_texture.height;
             std::vector<unsigned char> data = m->material.diffuse_texture.data;
-            cl::ImageFormat format(CL_RGBA, CL_UNORM_INT8);
-            cl::Image2D texture_image(
-                    clContext,
-                    CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                    format,
-                    w,
-                    h,
-                    0,
-                    data.data()
-            );
-            textures_array.push_back(texture_image);
+            bool find = false;
+            //We search if we already have this texture to dodge double same texture
+            for (int j = 0; j < dataValid.size(); j++)
+            {
+                if(dataValid[j] == data) // If we found this text
+                {
+                    find = true;
+                    tex_id = j; //Set tex_id to the texture
+                    texturesId_array.push_back(tex_id);
+                    break;
+                }
+            }
+            if(!find)
+            {
+                textureNbr++;
+                tex_id = dataValid.size(); // last indice to add a new texture on it and to save this id
+                texturesId_array.push_back(tex_id);
+                texturesData_array.push_back(w);
+                texturesData_array.push_back(h);
+                texturesData_array.insert(texturesData_array.end(), data.begin(),data.end());
+                dataValid.push_back(data); // new texture added
+                offset_array.push_back((data.size()+2)+offset_array[offset_array.size()-1]);
+                texturesSize = offset_array[offset_array.size()-1];
+            }
         } else {
-            textures_array.push_back(cl::Image2D());
+            texturesId_array.push_back(tex_id);
         }
-    }
+        }
 
-    std::cout << "Number of elements in textures array: " << textures_array.size() << std::endl;
-    std::cout << "Number of meshes by using textures array: " << mesh_number << std::endl;
+        for (int i = 0; i < texturesId_array.size() ;i++)
+        {
+            if(texturesId_array[i] != -1)
+            {
+                texturesId_array[i] = (int)offset_array[texturesId_array[i]];
+            }
+        }
+
+    //printVector(offset_array);
+    //printVector(texturesId_array);
+
+    //std::cout << "Number of elements in texturesData array: " << texturesData_array.size()<<" " << texturesData_array[0]<<" " << texturesData_array[1]<<" "  << texturesData_array[2]<< std::endl;
+    //std::cout << "Number of elements in texturesId array: " << texturesId_array.size() <<" "<<texturesId_array[0] << std::endl;
+    std::cout << "Number of textures saved : " << textureNbr << std::endl;
+    texturesDataBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned char) * texturesData_array.size(),texturesData_array.data());
+    texturesIdBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(int) * texturesId_array.size(),texturesId_array.data());
+
 
 }
 
@@ -272,6 +307,11 @@ void load(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, co
     load_kernel.setArg(9,splitMeshTriBuffer); // Ajouter le buffer
     load_kernel.setArg(10,lightsBuffer);
     load_kernel.setArg(11,lightNbr);
+    load_kernel.setArg(12,texturesDataBuffer);
+    load_kernel.setArg(13,texturesIdBuffer);
+    load_kernel.setArg(14,texturesSize);
+
+    //load_kernel.setArg(12,textures_array[0]);
     //Executing loading in kernel.cl
     queue.enqueueNDRangeKernel(load_kernel, cl::NullRange, global, local);
     cl_int kernelError = queue.finish();

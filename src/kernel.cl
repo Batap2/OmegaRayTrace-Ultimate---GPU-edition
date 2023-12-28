@@ -22,6 +22,9 @@
 //Material materials[MESH_MAX_NUMBER];
 //int material_nbr;
 //unsigned int GPURandomInt;
+//const int TEXTURE_MAX_NUMBER = 300 000 000;
+//unsigned char textures[300000000];
+
 
 
 
@@ -94,13 +97,14 @@ __kernel void updateLights(int max_x, int max_y, int light_nbr, __global float* 
 }
 
 //To load all data requiered to initialize the kernel
-__kernel void loading(int max_x, int max_y,__global float* cameraData,__global float* SkyColor, int mesh_nbr,__global float* materialsData,__global float* vertices,__global unsigned int* indices,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri,__global float * lightsData,int light_nbr)
+__kernel void loading(int max_x, int max_y,__global float* cameraData,__global float* SkyColor, int mesh_nbr,__global float* materialsData,__global float* vertices,__global unsigned int* indices,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri,__global float * lightsData,int light_nbr, __global unsigned char * texturesData,__global int * texturesOffset, int texturesize)
 {
     int i = get_global_id(0);
     int j = get_global_id(1);
     material_nbr = mesh_nbr;
 
-
+    //const int width = get_image_width(img2D);
+    //const int height = get_image_height(img2D);
     //Loading camera
     if( i==0 && j == 0)
     {
@@ -119,6 +123,17 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
         skyColor = (Vec3){SkyColor[0],SkyColor[1],SkyColor[2]};
     }
 
+
+    //Texture setup
+    if(i==4 && j ==0)
+    {
+        for(int tex_id =0; tex_id < texturesize; tex_id++)
+        {
+            textures[tex_id] = texturesData[tex_id];
+        }
+    }
+
+
     //Loading Material
     if(i==2 && j==0)
     {
@@ -133,8 +148,23 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
             materials[mesh_id].metallic = materialsData[mat_id+10];
             materials[mesh_id].roughness = materialsData[mat_id+11];
             materials[mesh_id].ao = materialsData[mat_id+12];
+            int offset_tex = texturesOffset[mesh_id];
+            if (offset_tex != -1)
+            {
+                int width = texturesData[offset_tex];
+                int height = texturesData[offset_tex+1];
+                materials[mesh_id].texture.width = width;
+                materials[mesh_id].texture.height = height;
+                materials[mesh_id].texture.offset_tex = offset_tex;
+            }
+
+
         }
+
+
     }
+
+
 
     //Loading Scene - mostly Triangles
     if(i==2 && j==0)
@@ -145,7 +175,9 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
         mainScene2.numTriangles = 0;
 
         //Adding spheres and his matereial
-        int mat_created_id = createMaterial(materials[2].ambiant_color,materials[2].diffuse_color,materials[2].specular_color,materials[2].shininess,0,0,materials[2].ao);
+        Texture t = materials[0].texture;
+        Vec3 pix_color = getPixelColor(t,0.5,0.5);
+        int mat_created_id = createMaterial((Vec3){pix_color.x,0.,0.},materials[2].diffuse_color,materials[2].specular_color,materials[2].shininess,0,0,materials[2].ao);
         addSphere((Vec3){0.5f,-0.1f,1.0f}, 0.3,mat_created_id);
 
         unsigned int offset_vertex = 0;
@@ -180,9 +212,10 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
         }
 
     }
+    //Lights setup
     if(i==3 && j==0)
     {
-        for(int light_id =0; light_id< light_nbr; light_id++) // a décommenter, c'est juste trop abusé l'intensité lumineuse de deux lights
+        for(int light_id =0; light_id< light_nbr; light_id++)
         {
             unsigned int l_id = light_id*11;
             Vec3 color = (Vec3){lightsData[l_id+8],lightsData[l_id+9],lightsData[l_id+10]};
@@ -191,6 +224,7 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
             addLight(pos,color,intensity);
         }
     }
+
 
 }
 
