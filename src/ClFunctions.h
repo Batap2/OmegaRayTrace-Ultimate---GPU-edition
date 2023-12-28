@@ -10,20 +10,6 @@
 #include <CL/cl2.hpp>
 #include "CL/cl_gl.h"
 
-void extractMeshData(const Mesh& current_mesh, float* outVertices, unsigned int* outIndices, int& outNumTriangles) {
-    outNumTriangles = current_mesh.triangle_indicies.size();
-
-    for (size_t i = 0; i < current_mesh.vertices.size(); ++i) {
-        outVertices[i * 3] = current_mesh.vertices[i].x;
-        outVertices[i * 3 + 1] = current_mesh.vertices[i].y;
-        outVertices[i * 3 + 2] = current_mesh.vertices[i].z;
-    }
-
-    // Extract indices
-    for (size_t i = 0; i < current_mesh.indicies.size(); ++i) {
-        outIndices[i] = current_mesh.indicies[i];
-    }
-}
 
 // Function to check if a glm::vec3 already exists in a vector
 bool vec3Exists(const std::vector<glm::vec3>& vec, const glm::vec3& target)
@@ -172,29 +158,109 @@ void initializeBuffers() {
     splitMeshBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMesh_array.size(), splitMesh_array.data());
     splitMeshTriBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMeshTri_array.size(), splitMeshTri_array.data());
 
+
 }
+
+void load(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, const cl::Device &device)
+{
+
+    //Camera setup
+    cl_float* cameraData = mainCamera.getCameraData();
+    cameraBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(cl_float) * 9, cameraData);
+    queue.enqueueWriteBuffer(cameraBuffer, CL_TRUE, 0, sizeof(cl_float) * 9, cameraData);
+    cl::NDRange global(max_x, max_y);
+
+    //SkyBox setup
+    updateskyColorBuffer();
+
+    //Range and window
+    cl::NDRange local(8, 8);
+    cl::Kernel load_kernel(program, "loading");
+
+    //Setting up arguments for loading
+    load_kernel.setArg(0,max_x);
+    load_kernel.setArg(1,max_y);
+    load_kernel.setArg(2,cameraBuffer);
+    load_kernel.setArg(3,skyColorBuffer);
+
+    //Executing loading in kernel.cl
+    queue.enqueueNDRangeKernel(load_kernel, cl::NullRange, global, local);
+    cl_int kernelError = queue.finish();
+    if (kernelError != CL_SUCCESS) {
+        std::cerr << "OpenCL kernel execution error: " << kernelError << std::endl;
+        exit(1);
+    }
+}
+
+
+void updateCL_Camera(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, const cl::Device &device)
+{
+    //Camera setup
+    cl_float* cameraData = mainCamera.getCameraData();
+    cameraBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(cl_float) * 9, cameraData);
+    queue.enqueueWriteBuffer(cameraBuffer, CL_TRUE, 0, sizeof(cl_float) * 9, cameraData);
+    cl::NDRange global(max_x, max_y);
+
+    //Range and window
+    cl::NDRange local(8, 8);
+    cl::Kernel updateCamera_kernel(program, "updateCamera");
+
+    //Setting up arguments for loading
+    updateCamera_kernel.setArg(0,max_x);
+    updateCamera_kernel.setArg(1,max_y);
+    updateCamera_kernel.setArg(2,cameraBuffer);
+
+    //Executing loading in kernel.cl
+    queue.enqueueNDRangeKernel(updateCamera_kernel, cl::NullRange, global, local);
+    cl_int kernelError = queue.finish();
+    if (kernelError != CL_SUCCESS) {
+        std::cerr << "OpenCL kernel execution error: " << kernelError << std::endl;
+        exit(1);
+    }
+}
+
+void updateCL_SkyColor(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, const cl::Device &device)
+{
+
+    //SkyBox setup
+    updateskyColorBuffer();
+
+    //Range and window
+    cl::NDRange global(max_x, max_y);
+    cl::NDRange local(8, 8);
+    cl::Kernel SkyColor_kernel(program, "updateSkyColor");
+
+    //Setting up arguments for loading
+    SkyColor_kernel.setArg(0,max_x);
+    SkyColor_kernel.setArg(1,max_y);
+    SkyColor_kernel.setArg(2,skyColorBuffer);
+
+    //Executing loading in kernel.cl
+    queue.enqueueNDRangeKernel(SkyColor_kernel, cl::NullRange, global, local);
+    cl_int kernelError = queue.finish();
+    if (kernelError != CL_SUCCESS) {
+        std::cerr << "OpenCL kernel execution error: " << kernelError << std::endl;
+        exit(1);
+    }
+}
+
+
 
 //Fct qui appelle un programme de rendu en gérant les threads pour un device donné
 void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, cl::Program &program, const cl::Device &device) {
-
-    //Envoi de la camera au GPU
-    cl_float* cameraData = mainCamera.getCameraData();
-    cl::Buffer cameraBuffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(cl_float) * 9, cameraData);
-    queue.enqueueWriteBuffer(cameraBuffer, CL_TRUE, 0, sizeof(cl_float) * 9, cameraData);
 
 
     cl::Kernel kernel(program, "render");
     kernel.setArg(0, buffer);
     kernel.setArg(1, max_x);
     kernel.setArg(2, max_y);
-    kernel.setArg(3,cameraBuffer);
-    kernel.setArg(4, vertexBuffer);  // Ajouter le buffer de vertices
-    kernel.setArg(5, indexBuffer);   // Ajouter le buffer d'indices
-    kernel.setArg(6, meshNbr);   // Le nombre de triangle contenu dans la scene
-    kernel.setArg(7,splitMeshBuffer); // Ajouter le buffer
-    kernel.setArg(8,splitMeshTriBuffer); // Ajouter le buffer
-    kernel.setArg(9,materialsBuffer);
-    kernel.setArg(10,skyColorBuffer);
+    kernel.setArg(3, vertexBuffer);  // Ajouter le buffer de vertices
+    kernel.setArg(4, indexBuffer);   // Ajouter le buffer d'indices
+    kernel.setArg(5, meshNbr);   // Le nombre de triangle contenu dans la scene
+    kernel.setArg(6,splitMeshBuffer); // Ajouter le buffer
+    kernel.setArg(7,splitMeshTriBuffer); // Ajouter le buffer
+    kernel.setArg(8,materialsBuffer);
+    kernel.setArg(9,skyColorBuffer);
 
     cl::NDRange global(max_x, max_y);
     cl::NDRange local(8, 8);
@@ -261,6 +327,8 @@ void initializeOpenCL(cl::Context& context, cl::CommandQueue& queue, cl::Program
     program = cl::Program(context, clSources);
 
     program.build(devices);
+
+
 }
 
 //Fct qui appelle render et qui mesure le temps de rendu

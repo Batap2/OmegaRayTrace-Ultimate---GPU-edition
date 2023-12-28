@@ -54,7 +54,9 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods) {
                 amount = amountinit ;
                 transop = view2 ;
                 sx = sy = 1.0 ; 
-                tx = ty = 0.0 ; 
+                tx = ty = 0.0 ;
+                updateCL_Camera(window_width,window_height,clQueue,clProgram,devices[0]);
+
                 break ;
             case GLFW_KEY_A:
                 leftHolded = true;
@@ -145,7 +147,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
         mainCamera.cameraDirection = glm::normalize(direction);
         mainCamera.cameraRight = glm::normalize(glm::cross(mainCamera.cameraDirection, upinit));
         mainCamera.cameraUp = glm::cross(mainCamera.cameraRight, mainCamera.cameraDirection);
-
+        updateCL_Camera(window_width,window_height,clQueue,clProgram,devices[0]);
     } else {
         lastX = xpos;
         lastY = ypos;
@@ -163,21 +165,33 @@ void manageInput()
     {
         if(leftHolded){
             mainCamera.cameraPos -= cameraSpeed * mainCamera.cameraRight;
+            updateCL_Camera(window_width,window_height,clQueue,clProgram,devices[0]);
+
         }
         if(rightHolded){
             mainCamera.cameraPos += cameraSpeed * mainCamera.cameraRight;
+            updateCL_Camera(window_width,window_height,clQueue,clProgram,devices[0]);
+
         }
         if(upHolded){
             mainCamera.cameraPos += cameraSpeed * mainCamera.cameraDirection;
+            updateCL_Camera(window_width,window_height,clQueue,clProgram,devices[0]);
+
         }
         if(downHolded){
             mainCamera.cameraPos -= cameraSpeed * mainCamera.cameraDirection;
+            updateCL_Camera(window_width,window_height,clQueue,clProgram,devices[0]);
+
         }
         if(aHolded){
             mainCamera.cameraPos -= cameraSpeed * upinit;
+            updateCL_Camera(window_width,window_height,clQueue,clProgram,devices[0]);
+
         }
         if(eHolded){
             mainCamera.cameraPos += cameraSpeed * upinit;
+            updateCL_Camera(window_width,window_height,clQueue,clProgram,devices[0]);
+
         }
     }
 }
@@ -233,7 +247,8 @@ int main(int argc, char* argv[]){
 
 //---------------------------- GPU PART ----------------------------------//
 
-    initializeOpenCL(clContext, clQueue, clProgram, gpuOutputImg, gpuOutputImg_size, window_width, window_height, devices);
+    initializeOpenCL(clContext, clQueue, clProgram, gpuOutputImg, gpuOutputImg_size, window_width, window_width, devices);
+
 
     //-------------------------------------------------------------//
 
@@ -282,6 +297,8 @@ int main(int argc, char* argv[]){
     std::vector<Mesh*> scene_meshes_check = scene_meshes;
 
     initializeBuffers();
+    load(window_width,window_height,clQueue,clProgram,devices[0]);
+
 
     while (!glfwWindowShouldClose(window))
     {

@@ -95,7 +95,7 @@ namespace GUI{
         ImGui::Text(" ");
         if(ImGui::ColorEdit3("Sky Color", &skyColor[0]))
         {
-            updateskyColorBuffer();
+            updateCL_SkyColor(window_width,window_height,clQueue,clProgram,devices[0]);
         }
         ImGui::Separator();ImGui::Separator();
 

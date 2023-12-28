@@ -7,39 +7,100 @@
 #include "src/OpenCL_src/Plane.cl"
 #include "src/OpenCL_src/Light.cl"
 #include "src/OpenCL_src/Scene.cl"
+#include "src/OpenCL_src/Camera.cl"
+
+// GLOBAL VARIABLE
+
+Camera mainCamera;
+//Scene *mainScene;
+//const int LIGHT_MAX_NUMBER = 32;
+//Light lights[LIGHT_MAX_NUMBER];
+//int lightNumber = 0;
+// Vec3 skyColor;
 
 
+
+//To update the camera
+__kernel void updateCamera(int max_x, int max_y,__global float* cameraData)
+{
+    int i = get_global_id(0);
+    int j = get_global_id(1);
+
+    if(i==0 && j == 0)
+    {
+        mainCamera.cameraPos = (Vec3){cameraData[0], cameraData[1], cameraData[2]};
+        mainCamera.cameraDirection = (Vec3){cameraData[3+0], cameraData[3+1], cameraData[3+2]};
+        mainCamera.cameraRight = (Vec3){cameraData[6+0], cameraData[6+1], cameraData[6+2]};
+        mainCamera.cameraUp = cross(mainCamera.cameraDirection, mainCamera.cameraRight);
+        mainCamera.FOV = 60.;
+        mainCamera.aspectRatio = (float)max_x / (float)max_y;
+        mainCamera.tanFOV = tan(0.5 * radians(mainCamera.FOV));
+    }
+}
+
+//To update the skyColor
+__kernel void updateSkyColor(int max_x, int max_y,__global float* SkyColor)
+{
+    int i = get_global_id(0);
+    int j = get_global_id(1);
+
+    if(i==0 && j == 1)
+    {
+        skyColor = (Vec3){SkyColor[0],SkyColor[1],SkyColor[2]};
+    }
+}
+
+//To load all data requiered to initialize the kernel
+__kernel void loading(int max_x, int max_y,__global float* cameraData,__global float* SkyColor)
+{
+    int i = get_global_id(0);
+    int j = get_global_id(1);
+
+    //Loading camera
+    if( i==0 && j == 0)
+    {
+        mainCamera.cameraPos = (Vec3){cameraData[0], cameraData[1], cameraData[2]};
+        mainCamera.cameraDirection = (Vec3){cameraData[3+0], cameraData[3+1], cameraData[3+2]};
+        mainCamera.cameraRight = (Vec3){cameraData[6+0], cameraData[6+1], cameraData[6+2]};
+        mainCamera.cameraUp = cross(mainCamera.cameraDirection, mainCamera.cameraRight);
+        mainCamera.FOV = 60.;
+        mainCamera.aspectRatio = (float)max_x / (float)max_y;
+        mainCamera.tanFOV = tan(0.5 * radians(mainCamera.FOV));
+    }
+
+    //Loading SkyColor
+    if(i==0 && j ==1)
+    {
+        skyColor = (Vec3){SkyColor[0],SkyColor[1],SkyColor[2]};
+    }
+
+}
 
 
 //Fonction principale du kernel -> Rendu par raytracing 'une image de la scène
-__kernel void render(__global float* fb, int max_x, int max_y,  __global float* cameraData,__global float* vertices,__global unsigned int* indices, int numMesh,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri,__global float* materials, __global float* SkyColor)
+__kernel void render(__global float* fb, int max_x, int max_y,__global float* vertices,__global unsigned int* indices, int numMesh,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri,__global float* materials, __global float* SkyColor)
 {
 	int i = get_global_id(0);
 	int j = get_global_id(1);
 
 	// TODO : importe la skycolor
-	skyColor = (Vec3){SkyColor[0],SkyColor[1],SkyColor[2]};
 
-	Vec3 cameraPos = (Vec3){cameraData[0], cameraData[1], cameraData[2]};
-	Vec3 cameraDirection = (Vec3){cameraData[3+0], cameraData[3+1], cameraData[3+2]};
-	Vec3 cameraRight = (Vec3){cameraData[6+0], cameraData[6+1], cameraData[6+2]};
-	Vec3 cameraUp = cross(cameraDirection, cameraRight);
-	float FOV = 60.;
+    /*mainCamera.cameraPos = (Vec3){cameraData[0], cameraData[1], cameraData[2]};
 
-    float aspectRatio = (float)max_x / (float)max_y;
-    float tanFOV = tan(0.5 * radians(FOV));
+    mainCamera.cameraDirection = (Vec3){cameraData[3+0], cameraData[3+1], cameraData[3+2]};
+    mainCamera.cameraRight = (Vec3){cameraData[6+0], cameraData[6+1], cameraData[6+2]};
+    mainCamera.cameraUp = cross(mainCamera.cameraDirection, mainCamera.cameraRight);
+    mainCamera.FOV = 60.;
+
+    mainCamera.aspectRatio = (float)max_x / (float)max_y;
+    mainCamera.tanFOV = tan(0.5 * radians(mainCamera.FOV));*/
 
     if ((i < max_x) && (j < max_y)) {
         int pixel_index = j * max_x * 3 + i * 3;
 
 
 		// Calcul des coordonnées du rayon
-		Ray ray;
-		float u = (2.0 * ((float)i + 0.5) / (float)max_x - 1.0) * aspectRatio *tanFOV;
-		float v = (1.0 - 2.0 * ((float)j + 0.5) / (float)max_y)* tanFOV;
-
-		ray.direction = normalize(add(scale(cameraRight, u), add(scale(cameraUp, v), cameraDirection)));
-		ray.origin = cameraPos;
+		Ray ray = getRayfromCamera(mainCamera,i,j,max_x,max_y);
 
 		Scene scene;
 
@@ -115,7 +176,7 @@ __kernel void render(__global float* fb, int max_x, int max_y,  __global float* 
 		
 		int bounce = 0;
 	
-		Vec3 out_color = computeColor(&ray, cameraPos, bounce);
+		Vec3 out_color = computeColor(&ray, mainCamera.cameraPos, bounce);
 
 		fb[pixel_index + 0] = out_color.x;
 		fb[pixel_index + 1] = out_color.y;
