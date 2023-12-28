@@ -166,6 +166,7 @@ void manageInput()
 {
     if(rclickHolded)
     {
+        render_number = 0;
         if(leftHolded){
             mainCamera.cameraPos -= cameraSpeed * mainCamera.cameraRight;
             updateCL_Camera(window_width,window_height,clQueue,clProgram,devices[0]);

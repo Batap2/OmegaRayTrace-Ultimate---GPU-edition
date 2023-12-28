@@ -45,6 +45,8 @@ namespace MeshLoader{
         for(int i = 0; i < meshNumber; ++i)
         {
             auto* newMesh = new Mesh();
+            Material mat;
+            newMesh->material = mat;
 
             aiMesh* aiMesh = aiScene->mMeshes[i];
 
@@ -203,15 +205,15 @@ namespace MeshLoader{
             newMesh->material.ambient_material = vec3(aiAmb.r, aiAmb.g, aiAmb.b);
             newMesh->material.diffuse_material = vec3(aiDiff.r, aiDiff.g, aiDiff.b);
             newMesh->material.specular_material = vec3(aiSpec.r, aiSpec.g, aiSpec.b);
-            newMesh->material.IOR = aiIOR;
-            newMesh->material.metallic = aiMetallic;
-            newMesh->material.roughness = aiShininessStrength;
-            newMesh->material.shininess = aiShininess;
-            newMesh->material.emissive_intensity = aiEmissiveIntensity;
-            if(aiEmissiveIntensity > 0)
-            {
-                newMesh->material.isEmissive = 1;
-            }
+            //newMesh->material.IOR = aiIOR;
+            //newMesh->material.metallic = aiMetallic;
+            //newMesh->material.roughness = aiShininessStrength;
+            //newMesh->material.shininess = aiShininess;
+            //newMesh->material.emissive_intensity = aiEmissiveIntensity;
+            //if(aiEmissiveIntensity > 0)
+            //{
+                //newMesh->material.isEmissive = 1;
+            //}
 
             // ----------------------------------------- //
 

@@ -64,9 +64,14 @@ struct Material {
         IOR = 1.0;
         ambient_material = glm::vec3(0.0f, 0.0f, 0.0f);
         ao = 10;
+
+        roughness = 0.6f;
+        metallic = 0.0f;
+
         useTexture = 0;
         isEmissive = 0;
         isTransparent = 0;
+        emissive_intensity = 0;
     }
 
     std::array<float, 13> getMaterialData()

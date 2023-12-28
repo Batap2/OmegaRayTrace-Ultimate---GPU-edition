@@ -190,46 +190,53 @@ Vec3 computePBR(HitData *HD, Ray *ray, Vec3 camPos)
 Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 {
 
-	HitData HD = shootRay(ray->origin, ray->direction);
-	Vec3 finalColor = computePBR(&HD, ray, camPos);
 
-	if(!HD.intersectionExists){
-		return skyColor;
-	}
+	Vec3 finalColor = (Vec3){0.0f,0.0f,0.0f};
+	Vec3 contribution = (Vec3){1.0f,1.0f,1.0f};
+	Vec3 previousColor = (Vec3){0.0f,0.0f,0.0f};
+
+	Ray ray2 = createRay(ray->origin, ray->direction);
+
+	HitData HD;
 
 	for(int bounce = 0; bounce < nbBounce; bounce++)
 	{
 
+		if(bounce != 0){
+			previousColor = HD.material.diffuse_color;
+		}
+
+		HD = shootRay(ray2.origin, ray2.direction);
+
 		HD.normal = randomizeInHemiSphere_fast(HD.normal, HD.material.roughness);
-		Ray reflectedRay;
-		reflectedRay.direction = reflect(ray->direction, HD.normal);
-		reflectedRay.origin = HD.position;
 
-				
-		float reflexionImportance = 1 - HD.material.roughness;
-
-		HD = shootRay(reflectedRay.origin, reflectedRay.direction);
-
-		Vec3 reflectedColor;
 
 		if(!HD.intersectionExists)
 		{
-			reflectedColor = skyColor;
+
+			finalColor = add(finalColor, multiply(contribution, skyColor));
+			break;
 		} else {
-			reflectedColor = computePBR(&HD, ray, camPos);
+			
+			contribution = multiply(contribution, HD.material.diffuse_color);
+			
+			Vec3 emissiveColor = scale(HD.material.diffuse_color, HD.material.emissiveIntensity);
+			
+
+
+			Vec3 mixedColor = lerp(scale(previousColor, HD.material.emissiveIntensity), emissiveColor, 0.5f);
+
+			finalColor = add(finalColor, mixedColor);
 		}
 
-		reflectedColor = scale(reflectedColor, 1/(float)nbBounce);
+		ray2.origin = HD.position;
+		ray2.direction = reflect(ray2.direction, HD.normal);
 
-		reflectedColor = scale(reflectedColor, reflexionImportance);
-
-		finalColor = add(finalColor, reflectedColor);
-		//finalColor = reflectedColor;
 	}
 
 
-	if(nbBounce == 0){
-		return finalColor;
+	if(nbBounce == 1){
+		return multiply(finalColor, contribution);
 	}
 	
 	return finalColor;
