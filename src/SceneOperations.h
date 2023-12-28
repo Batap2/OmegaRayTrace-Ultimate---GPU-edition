@@ -22,8 +22,8 @@ namespace SceneOperations
         l1->color = glm::vec3((float)255/255,(float)190/255,(float)136/255);
         l2->color = glm::vec3((float)198/255,(float)216/255,(float)255/255);
 
-        l1->intensity = 5;
-        l2->intensity = 5;
+        l1->intensity = 1;
+        l2->intensity = 1;
 
         scene_lights.push_back(l1);
         scene_lights.push_back(l2);

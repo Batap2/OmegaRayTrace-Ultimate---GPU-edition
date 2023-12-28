@@ -15,6 +15,7 @@ Scene *mainScene;
 Scene mainScene2;
 Vec3 skyColor;
 
+
 HitData shootRay(Vec3 origin, Vec3 direction)
 {
 	Ray ray = createRay(origin, direction);

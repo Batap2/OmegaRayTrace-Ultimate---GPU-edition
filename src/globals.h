@@ -81,6 +81,7 @@ inline float current_vp_width = window_width/screenSeparation1;
 inline float current_vp_height = window_height;
 
 inline std::vector<float> actual_render(window_height*window_width*3);
+
 inline int render_number = 0;
 
 // -------------- SCENE -------------- //
