@@ -2,7 +2,7 @@
 typedef struct {
     Vec3 center;
     float radius;
-    Material mat;
+    int mat;
 } Sphere;
 
 // Fonction pour tester l'intersection entre un rayon et une sphère
@@ -33,7 +33,7 @@ bool intersectSphere(Ray ray, Sphere sphere, float* t, float t_min, float* t_max
 			HD->intersectionExists = true;
 			HD->position = add(ray.origin, scale(ray.direction, *t));
 			HD->normal = normalize(subtract(HD->position, sphere.center));
-			HD->material = testMat2;
+			HD->material = materials[sphere.mat];
 			HD->objectType = SPHERE;
 			return true;
         }

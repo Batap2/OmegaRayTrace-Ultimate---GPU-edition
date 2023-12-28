@@ -10,6 +10,7 @@ typedef struct {
 } Scene;
 
 Scene *mainScene;
+Scene mainScene2;
 Vec3 skyColor;
 
 HitData shootRay(Vec3 origin, Vec3 direction)
@@ -22,14 +23,14 @@ HitData shootRay(Vec3 origin, Vec3 direction)
 	HitData HD;
 	HD.intersectionExists = false;
 
-	for (int s = 0; s < mainScene->numSpheres; s++) {
-			if (intersectSphere(ray, mainScene->spheres[s], &t, t_min, &t_max, &HD)) {}
+	for (int s = 0; s < mainScene2.numSpheres; s++) {
+			if (intersectSphere(ray, mainScene2.spheres[s], &t, t_min, &t_max, &HD)) {}
 			}
-	for (int p = 0; p < mainScene->numPlanes; p++) {
-		if (intersectPlane(ray, mainScene->planes[0], &t, t_min, &t_max, &HD)) {}
+	for (int p = 0; p < mainScene2.numPlanes; p++) {
+		if (intersectPlane(ray, mainScene2.planes[0], &t, t_min, &t_max, &HD)) {}
 		}
-	for (int tIndex = 0; tIndex < mainScene->numTriangles; tIndex++) {
-		if (intersectTriangle(ray, mainScene->triangles[tIndex], &t, t_min, &t_max, &HD)) {}
+	for (int tIndex = 0; tIndex < mainScene2.numTriangles; tIndex++) {
+		if (intersectTriangle(ray, mainScene2.triangles[tIndex], &t, t_min, &t_max, &HD)) {}
 	}
 
 	return HD;

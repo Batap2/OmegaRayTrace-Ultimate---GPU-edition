@@ -1,7 +1,7 @@
 typedef struct {
     Vec3 normal;
     Vec3 center;
-    Material mat;
+    int mat;
 } Plane;
 
 bool intersectPlane(Ray ray, Plane plane, float* t, float t_min, float* t_max, HitData* HD) {
@@ -15,7 +15,7 @@ bool intersectPlane(Ray ray, Plane plane, float* t, float t_min, float* t_max, H
         if (*t >= t_min && *t < *t_max) {
             *t_max = *t;
             HD->intersectionExists = true;
-            HD->material = testMat;
+            HD->material = materials[plane.mat];
 			HD->objectType = PLANE;
             return true;  // Il y a une intersection avec le plan
         }

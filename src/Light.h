@@ -35,5 +35,24 @@ public:
     //Square quad;
 
     float powerCorrection;
+
+    std::vector<float> getLightData() {
+        std::vector<float> lightData;
+
+        // Ajouter les données de la lumière au vecteur
+        lightData.push_back(static_cast<float>(type));
+        lightData.push_back(static_cast<float>(isInCamSpace));
+        lightData.push_back(pos.x);
+        lightData.push_back(pos.y);
+        lightData.push_back(pos.z);
+        lightData.push_back(radius);
+        lightData.push_back(intensity);
+        lightData.push_back(powerCorrection);
+        lightData.push_back(color.r);
+        lightData.push_back(color.g);
+        lightData.push_back(color.b);
+
+        return lightData;
+    }
 };
 #endif //OBJECT_VIEWER_LIGHT_H

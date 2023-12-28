@@ -25,5 +25,6 @@ typedef struct {
 
 } Material;
 
-Material testMat;
-Material testMat2;
+
+const int MESH_MAX_NUMBER = 1000;
+Material materials[MESH_MAX_NUMBER];

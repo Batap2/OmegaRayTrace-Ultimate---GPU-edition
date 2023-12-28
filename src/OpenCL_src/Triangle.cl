@@ -2,7 +2,7 @@ typedef struct {
     Vec3 vertex1;
     Vec3 vertex2;
     Vec3 vertex3;
-    Material mat;
+    int mat;
 } Triangle;
 
 
@@ -73,7 +73,7 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
         HD->intersectionExists = true;
         HD->position = add(ray.origin, scale(ray.direction, *t));
 		HD->normal = N;
-        HD->material = triangle.mat;
+        HD->material = materials[triangle.mat];
 		HD->objectType = TRIANGLE;
         return true;
     }

@@ -120,6 +120,7 @@ inline cl::Buffer splitMeshTriBuffer;
 inline cl::Buffer materialsBuffer;
 inline cl::Buffer skyColorBuffer;
 inline cl::Buffer cameraBuffer;
+inline cl::Buffer lightsBuffer;
 inline int meshNbr;
 inline std::vector<float> vertices_array;
 inline std::vector<unsigned int> indices_array;

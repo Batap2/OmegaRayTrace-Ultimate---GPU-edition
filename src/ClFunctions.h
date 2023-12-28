@@ -10,6 +10,7 @@
 #include <CL/cl2.hpp>
 #include "CL/cl_gl.h"
 
+//-----------------------UTILITARIES----------------------------------------//
 
 // Function to check if a glm::vec3 already exists in a vector
 bool vec3Exists(const std::vector<glm::vec3>& vec, const glm::vec3& target)
@@ -46,6 +47,46 @@ void convertVec3ToFloat(const std::vector<glm::vec3>& vec3Vector, std::vector<fl
     }
 }
 
+template <typename T>
+void printVector(const std::vector<T>& vec) {
+    std::cout << "[";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        std::cout << vec[i];
+        if (i < vec.size() - 1) {
+            std::cout << ", ";
+        }
+    }
+    std::cout << "]\n";
+}
+
+
+//To Write an image
+void writeImageToFile(const std::vector<float>& fb, size_t fb_size, int nx, int ny) {
+    // Output FB as Image
+    std::ofstream imageFile("ImageRendered.ppm");
+    if (!imageFile.is_open()) {
+        std::cerr << "Failed to open image file." << std::endl;
+        exit(1);
+    }
+
+    imageFile << "P3\n" << nx << " " << ny << "\n255\n";
+    for (int j = ny - 1; j >= 0; j--) {
+        for (int i = 0; i < nx; i++) {
+            size_t pixel_index = j * 3 * nx + i * 3;
+            float r = fb[pixel_index + 0] * 255.0f;
+            float g = fb[pixel_index + 1] * 255.0f;
+            float b = fb[pixel_index + 2] * 255.0f;
+            int ir = static_cast<int>(r);
+            int ig = static_cast<int>(g);
+            int ib = static_cast<int>(b);
+            imageFile << ir << " " << ig << " " << ib << "\n";
+            //std::cerr << r<< " " << g << " " << b << std::endl;
+        }
+    }
+
+    imageFile.close();
+}
+//--------------------------------------------------UPDATE BUFFER-----------------------------------------------------//
 
 void updateMaterialBuffer()
 {
@@ -69,6 +110,11 @@ void updateskyColorBuffer()
 {
     skyColorBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * 3, &skyColor);
 }
+
+
+
+//-----------------------------------------DATA EXTRACTOR FROM SCENE ---------------------------------------------------//
+
 
 void extractSceneData()
 {
@@ -127,32 +173,12 @@ void extractSceneData()
     std::cout<<" Element of splitMesh array : "<< splitMesh_array[0] <<std::endl;
 }
 
-template <typename T>
-void printVector(const std::vector<T>& vec) {
-    std::cout << "[";
-    for (size_t i = 0; i < vec.size(); ++i) {
-        std::cout << vec[i];
-        if (i < vec.size() - 1) {
-            std::cout << ", ";
-        }
-    }
-    std::cout << "]\n";
-}
+//---------------------------------------------FIRST INIT OF BUFFERS -------------------------------------------------------//
 
 void initializeBuffers() {
 
     extractSceneData();
 
-    printVector(vertices_array);
-    printVector(indices_array);
-    std::cout << "[";
-    for (size_t i = 0; i < scene_meshes[0]->vertices.size(); ++i) {
-        std::cout << scene_meshes[0]->vertices[i][0] <<"-"<< scene_meshes[0]->vertices[i][1] <<"-"<<scene_meshes[0]->vertices[i][2];
-        if (i < scene_meshes[0]->vertices.size() - 1) {
-            std::cout << ", ";
-        }
-    }
-    std::cout << "]\n";
     updateMaterialBuffer();
     updateskyColorBuffer();
     vertexBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * vertices_array.size(),vertices_array.data());
@@ -160,9 +186,12 @@ void initializeBuffers() {
     splitMeshBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMesh_array.size(), splitMesh_array.data());
     splitMeshTriBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMeshTri_array.size(), splitMeshTri_array.data());
 
-
 }
 
+
+//----------------------------------------------- KERNELS ----------------------------------------------------------------//
+
+//LOADING KERNEL - To set up initial scene data
 void load(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, const cl::Device &device)
 {
 
@@ -186,6 +215,10 @@ void load(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, co
     load_kernel.setArg(3,skyColorBuffer);
     load_kernel.setArg(4, meshNbr);
     load_kernel.setArg(5,materialsBuffer);
+    load_kernel.setArg(6, vertexBuffer);  // Ajouter le buffer de vertices
+    load_kernel.setArg(7, indexBuffer);   // Ajouter le buffer d'indices
+    load_kernel.setArg(8,splitMeshBuffer); // Ajouter le buffer
+    load_kernel.setArg(9,splitMeshTriBuffer); // Ajouter le buffer
 
     //Executing loading in kernel.cl
     queue.enqueueNDRangeKernel(load_kernel, cl::NullRange, global, local);
@@ -196,7 +229,7 @@ void load(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, co
     }
 }
 
-
+//To update the camera on the GPU
 void updateCL_Camera(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, const cl::Device &device)
 {
     //Camera setup
@@ -223,6 +256,7 @@ void updateCL_Camera(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &
     }
 }
 
+//To update SkyColor on the GPU
 void updateCL_SkyColor(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, const cl::Device &device)
 {
 
@@ -248,23 +282,43 @@ void updateCL_SkyColor(int max_x, int max_y,cl::CommandQueue &queue, cl::Program
     }
 }
 
+//To update Materials on the GPU
+void updateCL_Materials(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, const cl::Device &device)
+{
+
+    updateMaterialBuffer();
+
+    //Range and window
+    cl::NDRange global(max_x, max_y);
+    cl::NDRange local(8, 8);
+    cl::Kernel Materials_kernel(program, "updateMaterials");
+
+    //Setting up arguments for loading
+    Materials_kernel.setArg(0,max_x);
+    Materials_kernel.setArg(1,max_y);
+    Materials_kernel.setArg(2,meshNbr);
+    Materials_kernel.setArg(3,materialsBuffer);
+
+
+    //Executing loading in kernel.cl
+    queue.enqueueNDRangeKernel(Materials_kernel, cl::NullRange, global, local);
+    cl_int kernelError = queue.finish();
+    if (kernelError != CL_SUCCESS) {
+        std::cerr << "OpenCL kernel execution error: " << kernelError << std::endl;
+        exit(1);
+    }
+}
 
 
 
-//Fct qui appelle un programme de rendu en gérant les threads pour un device donné
+//To render a frame by raytracing on GPU
 void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, cl::Program &program, const cl::Device &device) {
-
 
     cl::Kernel kernel(program, "render");
     kernel.setArg(0, buffer);
     kernel.setArg(1, max_x);
     kernel.setArg(2, max_y);
-    kernel.setArg(3, vertexBuffer);  // Ajouter le buffer de vertices
-    kernel.setArg(4, indexBuffer);   // Ajouter le buffer d'indices
-    kernel.setArg(5, meshNbr);   // Le nombre de triangle contenu dans la scene
-    kernel.setArg(6,splitMeshBuffer); // Ajouter le buffer
-    kernel.setArg(7,splitMeshTriBuffer); // Ajouter le buffer
-    kernel.setArg(8,materialsBuffer);
+
 
     cl::NDRange global(max_x, max_y);
     cl::NDRange local(8, 8);
@@ -277,7 +331,7 @@ void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, c
     }
 }
 
-// Fct pour init l'environnement OPENCL et pour charger le programme de rendu
+//To setup the OpenCL environnement
 void initializeOpenCL(cl::Context& context, cl::CommandQueue& queue, cl::Program& program, std::vector<float>& img_buffer, size_t& img_buffer_size, int nx, int ny, std::vector<cl::Device>& devices) {
     // Initialize OpenCL
     std::vector<cl::Platform> platforms;
@@ -335,7 +389,7 @@ void initializeOpenCL(cl::Context& context, cl::CommandQueue& queue, cl::Program
 
 }
 
-//Fct qui appelle render et qui mesure le temps de rendu
+//To call render on GPU and mesure the rendering time
 void renderImage(cl::Buffer& buffer, int nx, int ny, cl::CommandQueue& queue, cl::Program& program, const std::vector<cl::Device>& devices) {
     // Measure the time before rendering
     clock_t start_time = clock();
@@ -350,30 +404,6 @@ void renderImage(cl::Buffer& buffer, int nx, int ny, cl::CommandQueue& queue, cl
     std::cerr << "Rendering time: " << duration << " seconds" << std::endl;
 }
 
-void writeImageToFile(const std::vector<float>& fb, size_t fb_size, int nx, int ny) {
-    // Output FB as Image
-    std::ofstream imageFile("ImageRendered.ppm");
-    if (!imageFile.is_open()) {
-        std::cerr << "Failed to open image file." << std::endl;
-        exit(1);
-    }
 
-    imageFile << "P3\n" << nx << " " << ny << "\n255\n";
-    for (int j = ny - 1; j >= 0; j--) {
-        for (int i = 0; i < nx; i++) {
-            size_t pixel_index = j * 3 * nx + i * 3;
-            float r = fb[pixel_index + 0] * 255.0f;
-            float g = fb[pixel_index + 1] * 255.0f;
-            float b = fb[pixel_index + 2] * 255.0f;
-            int ir = static_cast<int>(r);
-            int ig = static_cast<int>(g);
-            int ib = static_cast<int>(b);
-            imageFile << ir << " " << ig << " " << ib << "\n";
-            //std::cerr << r<< " " << g << " " << b << std::endl;
-        }
-    }
-
-    imageFile.close();
-}
 
 #endif //OBJECT_VIEWER_CLFUNCTIONS_H

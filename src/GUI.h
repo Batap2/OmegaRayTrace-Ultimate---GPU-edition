@@ -116,24 +116,28 @@ namespace GUI{
                 if(old_mesh_color != scene_meshes[selected_object]->material.diffuse_material)
                 {
                     scene_meshes[selected_object]->send_material_to_shaders();
-                    updateMaterialBuffer();
+                    updateCL_Materials(window_width,window_height,clQueue,clProgram,devices[0]);
+
                     old_mesh_color = scene_meshes[selected_object]->material.diffuse_material;
                 }
             }
             if(ImGui::DragFloat("Metallic", &scene_meshes[selected_object]->material.metallic, 0.01, 0, 1))
             {
                 scene_meshes[selected_object]->send_material_to_shaders();
-                updateMaterialBuffer();
+                updateCL_Materials(window_width,window_height,clQueue,clProgram,devices[0]);
+
             }
             if(ImGui::DragFloat("Roughness", &scene_meshes[selected_object]->material.roughness, 0.01, 0, 1))
             {
                 scene_meshes[selected_object]->send_material_to_shaders();
-                updateMaterialBuffer();
+                updateCL_Materials(window_width,window_height,clQueue,clProgram,devices[0]);
+
             }
             if(ImGui::DragFloat("Emissive Intensity", &scene_meshes[selected_object]->material.emissive_intensity, 0.01, 0, 50))
             {
                 scene_meshes[selected_object]->send_material_to_shaders();
-                updateMaterialBuffer();
+                updateCL_Materials(window_width,window_height,clQueue,clProgram,devices[0]);
+
             }
 
 
@@ -153,14 +157,16 @@ namespace GUI{
                 if(emissiveClick != scene_meshes[selected_object]->material.isEmissive){
                     scene_meshes[selected_object]->material.isEmissive = emissiveClick;
                     scene_meshes[selected_object]->send_material_to_shaders();
-                    updateMaterialBuffer();
+                    updateCL_Materials(window_width,window_height,clQueue,clProgram,devices[0]);
+
                 }
             }
             if(ImGui::Checkbox("Transparent", &transparentClick)){
                 if(transparentClick != scene_meshes[selected_object]->material.isTransparent){
                     scene_meshes[selected_object]->material.isTransparent = transparentClick;
                     scene_meshes[selected_object]->send_material_to_shaders();
-                    updateMaterialBuffer();
+                    updateCL_Materials(window_width,window_height,clQueue,clProgram,devices[0]);
+
                 }
             }
 
