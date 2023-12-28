@@ -17,6 +17,7 @@
 #include "SceneOperations.h"
 
 #include "globals.h"
+#include "ClFunctions.h"
 
 // FLAGS : https://pixtur.github.io/mkdocs-for-imgui/site/api-imgui/Flags---Enumerations/#ImGuiWindowFlags_NoMove
 // GIZMO : https://github.com/CedricGuillemet/ImGuizmo
@@ -92,7 +93,10 @@ namespace GUI{
         ImGui::InputFloat3("Camera position ", &mainCamera.cameraPos[0]);
         ImGui::InputFloat3("Camera orientation ", &mainCamera.cameraDirection[0]);
         ImGui::Text(" ");
-        ImGui::ColorEdit3("Sky Color", &skyColor[0]);
+        if(ImGui::ColorEdit3("Sky Color", &skyColor[0]))
+        {
+            updateskyColorBuffer();
+        }
         ImGui::Separator();ImGui::Separator();
 
         ImGui::Text(" ");ImGui::Text(" ");
@@ -112,20 +116,24 @@ namespace GUI{
                 if(old_mesh_color != scene_meshes[selected_object]->material.diffuse_material)
                 {
                     scene_meshes[selected_object]->send_material_to_shaders();
+                    updateMaterialBuffer();
                     old_mesh_color = scene_meshes[selected_object]->material.diffuse_material;
                 }
             }
             if(ImGui::DragFloat("Metallic", &scene_meshes[selected_object]->material.metallic, 0.01, 0, 1))
             {
                 scene_meshes[selected_object]->send_material_to_shaders();
+                updateMaterialBuffer();
             }
             if(ImGui::DragFloat("Roughness", &scene_meshes[selected_object]->material.roughness, 0.01, 0, 1))
             {
                 scene_meshes[selected_object]->send_material_to_shaders();
+                updateMaterialBuffer();
             }
             if(ImGui::DragFloat("Emissive Intensity", &scene_meshes[selected_object]->material.emissive_intensity, 0.01, 0, 50))
             {
                 scene_meshes[selected_object]->send_material_to_shaders();
+                updateMaterialBuffer();
             }
 
 
@@ -145,12 +153,14 @@ namespace GUI{
                 if(emissiveClick != scene_meshes[selected_object]->material.isEmissive){
                     scene_meshes[selected_object]->material.isEmissive = emissiveClick;
                     scene_meshes[selected_object]->send_material_to_shaders();
+                    updateMaterialBuffer();
                 }
             }
             if(ImGui::Checkbox("Transparent", &transparentClick)){
                 if(transparentClick != scene_meshes[selected_object]->material.isTransparent){
                     scene_meshes[selected_object]->material.isTransparent = transparentClick;
                     scene_meshes[selected_object]->send_material_to_shaders();
+                    updateMaterialBuffer();
                 }
             }
 
