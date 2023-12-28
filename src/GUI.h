@@ -117,27 +117,27 @@ namespace GUI{
                 {
                     scene_meshes[selected_object]->send_material_to_shaders();
                     updateCL_Materials(window_width,window_height,clQueue,clProgram,devices[0]);
-
                     old_mesh_color = scene_meshes[selected_object]->material.diffuse_material;
+                    render_number = 0;
                 }
             }
             if(ImGui::DragFloat("Metallic", &scene_meshes[selected_object]->material.metallic, 0.01, 0, 1))
             {
                 scene_meshes[selected_object]->send_material_to_shaders();
                 updateCL_Materials(window_width,window_height,clQueue,clProgram,devices[0]);
-
+                render_number = 0;
             }
             if(ImGui::DragFloat("Roughness", &scene_meshes[selected_object]->material.roughness, 0.01, 0, 1))
             {
                 scene_meshes[selected_object]->send_material_to_shaders();
                 updateCL_Materials(window_width,window_height,clQueue,clProgram,devices[0]);
-
+                render_number = 0;
             }
             if(ImGui::DragFloat("Emissive Intensity", &scene_meshes[selected_object]->material.emissive_intensity, 0.01, 0, 50))
             {
                 scene_meshes[selected_object]->send_material_to_shaders();
                 updateCL_Materials(window_width,window_height,clQueue,clProgram,devices[0]);
-
+                render_number = 0;
             }
 
 
@@ -158,7 +158,7 @@ namespace GUI{
                     scene_meshes[selected_object]->material.isEmissive = emissiveClick;
                     scene_meshes[selected_object]->send_material_to_shaders();
                     updateCL_Materials(window_width,window_height,clQueue,clProgram,devices[0]);
-
+                    render_number = 0;
                 }
             }
             if(ImGui::Checkbox("Transparent", &transparentClick)){
@@ -166,13 +166,14 @@ namespace GUI{
                     scene_meshes[selected_object]->material.isTransparent = transparentClick;
                     scene_meshes[selected_object]->send_material_to_shaders();
                     updateCL_Materials(window_width,window_height,clQueue,clProgram,devices[0]);
-
+                    render_number = 0;
                 }
             }
 
             if(ImGui::Button("Delete"))
             {
                 SceneOperations::removeMesh(selected_object);
+                render_number = 0;
                 ImGui::CloseCurrentPopup();
             }
 
@@ -208,7 +209,7 @@ namespace GUI{
         {
             SceneOperations::addLight();
             updateCL_Lights(window_width,window_height,clQueue,clProgram,devices[0]);
-
+            render_number = 0;
         }
 
         ImGui::Separator();
@@ -221,22 +222,22 @@ namespace GUI{
                 {
                     ShaderUtils::sendLightsToShaders();
                     updateCL_Lights(window_width,window_height,clQueue,clProgram,devices[0]);
-
+                    render_number = 0;
                 }
                 if(ImGui::ColorEdit3("Color", &scene_lights[selected_light]->color[0]), colorEditFlag)
                 {
                     if(old_light_color != scene_lights[selected_light]->color){
                         ShaderUtils::sendLightsToShaders();
                         updateCL_Lights(window_width,window_height,clQueue,clProgram,devices[0]);
-
                         old_light_color = scene_lights[selected_light]->color;
+                        render_number = 0;
                     }
                 }
                 if(ImGui::DragFloat("Intensity", &scene_lights[selected_light]->intensity, 0.01))
                 {
                     ShaderUtils::sendLightsToShaders();
                     updateCL_Lights(window_width,window_height,clQueue,clProgram,devices[0]);
-
+                    render_number = 0;
                 }
 
                 if(ImGui::Button("Delete"))
@@ -244,6 +245,7 @@ namespace GUI{
                     SceneOperations::removeLight(selected_light);
                     updateCL_Lights(window_width,window_height,clQueue,clProgram,devices[0]);
                     ImGui::CloseCurrentPopup();
+                    render_number = 0;
                 }
 
                 ImGui::EndPopup();
