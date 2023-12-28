@@ -18,7 +18,7 @@ HitData shootRay(Vec3 origin, Vec3 direction)
 	Ray ray = createRay(origin, direction);
 
 	float t;
-	float t_min = 0.01;
+	float t_min = 0.000001f;
 	float t_max = FLT_MAX;
 	HitData HD;
 	HD.intersectionExists = false;
@@ -97,29 +97,39 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 	HitData HD = shootRay(ray->origin, ray->direction);
 	Vec3 finalColor = computePhong(&HD, ray, camPos);
 
+	if(!HD.intersectionExists){
+		return (Vec3){0.0f,0.0f,0.0f};
+	}
+
 	for(int bounce = 0; bounce < nbBounce; bounce++)
 	{
-		if(!HD.intersectionExists)
-		{
-			return (Vec3){0.0f,0.3f,0.0f};
-		}
+
+		//HD.normal = randomizeInHemiSphere_fast(HD.normal, HD.material.roughness);
 
 		Ray reflectedRay;
 		reflectedRay.direction = reflect(ray->direction, HD.normal);
 		reflectedRay.origin = HD.position;
 
+				
 		HD = shootRay(reflectedRay.origin, reflectedRay.direction);
 
-		Vec3 reflectedColor = computePhong(&HD, ray, camPos);
-		reflectedColor = (Vec3){0.0f,1.0f,0.0f};
+		Vec3 reflectedColor;
 
-		add(finalColor, reflectedColor);
+		if(!HD.intersectionExists)
+		{
+			reflectedColor = (Vec3){0.0f,0.0f,0.0f};
+		} else {
+			reflectedColor = computePhong(&HD, ray, camPos);
+		}
+
+
+		reflectedColor = scale(reflectedColor, 1 - HD.material.roughness);
+
+		finalColor = add(finalColor, reflectedColor);
+		//finalColor = reflectedColor;
 	}
 
-	if(!HD.intersectionExists){
-		return skyColor;
-	}
 
-
-	return finalColor;
+	
+	return divide(finalColor, nbBounce);
 }

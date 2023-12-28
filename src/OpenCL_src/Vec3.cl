@@ -58,6 +58,13 @@ Vec3 cross(Vec3 a, Vec3 b) {
     return result;
 }
 
+Vec3 divide(Vec3 a, float b){
+	a.x = a.x/b;
+	a.y = a.y/b;
+	a.z = a.z/b;
+	return a;
+}
+
 Vec3 multiply(Vec3 a, Vec3 b)
 {
 	a.x = a.x * b.x;
