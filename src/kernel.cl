@@ -17,7 +17,8 @@ Camera mainCamera;
 //Light lights[LIGHT_MAX_NUMBER];
 //int lightNumber = 0;
 // Vec3 skyColor;
-
+const int MESH_MAX_NUMBER = 1000;
+Material materials[1000];
 
 
 //To update the camera
@@ -51,7 +52,7 @@ __kernel void updateSkyColor(int max_x, int max_y,__global float* SkyColor)
 }
 
 //To load all data requiered to initialize the kernel
-__kernel void loading(int max_x, int max_y,__global float* cameraData,__global float* SkyColor)
+__kernel void loading(int max_x, int max_y,__global float* cameraData,__global float* SkyColor, int mesh_nbr,__global float* materialsData )
 {
     int i = get_global_id(0);
     int j = get_global_id(1);
@@ -69,16 +70,31 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
     }
 
     //Loading SkyColor
-    if(i==0 && j ==1)
+    if(i==1 && j ==0)
     {
         skyColor = (Vec3){SkyColor[0],SkyColor[1],SkyColor[2]};
     }
 
+    //Loading Material
+    if(i==2 && j==0)
+    {
+        for(int mesh_id =0; mesh_id < mesh_nbr; mesh_id++)
+        {
+            unsigned int mat_id = mesh_id*13;
+            materials[mesh_id].ambiant_color = (Vec3){materialsData[mat_id],materialsData[mat_id+1],materialsData[mat_id+2]};
+            materials[mesh_id].diffuse_color = (Vec3){materialsData[mat_id+3],materialsData[mat_id+4],materialsData[mat_id+5]};
+            materials[mesh_id].specular_color = (Vec3){materialsData[mat_id+6],materialsData[mat_id+7],materialsData[mat_id+8]};
+            materials[mesh_id].shininess = materialsData[mat_id+9];
+            materials[mesh_id].metallic = materialsData[mat_id+10];
+            materials[mesh_id].roughness = materialsData[mat_id+11];
+            materials[mesh_id].ao = materialsData[mat_id+12];
+        }
+    }
 }
 
 
 //Fonction principale du kernel -> Rendu par raytracing 'une image de la scène
-__kernel void render(__global float* fb, int max_x, int max_y,__global float* vertices,__global unsigned int* indices, int numMesh,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri,__global float* materials, __global float* SkyColor)
+__kernel void render(__global float* fb, int max_x, int max_y,__global float* vertices,__global unsigned int* indices, int numMesh,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri,__global float* materials)
 {
 	int i = get_global_id(0);
 	int j = get_global_id(1);
@@ -126,15 +142,15 @@ __kernel void render(__global float* fb, int max_x, int max_y,__global float* ve
 			unsigned int tri_nbr = split_meshes_tri[mesh_id];
 			unsigned int index_nbr = tri_nbr *3;
 
-            Material current_mat;
-            unsigned int mat_id = mesh_id*13;
+            Material current_mat = materials[mesh_id];
+            /*unsigned int mat_id = mesh_id*13;
             current_mat.ambiant_color = (Vec3){materials[mat_id],materials[mat_id+1],materials[mat_id+2]};
             current_mat.diffuse_color = (Vec3){materials[mat_id+3],materials[mat_id+4],materials[mat_id+5]};
             current_mat.specular_color = (Vec3){materials[mat_id+6],materials[mat_id+7],materials[mat_id+8]};
             current_mat.shininess = materials[mat_id+9];
             current_mat.metallic = materials[mat_id+10];
             current_mat.roughness = materials[mat_id+11];
-            current_mat.ao = materials[mat_id+12];
+            current_mat.ao = materials[mat_id+12];*/
 
 			for(int tri = 0; tri < tri_nbr; tri++)
 			{

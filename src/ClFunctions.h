@@ -78,6 +78,7 @@ void extractSceneData()
     splitMeshTri_array.clear();
 
     size_t mesh_number = scene_meshes.size();
+    meshNbr = mesh_number;
     std::vector<glm::vec3> vertexChecklist;
     std::cout<<"Nbr of meshes in the scene : "<< mesh_number<<"\n";
     meshNbr = (int)mesh_number;
@@ -141,6 +142,7 @@ void printVector(const std::vector<T>& vec) {
 void initializeBuffers() {
 
     extractSceneData();
+
     printVector(vertices_array);
     printVector(indices_array);
     std::cout << "[";
@@ -182,6 +184,8 @@ void load(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, co
     load_kernel.setArg(1,max_y);
     load_kernel.setArg(2,cameraBuffer);
     load_kernel.setArg(3,skyColorBuffer);
+    load_kernel.setArg(4, meshNbr);
+    load_kernel.setArg(5,materialsBuffer);
 
     //Executing loading in kernel.cl
     queue.enqueueNDRangeKernel(load_kernel, cl::NullRange, global, local);
@@ -246,6 +250,7 @@ void updateCL_SkyColor(int max_x, int max_y,cl::CommandQueue &queue, cl::Program
 
 
 
+
 //Fct qui appelle un programme de rendu en gérant les threads pour un device donné
 void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, cl::Program &program, const cl::Device &device) {
 
@@ -260,7 +265,6 @@ void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, c
     kernel.setArg(6,splitMeshBuffer); // Ajouter le buffer
     kernel.setArg(7,splitMeshTriBuffer); // Ajouter le buffer
     kernel.setArg(8,materialsBuffer);
-    kernel.setArg(9,skyColorBuffer);
 
     cl::NDRange global(max_x, max_y);
     cl::NDRange local(8, 8);
