@@ -20,7 +20,10 @@
 // Vec3 skyColor;
 //const int MESH_MAX_NUMBER = 1000;
 //Material materials[MESH_MAX_NUMBER];
+//int material_nbr;
 //unsigned int GPURandomInt;
+
+
 
 //To update the camera
 __kernel void updateCamera(int max_x, int max_y,__global float* cameraData)
@@ -58,6 +61,7 @@ __kernel void updateMaterials(int max_x, int max_y, int mesh_nbr, __global float
     int j = get_global_id(1);
 
     if (i == 0 && j == 2) {
+        material_nbr = mesh_nbr;
         for(int mesh_id =0; mesh_id < mesh_nbr; mesh_id++)
         {
             unsigned int mat_id = mesh_id*13;
@@ -94,6 +98,8 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
 {
     int i = get_global_id(0);
     int j = get_global_id(1);
+    material_nbr = mesh_nbr;
+
 
     //Loading camera
     if( i==0 && j == 0)
@@ -118,6 +124,7 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
     {
         for(int mesh_id =0; mesh_id < mesh_nbr; mesh_id++)
         {
+
             unsigned int mat_id = mesh_id*13;
             materials[mesh_id].ambiant_color = (Vec3){materialsData[mat_id],materialsData[mat_id+1],materialsData[mat_id+2]};
             materials[mesh_id].diffuse_color = (Vec3){materialsData[mat_id+3],materialsData[mat_id+4],materialsData[mat_id+5]};
@@ -136,6 +143,10 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
 		mainScene2.numSpheres = 0;
         mainScene2.numPlanes = 0;
         mainScene2.numTriangles = 0;
+
+        //Adding spheres and his matereial
+        int mat_created_id = createMaterial(materials[2].ambiant_color,materials[2].diffuse_color,materials[2].specular_color,materials[2].shininess,materials[2].metallic,materials[2].roughness,materials[2].ao);
+        addSphere((Vec3){0.,0.,0}, 0.5,mat_created_id);
 
         unsigned int offset_vertex = 0;
         unsigned int offset_index = 0;

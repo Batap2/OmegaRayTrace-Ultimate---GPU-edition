@@ -15,6 +15,14 @@ Scene *mainScene;
 Scene mainScene2;
 Vec3 skyColor;
 
+void addSphere(Vec3 center, float radius, int mat)
+{
+Sphere s = (Sphere){center,radius,mat};
+mainScene2.spheres[mainScene2.numSpheres] = s;
+mainScene2.numSpheres++;
+}
+
+
 HitData shootRay(Vec3 origin, Vec3 direction)
 {
 	Ray ray = createRay(origin, direction);
@@ -100,7 +108,7 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 	Vec3 finalColor = computePhong(&HD, ray, camPos);
 
 	if(!HD.intersectionExists){
-		return (Vec3){0.0f,0.0f,0.0f};
+		return skyColor;
 	}
 
 	for(int bounce = 0; bounce < nbBounce; bounce++)
