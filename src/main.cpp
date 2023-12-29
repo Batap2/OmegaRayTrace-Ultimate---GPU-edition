@@ -294,7 +294,7 @@ int main(int argc, char* argv[]){
 
 
     SceneOperations::initSceneLights();
-    SceneOperations::openFile("data/big_plane.fbx");
+    SceneOperations::openFile("data/cornel.fbx");
     SceneOperations::init_flat_screen();
 
     ShaderUtils::reshape(window, window_width, window_height);
@@ -302,7 +302,7 @@ int main(int argc, char* argv[]){
 
     mainCamera.cameraPos = vec3(0,0.2,4);
 
-    std::vector<Mesh*> scene_meshes_check = scene_meshes;
+    rng.seed(std::random_device()());
 
     initializeBuffers();
     load(window_width,window_height,clQueue,clProgram,devices[0]);

@@ -41,7 +41,7 @@ bool intersectSphere(Ray ray, Sphere sphere, float* t, float t_min, float* t_max
 			*t_max = *t;
 			HD->intersectionExists = true;
 			HD->position = add(ray.origin, scale(ray.direction, *t));
-            HD->position2 = add(ray.origin, scale(ray.direction, *t));
+            HD->position2 = add(ray.origin, scale(ray.direction, t2));
 			HD->normal = normalize(subtract(HD->position, sphere.center));
 			HD->material = materials[sphere.mat];
 			HD->objectType = SPHERE;

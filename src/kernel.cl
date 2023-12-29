@@ -135,6 +135,9 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
             materials[mesh_id].roughness = materialsData[mat_id+11];
             materials[mesh_id].ao = materialsData[mat_id+12];
             materials[mesh_id].emissiveIntensity = materialsData[mat_id+13];
+
+            // TODO : rajouter cela
+            materials[mesh_id].isTransparent = 0.0f;
         }
     }
 
@@ -153,31 +156,41 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
 
         // scene : big_plane
 
-        //int mat_created_id = createMaterial(materials[2].ambiant_color,materials[2].diffuse_color,materials[2].specular_color,materials[2].shininess,0,0,materials[2].ao);
-        addSphere((Vec3){0.0f,0.35f,0.0f}, 0.3,3);
+        // addSphere((Vec3){0.0f,0.35f,0.0f}, 0.3,3);
 
-        //int mat_created_id2 = createMaterial(materials[2].ambiant_color,materials[2].diffuse_color,materials[2].specular_color,materials[2].shininess,0,0,materials[2].ao);
-        addSphere((Vec3){1.0f,0.35f,0.0f}, 0.3,1);
+        // addSphere((Vec3){-0.5f,1.35f,0.0f}, 0.3,1);
 
-        //int mat_created_id = createMaterial(materials[2].ambiant_color,materials[2].diffuse_color,materials[2].specular_color,materials[2].shininess,0,0,materials[2].ao);
-        addSphere((Vec3){-1.0f,0.35f,0.0f}, 0.3,2);
+        // addSphere((Vec3){-1.0f,0.35f,0.0f}, 0.3,2);
 
 
-        materials[0].roughness = 0.8f;
-        materials[0].diffuse_color = (Vec3){0.4f,0.4f,0.4f};
+        // materials[0].roughness = 0.8f;
+        // materials[0].diffuse_color = (Vec3){0.4f,0.4f,0.4f};
 
-        materials[1].roughness = 0.6f;
-        materials[1].diffuse_color = (Vec3){1.0f,1.0f,1.0f};
-        materials[1].emissiveIntensity = 10.0f;
+        // materials[1].roughness = 0.6f;
+        // materials[1].diffuse_color = (Vec3){1.0f,1.0f,1.0f};
+        // materials[1].emissiveIntensity = 10.0f;
 
-        materials[2].roughness = 1.0f;
-        materials[2].diffuse_color = (Vec3){1.0f,0.0f,0.0f};
+        // materials[2].roughness = 1.0f;
+        // materials[2].diffuse_color = (Vec3){1.0f,0.0f,0.0f};
 
-        materials[3].roughness = 0.1f;
+        // materials[3].roughness = 0.0f;
+        // materials[3].isTransparent = 1.0f;
+
 
         // scene : cornel
 
-        //materials[6].emissiveIntensity = 2.0f;
+        int mat_created_id = createMaterial(materials[2].ambiant_color,(Vec3){1.0f,1.0f,1.0f},materials[2].specular_color,materials[2].shininess,0.0f,0.0f,materials[2].ao);
+        addSphere((Vec3){0.0f,-0.6f,1.5f}, 0.2,mat_created_id);
+
+        int mat_created_id2 = createMaterial(materials[2].ambiant_color,(Vec3){1.0f,1.0f,1.0f},materials[2].specular_color,materials[2].shininess,0.0f,1.0f,materials[2].ao);
+        addSphere((Vec3){-0.5f,-0.6f,1.5f}, 0.2,mat_created_id2);
+
+        int mat_created_id3 = createMaterial(materials[2].ambiant_color,(Vec3){1.0f,1.0f,1.0f},materials[2].specular_color,materials[2].shininess,0.0f,0.0f,materials[2].ao);
+        addSphere((Vec3){0.5f,-0.6f,1.5f}, 0.2,mat_created_id3);
+
+        materials[mat_created_id3].isTransparent = 1.0f;
+
+        materials[6].emissiveIntensity = 2.0f;
 
         // DEBUG ---------------------------------------------------------------
 
@@ -251,7 +264,10 @@ __kernel void render(__global float* fb, int max_x, int max_y)
 		//addLight((Vec3){0.75f,1.0f,1.2f}, (Vec3){0.85f,0.95f,1.0f}, 0.1f);
 
 		
-		int bounce = 5;
+		int bounce = 100;
+
+        // anti aliasing
+        ray.direction =  randomizeInHemiSphere_fast(ray.direction, 0.0002f);
 	
 		Vec3 out_color = computeColor(&ray, mainCamera.cameraPos, bounce);
 

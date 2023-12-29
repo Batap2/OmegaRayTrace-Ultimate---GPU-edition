@@ -10,6 +10,8 @@
 #include <CL/cl.h>
 #include <CL/cl2.hpp>
 #include "CL/cl_gl.h"
+#include <random>
+
 
 // -------------- MENU APPEARANCE -------------- //
 inline float screenSeparation1 = 4;
@@ -41,6 +43,8 @@ inline float lastX =  window_width / 2.0;
 inline float lastY =  window_height / 2.0;
 
 inline mat4 projection, modelview, model, view;
+
+inline std::mt19937 rng;
 
 // -------------- SHADER & UNIFORM LOCATIONS -------------- //
 inline GLuint vertexshader, fragmentshader, shaderprogram;

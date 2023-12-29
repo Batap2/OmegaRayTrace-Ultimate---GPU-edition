@@ -98,6 +98,22 @@ Vec3 reflect(Vec3 vec, Vec3 normal)
     return reflectedVec;
 }
 
+Vec3 refract(Vec3 dir, Vec3 normal, float n1, float n2)
+{
+    // coeff. de réfraction, normale inverse à l'intersection, direction du rayon incident
+    float nr = n1/n2;
+    //Vec3 nInv = Vec3(0,0,0) - raySceneIntersection.normal;
+
+    //Vec3 refractedDirection = sqrt(1-pow(nr,2)*(1-pow(Vec3::dot(nInv, dir),2)))*nInv + nr*(dir-Vec3::dot(nInv, dir)*nInv);
+    //plus optimale
+    float c1 = -dot(normal, dir);
+    float c2 = sqrt( 1 - pow(nr,2) * (1 - pow(c1,2)));
+
+    Vec3 refractedDirection = normalize(add(scale(dir, nr), scale(normal, nr*c1-c2)));
+
+    return refractedDirection;
+}
+
 Vec3 clampMin(Vec3 a, float clamp){
 	a.x = min(a.x, clamp);
 	a.y = min(a.y, clamp);

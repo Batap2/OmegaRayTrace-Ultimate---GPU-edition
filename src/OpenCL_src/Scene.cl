@@ -199,6 +199,8 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 
 	HitData HD;
 
+	bool rayInObject = false;
+
 	for(int bounce = 0; bounce < nbBounce; bounce++)
 	{
 
@@ -216,8 +218,9 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 
 			finalColor = add(finalColor, multiply(contribution, skyColor));
 			break;
-		} else {
-			
+		} else 
+		{			
+
 			contribution = multiply(contribution, HD.material.diffuse_color);
 			
 			Vec3 emissiveColor = scale(HD.material.diffuse_color, HD.material.emissiveIntensity);
@@ -228,8 +231,30 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 			finalColor = add(finalColor, mixedColor_emissive);
 		}
 
-		ray2.origin = HD.position;
-		ray2.direction = reflect(ray2.direction, HD.normal);
+
+		if(HD.material.isTransparent != 0.0f)
+		{
+			if(rayInObject)
+			{
+				ray2.direction = refract(ray2.direction, negate(HD.normal), 1.4f, 1.0f);
+				if(HD.objectType == SPHERE)
+				{
+					ray2.origin = add(HD.position2, scale(ray2.direction, 0.01f));
+				}
+			} else 
+			{
+				ray2.origin = HD.position;
+				ray2.direction = refract(ray2.direction, HD.normal, 1.0f, 1.4f);
+			}
+
+			rayInObject = !rayInObject;
+
+		} else 
+		{
+			ray2.origin = HD.position;
+			ray2.direction = reflect(ray2.direction, HD.normal);
+		}
+
 
 	}
 

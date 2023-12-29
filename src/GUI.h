@@ -155,7 +155,11 @@ namespace GUI{
 
             if(ImGui::Checkbox("Emissive", &emissiveClick)){
                 if(emissiveClick != scene_meshes[selected_object]->material.isEmissive){
-                    scene_meshes[selected_object]->material.isEmissive = emissiveClick;
+                    if(emissiveClick){
+                        scene_meshes[selected_object]->material.isEmissive = 1.0f;
+                    } else {
+                        scene_meshes[selected_object]->material.isEmissive = 0.0f;
+                    }
                     scene_meshes[selected_object]->send_material_to_shaders();
                     updateCL_Materials(window_width,window_height,clQueue,clProgram,devices[0]);
                     render_number = 0;
@@ -163,7 +167,11 @@ namespace GUI{
             }
             if(ImGui::Checkbox("Transparent", &transparentClick)){
                 if(transparentClick != scene_meshes[selected_object]->material.isTransparent){
-                    scene_meshes[selected_object]->material.isTransparent = transparentClick;
+                    if(transparentClick){
+                        scene_meshes[selected_object]->material.isTransparent = 1.0f;
+                    } else {
+                        scene_meshes[selected_object]->material.isTransparent = 0.0f;
+                    }
                     scene_meshes[selected_object]->send_material_to_shaders();
                     updateCL_Materials(window_width,window_height,clQueue,clProgram,devices[0]);
                     render_number = 0;
