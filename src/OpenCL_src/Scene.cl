@@ -197,7 +197,7 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 		return skyColor;
 	}
 
-	for(int bounce = 0; bounce < nbBounce; bounce++)
+	for(int bounce = 0; bounce < 0; bounce++)
 	{
 
 		HD.normal = randomizeInHemiSphere_fast(HD.normal, HD.material.roughness);

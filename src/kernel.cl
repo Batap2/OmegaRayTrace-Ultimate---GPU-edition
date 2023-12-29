@@ -177,7 +177,7 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
         //Adding spheres and his matereial
         Texture t = materials[0].texture;
         Vec3 pix_color = getPixelColor(t,0.5,0.5);
-        int mat_created_id = createMaterial((Vec3){pix_color.x,0.,0.},materials[2].diffuse_color,materials[2].specular_color,materials[2].shininess,0,0,materials[2].ao);
+        int mat_created_id = createMaterial((Vec3){0.,0.,0.},(Vec3){(float)textures[200002]/255.f,(float)textures[200003]/255.f,(float)textures[200004]/255.f},(Vec3){0.,0.,0.},0,0,0,0);
         addSphere((Vec3){0.5f,-0.1f,1.0f}, 0.3,mat_created_id);
 
         unsigned int offset_vertex = 0;

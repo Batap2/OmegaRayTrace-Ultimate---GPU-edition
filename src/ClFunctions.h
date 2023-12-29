@@ -51,7 +51,7 @@ template <typename T>
 void printVector(const std::vector<T>& vec) {
     std::cout << "[";
     for (size_t i = 0; i < vec.size(); ++i) {
-        std::cout << vec[i];
+        std::cout << (int)vec[i];
         if (i < vec.size() - 1) {
             std::cout << ", ";
         }
@@ -187,7 +187,7 @@ void updateTextureBuffer()
 
     //printVector(offset_array);
     //printVector(texturesId_array);
-
+    printVector(texturesData_array);
     //std::cout << "Number of elements in texturesData array: " << texturesData_array.size()<<" " << texturesData_array[0]<<" " << texturesData_array[1]<<" "  << texturesData_array[2]<< std::endl;
     //std::cout << "Number of elements in texturesId array: " << texturesId_array.size() <<" "<<texturesId_array[0] << std::endl;
     std::cout << "Number of textures saved : " << textureNbr << std::endl;
