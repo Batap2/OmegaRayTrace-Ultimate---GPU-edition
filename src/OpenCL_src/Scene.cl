@@ -199,7 +199,10 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 
 	HitData HD;
 
+	bool hasHittedTransparentObject = false;
+
 	bool rayInObject = false;
+
 
 	for(int bounce = 0; bounce < nbBounce; bounce++)
 	{
@@ -221,36 +224,81 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 		} else 
 		{			
 
+			// absorb light of the light beam with the materials
 			contribution = multiply(contribution, HD.material.diffuse_color);
-			
-			Vec3 emissiveColor = scale(HD.material.diffuse_color, HD.material.emissiveIntensity);
+
+
 			
 
+
+			// add light to light beam uniquely if the material is emissive
+			Vec3 emissiveColor = scale(HD.material.diffuse_color, HD.material.emissiveIntensity);
+			
 			Vec3 mixedColor_emissive = lerp(scale(previousColor, HD.material.emissiveIntensity), emissiveColor, 0.5f);
 
 			finalColor = add(finalColor, mixedColor_emissive);
+
+
 		}
 
 
 		if(HD.material.isTransparent != 0.0f)
 		{
+			
+
 			if(rayInObject)
 			{
+				// TODO : mettre HD.material.IOR à la place de 1.4f (sur l'autre ligne refract aussi)
 				ray2.direction = refract(ray2.direction, negate(HD.normal), 1.4f, 1.0f);
 				if(HD.objectType == SPHERE)
 				{
 					ray2.origin = add(HD.position2, scale(ray2.direction, 0.01f));
 				}
+	
 			} else 
 			{
-				ray2.origin = HD.position;
+
+
+				// ---------- reflexion of transparent materials
+
+				// this part is incredibly dirty, the correct way is to make a recursive function but opencl doesn't support it.
+				// this part needs to be externalised in an other function but sadly my time is up.
+
+				Ray reflectRayFromTransparent = createRay(HD.position, reflect(ray2.direction, HD.normal));
+
+				HitData H_reflectFromTransparent = shootRay(reflectRayFromTransparent.origin, reflectRayFromTransparent.direction);
+
+
+				if(!HD.intersectionExists)
+				{
+
+					finalColor = add(finalColor, multiply(contribution, skyColor));
+					break;
+				} else 
+				{			
+
+					contribution = multiply(contribution, lerp(H_reflectFromTransparent.material.diffuse_color, (Vec3){1.0f,1.0f,1.0f}, 0.8f));
+
+				
+					// add light to light beam uniquely if the material is emissive
+					Vec3 emissiveColor = scale(H_reflectFromTransparent.material.diffuse_color, H_reflectFromTransparent.material.emissiveIntensity);
+					Vec3 mixedColor_emissive = lerp(scale(previousColor, H_reflectFromTransparent.material.emissiveIntensity), emissiveColor, 0.5f);
+					finalColor = add(finalColor, mixedColor_emissive);
+				}
+
+				// ---------- reflexion of transparent materials
+
+
+				ray2.origin = add(HD.position, scale(ray2.direction, 0.01f));
 				ray2.direction = refract(ray2.direction, HD.normal, 1.0f, 1.4f);
 			}
 
 			rayInObject = !rayInObject;
+			hasHittedTransparentObject = true;
 
 		} else 
 		{
+
 			ray2.origin = HD.position;
 			ray2.direction = reflect(ray2.direction, HD.normal);
 		}
@@ -258,10 +306,6 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 
 	}
 
-
-	if(nbBounce == 1){
-		return multiply(finalColor, contribution);
-	}
 	
 	return finalColor;
 }

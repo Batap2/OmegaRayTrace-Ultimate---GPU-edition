@@ -138,6 +138,7 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
 
             // TODO : rajouter cela
             materials[mesh_id].isTransparent = 0.0f;
+            materials[mesh_id].IOR = 1.4f;
         }
     }
 
@@ -264,7 +265,7 @@ __kernel void render(__global float* fb, int max_x, int max_y)
 		//addLight((Vec3){0.75f,1.0f,1.2f}, (Vec3){0.85f,0.95f,1.0f}, 0.1f);
 
 		
-		int bounce = 100;
+		int bounce = 25;
 
         // anti aliasing
         ray.direction =  randomizeInHemiSphere_fast(ray.direction, 0.0002f);
