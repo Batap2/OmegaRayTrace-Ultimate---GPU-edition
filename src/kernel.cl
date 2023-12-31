@@ -278,6 +278,108 @@ __kernel void render(__global float* fb, int max_x, int max_y)
     }
 }
 
+__kernel void denoise_avg(__global float* fb, int window_size, int max_x, int max_y)
+{
+    int i = get_global_id(0);
+    int j = get_global_id(1);
+
+    if ((i < max_x) && (j < max_y)) {
+        int pixel_index = j * max_x * 3 + i * 3;
+
+        // Initialisation des variables pour la moyenne
+        float sum_r = 0.0f;
+        float sum_g = 0.0f;
+        float sum_b = 0.0f;
+
+        // Taille de la fenêtre de moyenne
+        int window_size = 1;
+        // Calcul de la moyenne dans la fenêtre
+        for (int di = -window_size; di <= window_size; di++) {
+            for (int dj = -window_size; dj <= window_size; dj++) {
+                int ni = i + di;
+                int nj = j + dj;
+
+                if (ni >= 0 && ni < max_x && nj >= 0 && nj < max_y) {
+                    int neighbor_index = nj * max_x * 3 + ni * 3;
+                    sum_r += fb[neighbor_index + 0];
+                    sum_g += fb[neighbor_index + 1];
+                    sum_b += fb[neighbor_index + 2];
+                }
+            }
+        }
+
+        // Calcul de la moyenne
+        int num_pixels_in_window = (2 * window_size + 1) * (2 * window_size + 1);
+        fb[pixel_index + 0] = sum_r / num_pixels_in_window;
+        fb[pixel_index + 1] = sum_g / num_pixels_in_window;
+        fb[pixel_index + 2] = sum_b / num_pixels_in_window;
+    }
+}
+
+
+// Fonction de noyau pour le filtre bilatéral
+__kernel void denoise_bil(__global float* fb, int max_x, int max_y, int window_size, float spatial_sigma, float intensity_sigma)
+{
+        int i = get_global_id(0);
+        int j = get_global_id(1);
+
+        if ((i < max_x) && (j < max_y)) {
+            int pixel_index = j * max_x * 3 + i * 3;
+
+
+        // Pixel d'origine
+        float center_r = fb[pixel_index + 0];
+        float center_g = fb[pixel_index + 1];
+        float center_b = fb[pixel_index + 2];
+
+            // Initialisation des variables pour la moyenne
+            float sum_r = 0.0f;
+            float sum_g = 0.0f;
+            float sum_b = 0.0f;
+            float weight_sum = 0.0f;
+
+            // Calcul de la moyenne dans la fenêtre
+            for (int di = -window_size; di <= window_size; di++) {
+                for (int dj = -window_size; dj <= window_size; dj++) {
+                    int ni = i + di;
+                    int nj = j + dj;
+
+
+
+                    if (ni >= 0 && ni < max_x && nj >= 0 && nj < max_y) {
+                        int neighbor_index = nj * max_x * 3 + ni * 3;
+                    // Pixel voisin
+                    float neighbor_r = fb[neighbor_index + 0];
+                    float neighbor_g = fb[neighbor_index + 1];
+                    float neighbor_b = fb[neighbor_index + 2];
+
+                    // Calcul des poids spatial et d'intensité
+                    float spatial_weight = exp(-(di * di + dj * dj) / (2.0f * spatial_sigma * spatial_sigma));
+                    float intensity_weight = exp(-((center_r - neighbor_r) * (center_r - neighbor_r) + (center_g - neighbor_g) * (center_g - neighbor_g) + (center_b - neighbor_b) * (center_b - neighbor_b)) /(2.0f * intensity_sigma * intensity_sigma));
+
+                    float weight = spatial_weight * intensity_weight;
+
+                    // Accumulation pondérée
+                    sum_r += neighbor_r * weight;
+                    sum_g += neighbor_g * weight;
+                    sum_b += neighbor_b * weight;
+
+                    // Accumulation des poids
+                    weight_sum += weight;
+
+
+                    }
+                }
+            }
+
+
+        // Calcul de la moyenne pondérée
+        fb[pixel_index + 0] = sum_r / weight_sum;
+        fb[pixel_index + 1] = sum_g / weight_sum;
+        fb[pixel_index + 2] = sum_b / weight_sum;
+        }
+}
+
 __kernel void getRandomIntInGPU(unsigned int CPURandomInt)
 {
     GPURandomInt = CPURandomInt;

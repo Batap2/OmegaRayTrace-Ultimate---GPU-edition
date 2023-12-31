@@ -366,6 +366,7 @@ void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, c
     kernel.setArg(2, max_y);
 
 
+
     cl::NDRange global(max_x, max_y);
     cl::NDRange local(8, 8);
 
@@ -374,6 +375,43 @@ void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, c
     randInt.setArg(0,random_int);
     queue.enqueueNDRangeKernel(randInt, cl::NullRange, global, local);
 
+    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, local);
+    cl_int kernelError = queue.finish();
+    if (kernelError != CL_SUCCESS) {
+        std::cerr << "OpenCL kernel execution error: " << kernelError << std::endl;
+        exit(1);
+    }
+}
+
+//To render a frame by raytracing on GPU
+void denoise_avg(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, cl::Program &program, const cl::Device &device, int window_size) {
+    cl::Kernel kernel(program, "denoise_avg");
+    kernel.setArg(0, buffer);
+    kernel.setArg(1, max_x);
+    kernel.setArg(2, max_y);
+    kernel.setArg(3,window_size);
+
+    cl::NDRange global(max_x, max_y);
+    cl::NDRange local(8, 8);
+    queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, local);
+    cl_int kernelError = queue.finish();
+    if (kernelError != CL_SUCCESS) {
+        std::cerr << "OpenCL kernel execution error: " << kernelError << std::endl;
+        exit(1);
+    }
+}
+
+void denoise_bil(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, cl::Program &program, const cl::Device &device, float spatial, float intensity, int window_size) {
+    cl::Kernel kernel(program, "denoise_bil");
+    kernel.setArg(0, buffer);
+    kernel.setArg(1, max_x);
+    kernel.setArg(2, max_y);
+    kernel.setArg(3,window_size);
+    kernel.setArg(4, spatial); // Float spatial sigma (0.1 a 10)
+    kernel.setArg(5, intensity);// Float intensity sigma (0.1 a 10)
+
+    cl::NDRange global(max_x, max_y);
+    cl::NDRange local(8, 8);
     queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, local);
     cl_int kernelError = queue.finish();
     if (kernelError != CL_SUCCESS) {
@@ -447,6 +485,9 @@ void renderImage(cl::Buffer& buffer, int nx, int ny, cl::CommandQueue& queue, cl
 
     // Render
     render(buffer, nx, ny, queue, program, devices[0]);
+    //denoise_avg(buffer, nx, ny, queue, program, devices[0],1);
+     denoise_bil(buffer, nx, ny, queue, program, devices[0],1,1,5);
+    denoise_bil(buffer, nx, ny, queue, program, devices[0],5,7,1);
 
     // Measure the time after rendering
     clock_t end_time = clock();

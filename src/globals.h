@@ -114,7 +114,6 @@ inline glm::vec3 old_mesh_color;
 inline bool emissiveClick, transparentClick;
 
 // --------------- OPENCL -------------- //
-
 inline cl::Context clContext;
 inline cl::CommandQueue clQueue;
 inline cl::Program clProgram;
