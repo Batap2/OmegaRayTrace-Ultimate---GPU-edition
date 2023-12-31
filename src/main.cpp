@@ -250,6 +250,27 @@ void display() {
 
 }
 
+struct Vec3{
+    float x;
+    float y;
+    float z;
+};
+struct  tri_float{
+    Vec3 v1;
+    Vec3 v2;
+    Vec3 v3;
+};
+
+struct KDNode {
+    int start, end; // Indices des triangles dans le vecteur de triangles
+    Vec3 min, max; // Boîte englobante
+    KDNode* left;
+    KDNode* right;
+};
+
+
+
+
 int main(int argc, char* argv[]){
 
 //---------------------------- GPU PART ----------------------------------//
@@ -293,7 +314,7 @@ int main(int argc, char* argv[]){
 
 
     SceneOperations::initSceneLights();
-    SceneOperations::openFile("data/cube_tex.fbx");
+    SceneOperations::openFile("data/plane2.fbx");
     SceneOperations::init_flat_screen();
 
     ShaderUtils::reshape(window, window_width, window_height);
@@ -305,6 +326,7 @@ int main(int argc, char* argv[]){
 
     initializeBuffers();
     load(window_width,window_height,clQueue,clProgram,devices[0]);
+
 
 
     while (!glfwWindowShouldClose(window))

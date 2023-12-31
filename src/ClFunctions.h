@@ -138,7 +138,7 @@ void extractSceneData()
     indices_array.clear();
     splitMesh_array.clear();
     splitMeshTri_array.clear();
-
+    bbox_array.clear();
     size_t mesh_number = scene_meshes.size();
     meshNbr = mesh_number;
     std::vector<glm::vec3> vertexChecklist;
@@ -150,6 +150,8 @@ void extractSceneData()
         size_t n_tri = m.triangle_indicies.size();
         size_t n_id = m.triangle_indicies.size()*3;
         size_t n_vertex_float = m.vertices.size()*3;
+        glm::vec3 bbmin = m.bbmin;
+        glm::vec3 bbmax = m.bbmax;
         splitMeshTri_array.push_back(n_tri);
 
         std::cout<<"Mesh: "<< i+1 <<"\n";
@@ -178,6 +180,14 @@ void extractSceneData()
             }
         }
 
+        for(int j = 0; j < 3;j++)
+        {
+            bbox_array.push_back(bbmin[j]);
+        }
+        for(int j = 0; j < 3;j++)
+        {
+            bbox_array.push_back(bbmax[j]);
+        }
         //std::cout<<"Elements succesfully pushed -> "<< element_pushed <<std::endl;
         convertVec3ToFloat(m.vertices,vertices_array);
         splitMesh_array.push_back(m.vertices.size());
@@ -187,6 +197,7 @@ void extractSceneData()
     std::cout<<" Size of vertex array : "<< vertices_array.size() << std::endl;
     std::cout<<" Size of splitMesh array : "<< splitMesh_array.size() <<std::endl;
     std::cout<<" Element of splitMesh array : "<< splitMesh_array[0] <<std::endl;
+    std::cout << "Size of bbox array "<< bbox_array.size() << std::endl;
 }
 
 //---------------------------------------------FIRST INIT OF BUFFERS -------------------------------------------------------//
@@ -202,6 +213,7 @@ void initializeBuffers() {
     indexBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * indices_array.size(), indices_array.data());
     splitMeshBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMesh_array.size(), splitMesh_array.data());
     splitMeshTriBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMeshTri_array.size(), splitMeshTri_array.data());
+    bboxBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * bbox_array.size(),bbox_array.data());
 
 }
 
@@ -238,6 +250,7 @@ void load(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, co
     load_kernel.setArg(9,splitMeshTriBuffer); // Ajouter le buffer
     load_kernel.setArg(10,lightsBuffer);
     load_kernel.setArg(11,lightNbr);
+    load_kernel.setArg(12,bboxBuffer);
     //Executing loading in kernel.cl
     queue.enqueueNDRangeKernel(load_kernel, cl::NullRange, global, local);
     cl_int kernelError = queue.finish();
@@ -451,7 +464,7 @@ void renderImage(cl::Buffer& buffer, int nx, int ny, cl::CommandQueue& queue, cl
     clock_t end_time = clock();
     double duration = double(end_time - start_time) / CLOCKS_PER_SEC;
 
-    //std::cerr << "Rendering time: " << duration << " seconds" << std::endl;
+    std::cerr << "Rendering time: " << duration << " seconds" << std::endl;
 }
 
 

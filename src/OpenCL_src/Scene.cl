@@ -5,13 +5,17 @@ typedef struct {
     Plane planes[100];
     int numPlanes;
 
-    Triangle triangles[200];
+    Triangle triangles[300000];
     int numTriangles;
+
+    Bbox bboxes[100];
+    int numBboxes;
 } Scene;
 
 Scene *mainScene;
 Scene mainScene2;
 Vec3 skyColor;
+int scene_size;
 
 void addSphere(Vec3 center, float radius, int mat)
 {
@@ -37,9 +41,19 @@ HitData shootRay(Vec3 origin, Vec3 direction)
 	for (int p = 0; p < mainScene2.numPlanes; p++) {
 		if (intersectPlane(ray, mainScene2.planes[0], &t, t_min, &t_max, &HD)) {}
 		}
-	for (int tIndex = 0; tIndex < mainScene2.numTriangles; tIndex++) {
-		if (intersectTriangle(ray, mainScene2.triangles[tIndex], &t, t_min, &t_max, &HD)) {}
+
+	for (int bi = 0; bi < mainScene2.numBboxes; bi++) {
+	    Bbox b = mainScene2.bboxes[0];
+		if(intersectBbox(ray,b)){
+		    unsigned int start = b.offset_triangle;
+		
+    unsigned int tri_nbr = b.triangle_nbr;
+			for (int tIndex = start; tIndex < tri_nbr; tIndex++) {
+        		if (intersectTriangle(ray, mainScene2.triangles[tIndex], &t, t_min, &t_max, &HD)) {}
+        	}
+		}
 	}
+
 
 	return HD;
 }
