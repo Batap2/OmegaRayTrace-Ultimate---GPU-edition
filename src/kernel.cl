@@ -226,18 +226,20 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
             }
             offset_index += index_nbr;
             offset_vertex += vertex_nbr;
-
-            int bboxid = mesh_id * 6;
-            Bbox current_bbox;
-            current_bbox.bbmin = (Vec3){bboxs[bboxid],bboxs[bboxid+1],bboxs[bboxid+2]};
-            current_bbox.bbmax = (Vec3){bboxs[bboxid+3],bboxs[bboxid+4],bboxs[bboxid+5]};
-            current_bbox.offset_triangle = offset_tri;
-            current_bbox.triangle_nbr = tri_nbr;
-            mainScene2.bboxes[mesh_id] = current_bbox;
-            mainScene2.numBboxes++;
-
             offset_tri += tri_nbr;
         }
+
+                    int bboxid = 0;
+                    Bbox current_bbox;
+                    current_bbox.bbmin = (Vec3){bboxs[bboxid],bboxs[bboxid+1],bboxs[bboxid+2]};
+                    current_bbox.bbmax = (Vec3){bboxs[bboxid+3],bboxs[bboxid+4],bboxs[bboxid+5]};
+                    current_bbox.offset_triangle = 0;
+                    current_bbox.triangle_nbr = offset_tri;
+                    current_bbox.trianglesOfBox = &mainScene2.triangles;
+                    mainScene2.bboxes[0] = current_bbox;
+                    mainScene2.numBboxes++;
+
+        generateKdTree(&mainScene2.bboxes[0], 3 , 0);
 
     }
     if(i==3 && j==0)
@@ -275,7 +277,7 @@ __kernel void render(__global float* fb, int max_x, int max_y)
 		//addLight((Vec3){0.75f,1.0f,1.2f}, (Vec3){0.85f,0.95f,1.0f}, 0.1f);
 
 		
-		int bounce = 25;
+		int bounce = 15;
 
         // anti aliasing
         ray.direction =  randomizeInHemiSphere_fast(ray.direction, 0.0002f);

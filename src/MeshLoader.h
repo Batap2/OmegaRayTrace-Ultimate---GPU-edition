@@ -97,8 +97,19 @@ namespace MeshLoader{
 
             aiAABB aabb = aiMesh->mAABB;
 
-            newMesh->bbmin = glm::vec3(aabb.mMin.x, aabb.mMin.y, aabb.mMin.z);
-            newMesh->bbmax = glm::vec3(aabb.mMax.x, aabb.mMax.y, aabb.mMax.z);
+            glm::vec3 bbmin(FLT_MAX,FLT_MAX,FLT_MAX);
+            glm::vec3 bbmax(FLT_MIN,FLT_MIN,FLT_MIN);
+            for (const glm::vec3& vertex : newMesh->vertices) {
+                bbmin[0] = std::min(bbmin[0], vertex[0]);
+                bbmin[1] = std::min(bbmin[1], vertex[1]);
+                bbmin[2] = std::min(bbmin[2], vertex[2]);
+
+                bbmax[0] = std::max(bbmax[0], vertex[0]);
+                bbmax[1] = std::max(bbmax[1], vertex[1]);
+                bbmax[2] = std::max(bbmax[2], vertex[2]);
+            }
+            newMesh->bbmin = bbmin;
+            newMesh->bbmax = bbmax;
 
             // --------------- TEXTURE ---------------- //
 

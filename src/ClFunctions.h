@@ -142,6 +142,8 @@ void extractSceneData()
     bbox_array.clear();
     size_t mesh_number = scene_meshes.size();
     meshNbr = mesh_number;
+    glm::vec3 bbmin(FLT_MAX,FLT_MAX,FLT_MAX);
+    glm::vec3 bbmax(FLT_MIN,FLT_MIN,FLT_MIN);
     std::vector<glm::vec3> vertexChecklist;
     std::cout<<"Nbr of meshes in the scene : "<< mesh_number<<"\n";
     meshNbr = (int)mesh_number;
@@ -151,8 +153,7 @@ void extractSceneData()
         size_t n_tri = m.triangle_indicies.size();
         size_t n_id = m.triangle_indicies.size()*3;
         size_t n_vertex_float = m.vertices.size()*3;
-        glm::vec3 bbmin = m.bbmin;
-        glm::vec3 bbmax = m.bbmax;
+
         splitMeshTri_array.push_back(n_tri);
 
         std::cout<<"Mesh: "<< i+1 <<"\n";
@@ -169,6 +170,15 @@ void extractSceneData()
                 std::cout<< "   Current sommet = "<< current_id << std::endl;
                 indices_array.push_back(current_id);
                 glm::vec3 current_vertex = glm::vec3(m.vertices[current_id][0], m.vertices[current_id][1], m.vertices[current_id][2]);
+
+                bbmin[0] = std::min(bbmin[0], current_vertex[0]);
+                bbmin[1] = std::min(bbmin[1], current_vertex[1]);
+                bbmin[2] = std::min(bbmin[2], current_vertex[2]);
+
+                bbmax[0] = std::max(bbmax[0], current_vertex[0]);
+                bbmax[1] = std::max(bbmax[1], current_vertex[1]);
+                bbmax[2] = std::max(bbmax[2], current_vertex[2]);
+
                 if (pushBackIfNotExists(vertexChecklist, current_vertex))
                 {
                     //vertices_array.push_back(m.vertices[current_id][0]);
@@ -181,18 +191,19 @@ void extractSceneData()
             }
         }
 
-        for(int j = 0; j < 3;j++)
-        {
-            bbox_array.push_back(bbmin[j]);
-        }
-        for(int j = 0; j < 3;j++)
-        {
-            bbox_array.push_back(bbmax[j]);
-        }
+
         //std::cout<<"Elements succesfully pushed -> "<< element_pushed <<std::endl;
         convertVec3ToFloat(m.vertices,vertices_array);
         splitMesh_array.push_back(m.vertices.size());
 
+    }
+    for(int j = 0; j < 3;j++)
+    {
+        bbox_array.push_back(bbmin[j]);
+    }
+    for(int j = 0; j < 3;j++)
+    {
+        bbox_array.push_back(bbmax[j]);
     }
     std::cout<<" Size of index array : "<< indices_array.size()<<std::endl;
     std::cout<<" Size of vertex array : "<< vertices_array.size() << std::endl;

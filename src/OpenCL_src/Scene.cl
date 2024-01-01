@@ -43,20 +43,14 @@ HitData shootRay(Vec3 origin, Vec3 direction)
 		if (intersectPlane(ray, mainScene2.planes[0], &t, t_min, &t_max, &HD)) {}
 		}
 
-    for (int bi = 0; bi < mainScene2.numBboxes; bi++) {
-        Bbox b = mainScene2.bboxes[bi];
+        Bbox b = mainScene2.bboxes[0];
         if(intersectBbox(ray,b))
         {
-            unsigned int start = b.offset_triangle;
             unsigned int tri_nbr = b.triangle_nbr;
-            for (int tIndex = start; tIndex < tri_nbr; tIndex++) {
-              if (intersectTriangle(ray, mainScene2.triangles[tIndex], &t, t_min, &t_max, &HD)) {}
+            for (int tIndex = 0; tIndex < tri_nbr; tIndex++) {
+              if (intersectTriangle(ray, b.trianglesOfBox[tIndex], &t, t_min, &t_max, &HD)) {}
             }
         }
-        }
-
-
-
 
 	return HD;
 }
@@ -95,7 +89,7 @@ Vec3 computePhong(HitData *HD, Ray *ray, Vec3 camPos){
 	}
 
     return clampMin(result,1.0f);
-	
+
 }
 
 
@@ -155,26 +149,26 @@ Vec3 computePBR(HitData *HD, Ray *ray, Vec3 camPos)
 
 	Vec3 F0 = (Vec3){0.04f,0.04f,0.04f};
 	F0 = lerp(F0, HD->material.diffuse_color, HD->material.roughness);
-	
+
 	for(int light_i = 0; light_i < lightNumber; ++light_i)
 	{
 		Light light = lights[light_i];
 		Vec3 lightDir = normalize(subtract(light.pos, HD->position));
 		Vec3 Halfway = normalize(add(viewDir, lightDir));
-		
+
 
 		// Calcul de la radiance
 		float distanceFromL = length(lightDir);
 		float attenuation = 1/distanceFromL*distanceFromL*light.intensity;
 		Vec3 radiance = scale(light.color, attenuation);
 
-		
+
 		// Modele de reflectance de Cook-Torrance
 		float NDF = DistributionGGX(HD->normal, Halfway, HD->material.roughness);
 		float G = GeometrySmith(HD->normal, viewDir, lightDir, HD->material.roughness);
 		Vec3 F = fresnelSchlick(max(dot(Halfway, viewDir), 0.0f), F0);
 
-		
+
 		// Composante spéculaire, KS: valeur de Fresnel de la composante spéculaire, KD: l'énergie non reflétée par le spéculaire
 		Vec3 kS = F;
 		Vec3 kD = subtract((Vec3){1.0f,1.0f,1.0f}, kS);
@@ -189,7 +183,7 @@ Vec3 computePBR(HitData *HD, Ray *ray, Vec3 camPos)
 
 		// somme des calculs de PBR, Lambert Diffuse
 		float NdotL = max(dot(HD->normal, lightDir), 0.0f);
-		
+
 		Vec3 resultPBR = multiply(add(divide(multiply(kD,HD->material.diffuse_color),3.14159265359f),specularPBR),scale(radiance,NdotL));
 		result = add(result, resultPBR);
 	}
@@ -238,19 +232,19 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 
 			finalColor = add(finalColor, multiply(contribution, skyColor));
 			break;
-		} else 
-		{			
+		} else
+		{
 
 			// absorb light of the light beam with the materials
 			contribution = multiply(contribution, HD.material.diffuse_color);
 
 
-			
+
 
 
 			// add light to light beam uniquely if the material is emissive
 			Vec3 emissiveColor = scale(HD.material.diffuse_color, HD.material.emissiveIntensity);
-			
+
 			Vec3 mixedColor_emissive = lerp(scale(previousColor, HD.material.emissiveIntensity), emissiveColor, 0.5f);
 
 			finalColor = add(finalColor, mixedColor_emissive);
@@ -261,7 +255,7 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 
 		if(HD.material.isTransparent != 0.0f)
 		{
-			
+
 
 			if(rayInObject)
 			{
@@ -271,8 +265,8 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 				{
 					ray2.origin = add(HD.position2, scale(ray2.direction, 0.01f));
 				}
-	
-			} else 
+
+			} else
 			{
 
 
@@ -291,12 +285,12 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 
 					finalColor = add(finalColor, multiply(contribution, skyColor));
 					break;
-				} else 
-				{			
+				} else
+				{
 
 					contribution = multiply(contribution, lerp(H_reflectFromTransparent.material.diffuse_color, (Vec3){1.0f,1.0f,1.0f}, 0.8f));
 
-				
+
 					// add light to light beam uniquely if the material is emissive
 					Vec3 emissiveColor = scale(H_reflectFromTransparent.material.diffuse_color, H_reflectFromTransparent.material.emissiveIntensity);
 					Vec3 mixedColor_emissive = lerp(scale(previousColor, H_reflectFromTransparent.material.emissiveIntensity), emissiveColor, 0.5f);
@@ -313,7 +307,7 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 			rayInObject = !rayInObject;
 			hasHittedTransparentObject = true;
 
-		} else 
+		} else
 		{
 
 			ray2.origin = HD.position;
