@@ -128,6 +128,7 @@ inline cl::Buffer materialsBuffer;
 inline cl::Buffer skyColorBuffer;
 inline cl::Buffer cameraBuffer;
 inline cl::Buffer lightsBuffer;
+inline cl::Buffer bboxBuffer;
 inline int meshNbr;
 inline int lightNbr;
 inline std::vector<float> vertices_array;
@@ -136,4 +137,5 @@ inline std::vector<unsigned int> splitMesh_array;
 inline std::vector<unsigned int> splitMeshTri_array;
 inline std::vector<float> materials_array;
 inline std::vector<float> lights_array;
+inline std::vector<float> bbox_array;
 #endif

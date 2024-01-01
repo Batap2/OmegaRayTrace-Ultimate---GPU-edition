@@ -6,6 +6,7 @@
 #include "src/OpenCL_src/Sphere.cl"
 #include "src/OpenCL_src/Triangle.cl"
 #include "src/OpenCL_src/Plane.cl"
+#include "src/OpenCL_src/Bbox.cl"
 #include "src/OpenCL_src/Light.cl"
 #include "src/OpenCL_src/Scene.cl"
 #include "src/OpenCL_src/Camera.cl"
@@ -95,12 +96,11 @@ __kernel void updateLights(int max_x, int max_y, int light_nbr, __global float* 
 }
 
 //To load all data requiered to initialize the kernel
-__kernel void loading(int max_x, int max_y,__global float* cameraData,__global float* SkyColor, int mesh_nbr,__global float* materialsData,__global float* vertices,__global unsigned int* indices,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri,__global float * lightsData,int light_nbr)
-{
+__kernel void loading(int max_x, int max_y,__global float* cameraData,__global float* SkyColor, int mesh_nbr,__global float* materialsData,__global float* vertices,__global unsigned int* indices,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri,__global float * lightsData,int light_nbr, __global float * bboxs){
     int i = get_global_id(0);
     int j = get_global_id(1);
     material_nbr = mesh_nbr;
-
+    scene_size = mesh_nbr;
 
     //Loading camera
     if( i==0 && j == 0)
@@ -149,7 +149,7 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
 		mainScene2.numSpheres = 0;
         mainScene2.numPlanes = 0;
         mainScene2.numTriangles = 0;
-
+        mainScene2.numBboxes = 0;
 
 
         // DEBUG ---------------------------------------------------------------
@@ -197,10 +197,9 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
 
 
 
-
         unsigned int offset_vertex = 0;
         unsigned int offset_index = 0;
-
+        unsigned int offset_tri = 0;
         for(int mesh_id = 0; mesh_id < mesh_nbr; mesh_id++)
         {
             unsigned int vertex_nbr = split_meshes[mesh_id];
@@ -227,6 +226,17 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
             }
             offset_index += index_nbr;
             offset_vertex += vertex_nbr;
+
+            int bboxid = mesh_id * 6;
+            Bbox current_bbox;
+            current_bbox.bbmin = (Vec3){bboxs[bboxid],bboxs[bboxid+1],bboxs[bboxid+2]};
+            current_bbox.bbmax = (Vec3){bboxs[bboxid+3],bboxs[bboxid+4],bboxs[bboxid+5]};
+            current_bbox.offset_triangle = offset_tri;
+            current_bbox.triangle_nbr = tri_nbr;
+            mainScene2.bboxes[mesh_id] = current_bbox;
+            mainScene2.numBboxes++;
+
+            offset_tri += tri_nbr;
         }
 
     }
