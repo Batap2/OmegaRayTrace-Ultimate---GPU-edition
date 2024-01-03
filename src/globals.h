@@ -127,6 +127,8 @@ inline cl::Buffer cameraBuffer;
 inline cl::Buffer lightsBuffer;
 inline cl::Buffer texturesDataBuffer;
 inline cl::Buffer texturesIdBuffer;
+inline cl::Buffer uvBuffer;
+inline cl::Buffer splitUVBuffer;
 inline int meshNbr;
 inline int lightNbr;
 inline int textureNbr;
@@ -139,4 +141,6 @@ inline std::vector<float> materials_array;
 inline std::vector<float> lights_array;
 inline std::vector<unsigned char> texturesData_array;
 inline std::vector<int> texturesId_array;
+inline std::vector<float> uv_array;
+inline std::vector<unsigned int> splitUV_array;
 #endif

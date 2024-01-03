@@ -187,7 +187,7 @@ void updateTextureBuffer()
 
     //printVector(offset_array);
     //printVector(texturesId_array);
-    printVector(texturesData_array);
+    //printVector(texturesData_array);
     //std::cout << "Number of elements in texturesData array: " << texturesData_array.size()<<" " << texturesData_array[0]<<" " << texturesData_array[1]<<" "  << texturesData_array[2]<< std::endl;
     //std::cout << "Number of elements in texturesId array: " << texturesId_array.size() <<" "<<texturesId_array[0] << std::endl;
     std::cout << "Number of textures saved : " << textureNbr << std::endl;
@@ -197,66 +197,87 @@ void updateTextureBuffer()
 
 }
 
+
+
+
+
 //-----------------------------------------DATA EXTRACTOR FROM SCENE ---------------------------------------------------//
 
 
-void extractSceneData()
-{
+void extractSceneData() {
     vertices_array.clear();
     indices_array.clear();
     splitMesh_array.clear();
     splitMeshTri_array.clear();
+    uv_array.clear();
 
     size_t mesh_number = scene_meshes.size();
     meshNbr = mesh_number;
     std::vector<glm::vec3> vertexChecklist;
-    std::cout<<"Nbr of meshes in the scene : "<< mesh_number<<"\n";
-    meshNbr = (int)mesh_number;
-    for(size_t i = 0; i < mesh_number; i++)
-    {
+    std::cout << "Nbr of meshes in the scene : " << mesh_number << "\n";
+    meshNbr = (int) mesh_number;
+    for (size_t i = 0; i < mesh_number; i++) {
         Mesh m = *scene_meshes[i];
         size_t n_tri = m.triangle_indicies.size();
-        size_t n_id = m.triangle_indicies.size()*3;
-        size_t n_vertex_float = m.vertices.size()*3;
+        size_t n_id = m.triangle_indicies.size() * 3;
+        size_t n_vertex_float = m.vertices.size() * 3;
+        size_t n_uv = m.uv.size();
         splitMeshTri_array.push_back(n_tri);
 
-        std::cout<<"Mesh: "<< i+1 <<"\n";
-        std::cout<<" Number of triangles : "<< n_tri<<std::endl;
-        std::cout<<" Number of indices : "<< n_id <<std::endl;
-        std::cout<<" Number of vertex float : "<< n_vertex_float<<std::endl;
-
-        unsigned int element_pushed =0;
+        std::cout << "Mesh: " << i + 1 << "\n";
+        std::cout << " Number of triangles : " << n_tri << std::endl;
+        std::cout << " Number of indices : " << n_id << std::endl;
+        std::cout << " Number of vertex float : " << n_vertex_float << std::endl;
+        std::cout << " Number of uvs float :  " << n_uv << std::endl;
+        unsigned int element_pushed = 0;
         for (size_t tri = 0; tri < n_tri; ++tri)//triangle
         {
             for (size_t id = 0; id < 3; ++id) // index sommet
             {
                 unsigned int current_id = m.triangle_indicies[tri].vertices[id];
-                std::cout<< "   Current sommet = "<< current_id << std::endl;
+                //std::cout<< "   Current sommet = "<< current_id << std::endl;
                 indices_array.push_back(current_id);
-                glm::vec3 current_vertex = glm::vec3(m.vertices[current_id][0], m.vertices[current_id][1], m.vertices[current_id][2]);
-                if (pushBackIfNotExists(vertexChecklist, current_vertex))
-                {
+                glm::vec3 current_vertex = glm::vec3(m.vertices[current_id][0], m.vertices[current_id][1],
+                                                     m.vertices[current_id][2]);
+
+            }
+
+            for (size_t id = 0; id < 3; ++id) // index sommet
+            {
+                unsigned int current_id = m.triangle_indicies[tri].vertices[id];
+                //std::cout<< "   Current sommet = "<< current_id << std::endl;
+                indices_array.push_back(current_id);
+                glm::vec3 current_vertex = glm::vec3(m.vertices[current_id][0], m.vertices[current_id][1],
+                                                     m.vertices[current_id][2]);
+                if (pushBackIfNotExists(vertexChecklist, current_vertex)) {
                     //vertices_array.push_back(m.vertices[current_id][0]);
                     //vertices_array.push_back(m.vertices[current_id][1]);
                     //vertices_array.push_back(m.vertices[current_id][2]);
-                    element_pushed+=3;
+                    element_pushed += 3;
                 }
-
-
             }
-        }
 
-        //std::cout<<"Elements succesfully pushed -> "<< element_pushed <<std::endl;
-        convertVec3ToFloat(m.vertices,vertices_array);
-        splitMesh_array.push_back(m.vertices.size());
+            //std::cout<<"Elements succesfully pushed -> "<< element_pushed <<std::endl;
+            convertVec3ToFloat(m.vertices, vertices_array);
+            splitMesh_array.push_back(m.vertices.size());
+
+        }
+        for (int uv_id = 0; uv_id < m.uv.size();uv_id++)
+        {
+            uv_array.push_back(m.uv[uv_id]);
+        }
+        splitUV_array.push_back(n_uv);
+
+        std::cout << " Size of index array : " << indices_array.size() << std::endl;
+        std::cout << " Size of vertex array : " << vertices_array.size() << std::endl;
+        std::cout << " Size of splitMesh array : " << splitMesh_array.size() << std::endl;
+        std::cout << " Element of splitMesh array : " << splitMesh_array[0] << std::endl;
+        std::cout << " Element of splitUV array : " << splitUV_array[0] << std::endl;
+        std::cout << " Size of uv array : " <<uv_array.size() << std::endl;
+        std::cout << "Size of split uv "<< splitUV_array.size() <<std::endl;
 
     }
-    std::cout<<" Size of index array : "<< indices_array.size()<<std::endl;
-    std::cout<<" Size of vertex array : "<< vertices_array.size() << std::endl;
-    std::cout<<" Size of splitMesh array : "<< splitMesh_array.size() <<std::endl;
-    std::cout<<" Element of splitMesh array : "<< splitMesh_array[0] <<std::endl;
 }
-
 //---------------------------------------------FIRST INIT OF BUFFERS -------------------------------------------------------//
 
 void initializeBuffers() {
@@ -271,7 +292,8 @@ void initializeBuffers() {
     indexBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * indices_array.size(), indices_array.data());
     splitMeshBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMesh_array.size(), splitMesh_array.data());
     splitMeshTriBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMeshTri_array.size(), splitMeshTri_array.data());
-
+    uvBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * uv_array.size(), uv_array.data());
+    splitUVBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitUV_array.size(), splitUV_array.data());
 }
 
 
@@ -310,6 +332,8 @@ void load(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, co
     load_kernel.setArg(12,texturesDataBuffer);
     load_kernel.setArg(13,texturesIdBuffer);
     load_kernel.setArg(14,texturesSize);
+    load_kernel.setArg(15,uvBuffer);
+    load_kernel.setArg(16,splitUVBuffer);
 
     //load_kernel.setArg(12,textures_array[0]);
     //Executing loading in kernel.cl

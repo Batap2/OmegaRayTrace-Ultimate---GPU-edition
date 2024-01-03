@@ -2,6 +2,7 @@ typedef struct {
     Vec3 vertex1;
     Vec3 vertex2;
     Vec3 vertex3;
+    float2 uv1, uv2, uv3;
     int mat;
 } Triangle;
 
@@ -50,7 +51,7 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
         Vec3 edge1 = subtract(triangle.vertex3, triangle.vertex2);
         Vec3 vp1 = subtract(hit_position, triangle.vertex2);
         C = cross(edge1, vp1);
-        v = dot(N, C);
+        v = dot(N, C);  // Use different variable for v
         if (v < 0) {
             return false;
         }
@@ -59,10 +60,11 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
         Vec3 edge2 = subtract(triangle.vertex1, triangle.vertex3);
         Vec3 vp2 = subtract(hit_position, triangle.vertex3);
         C = cross(edge2, vp2);
-        u = dot(N, C);
+        u = dot(N, C);  // Use different variable for u
         if (u < 0) {
             return false;
         }
+
 
         // We have an intersection
         u /= area2;
@@ -75,6 +77,12 @@ bool intersectTriangle(Ray ray, Triangle triangle, float* t, float t_min, float*
 		HD->normal = N;
         HD->material = materials[triangle.mat];
 		HD->objectType = TRIANGLE;
+        HD->uv_hit.x = u;
+        HD->uv_hit.y = v;
+        HD->uv0 = triangle.uv1;
+        HD->uv1 = triangle.uv2;
+        HD->uv2 = triangle.uv3;
+
         return true;
     }
 

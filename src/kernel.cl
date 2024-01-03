@@ -97,7 +97,7 @@ __kernel void updateLights(int max_x, int max_y, int light_nbr, __global float* 
 }
 
 //To load all data requiered to initialize the kernel
-__kernel void loading(int max_x, int max_y,__global float* cameraData,__global float* SkyColor, int mesh_nbr,__global float* materialsData,__global float* vertices,__global unsigned int* indices,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri,__global float * lightsData,int light_nbr, __global unsigned char * texturesData,__global int * texturesOffset, int texturesize)
+__kernel void loading(int max_x, int max_y,__global float* cameraData,__global float* SkyColor, int mesh_nbr,__global float* materialsData,__global float* vertices,__global unsigned int* indices,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri,__global float * lightsData,int light_nbr, __global unsigned char * texturesData,__global int * texturesOffset, int texturesize, __global float * uvs,__global unsigned int * split_uvs)
 {
     int i = get_global_id(0);
     int j = get_global_id(1);
@@ -182,11 +182,13 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
 
         unsigned int offset_vertex = 0;
         unsigned int offset_index = 0;
+        unsigned int offset_uvs = 0;
 
         for(int mesh_id = 0; mesh_id < mesh_nbr; mesh_id++)
         {
             unsigned int vertex_nbr = split_meshes[mesh_id];
             unsigned int tri_nbr = split_meshes_tri[mesh_id];
+            unsigned int uv_nbr = split_uvs[mesh_id];
             unsigned int index_nbr = tri_nbr *3;
 
             for(int tri = 0; tri < tri_nbr; tri++)
@@ -197,18 +199,31 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
                 int id2 = current_id + 2;
 
                 Vec3 s0 = (Vec3){vertices[(offset_vertex+indices[id0])*3+0],vertices[(offset_vertex+indices[id0])*3+1],vertices[(offset_vertex+indices[id0])*3+2]};
+                float2 uv0;
+                uv0.x = uvs[offset_uvs + indices[id0] * 2];
+                uv0.y = uvs[offset_uvs + indices[id0] * 2 + 1];
                 Vec3 s1 = (Vec3){vertices[(offset_vertex+indices[id1])*3+0],vertices[(offset_vertex+indices[id1])*3+1],vertices[(offset_vertex+indices[id1])*3+2]};
+                float2 uv1;
+                uv1.x = uvs[offset_uvs + indices[id1] * 2];
+                uv1.y = uvs[offset_uvs + indices[id1] * 2 + 1];
                 Vec3 s2 = (Vec3){vertices[(offset_vertex+indices[id2])*3+0],vertices[(offset_vertex+indices[id2])*3+1],vertices[(offset_vertex+indices[id2])*3+2]};
+                float2 uv2;
+                uv2.x = uvs[offset_uvs + indices[id2] * 2];
+                uv2.y = uvs[offset_uvs + indices[id2] * 2 + 1];
 
                 int current_tri_id =tri + offset_index/3;
                 mainScene2.triangles[current_tri_id].vertex1 = s0;
                 mainScene2.triangles[current_tri_id].vertex2 = s1;
                 mainScene2.triangles[current_tri_id].vertex3 = s2;
+                mainScene2.triangles[current_tri_id].uv1 = uv0;
+                mainScene2.triangles[current_tri_id].uv2 = uv1;
+                mainScene2.triangles[current_tri_id].uv3 = uv2;
                 mainScene2.triangles[current_tri_id].mat = mesh_id;
                 mainScene2.numTriangles++;
             }
             offset_index += index_nbr;
             offset_vertex += vertex_nbr;
+            offset_uvs += uv_nbr;
         }
 
     }

@@ -193,6 +193,29 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 	HitData HD = shootRay(ray->origin, ray->direction);
 	Vec3 finalColor = computePBR(&HD, ray, camPos);
 
+
+        Texture t = HD.material.texture;
+        int texX = (int)(HD.uv_hit.x* (t.width-1));
+        int texY = (int)(HD.uv_hit.y* (t.height-1));
+
+
+         texX = (texX < 0) ? 0 : ((texX >= t.width) ? t.width - 1 : texX);
+         texY = (texY < 0) ? 0 : ((texY >= t.height) ? t.height - 1 : texY);
+
+         float2 texCoord;
+        float2 uv1 = HD.uv0;
+        float2 uv2 = HD.uv1;
+        float2 uv3 = HD.uv2;
+
+        texCoord.x = (1 - HD.uv_hit.x - HD.uv_hit.y) * uv1.x + HD.uv_hit.x * uv2.x + HD.uv_hit.y * uv3.x;
+        texCoord.y = (1 - HD.uv_hit.x - HD.uv_hit.y) * uv1.y + HD.uv_hit.x * uv2.y + HD.uv_hit.y * uv3.y;
+
+          int texId = 3 * (uv1.y * t.width + uv1.x);
+
+          Vec3 textureColor = (Vec3){textures[texId],textures[300+1],textures[300+2]};
+            finalColor.x = textureColor.x;
+
+
 	if(!HD.intersectionExists){
 		return skyColor;
 	}
