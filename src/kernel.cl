@@ -23,7 +23,8 @@
 //Material materials[MESH_MAX_NUMBER];
 //int material_nbr;
 //unsigned int GPURandomInt;
-
+//const int TEXTURE_MAX_NUMBER = 300 000 000;
+//unsigned char textures[300000000];
 
 
 //To update the camera
@@ -78,6 +79,9 @@ __kernel void updateMaterials(int max_x, int max_y, int mesh_nbr, __global float
     }
 }
 
+
+
+
 //To update lights
 __kernel void updateLights(int max_x, int max_y, int light_nbr, __global float* lightsData) {
     int i = get_global_id(0);
@@ -96,7 +100,7 @@ __kernel void updateLights(int max_x, int max_y, int light_nbr, __global float* 
 }
 
 //To load all data requiered to initialize the kernel
-__kernel void loading(int max_x, int max_y,__global float* cameraData,__global float* SkyColor, int mesh_nbr,__global float* materialsData,__global float* vertices,__global unsigned int* indices,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri,__global float * lightsData,int light_nbr, __global float * bboxs){
+__kernel void loading(int max_x, int max_y,__global float* cameraData,__global float* SkyColor, int mesh_nbr,__global float* materialsData,__global float* vertices,__global unsigned int* indices,__global unsigned int* split_meshes,__global unsigned int* split_meshes_tri,__global float * lightsData,int light_nbr, __global float * bboxs, __global unsigned char * texturesData, __global unsigned int * split_textures, int texturesize, __global float * uvsData, __global unsigned int * split_uvs){
     int i = get_global_id(0);
     int j = get_global_id(1);
     material_nbr = mesh_nbr;
@@ -120,6 +124,15 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
         skyColor = (Vec3){SkyColor[0],SkyColor[1],SkyColor[2]};
     }
 
+        //Texture setup
+        if(i==4 && j ==0)
+        {
+            for(int tex_id =0; tex_id < texturesize; tex_id++)
+            {
+                textures[tex_id] = texturesData[tex_id];
+            }
+        }
+
     //Loading Material
     if(i==2 && j==0)
     {
@@ -136,11 +149,28 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
             materials[mesh_id].ao = materialsData[mat_id+12];
             materials[mesh_id].emissiveIntensity = materialsData[mat_id+13];
 
+            unsigned int tex_id = mesh_id* 3;
+            materials[mesh_id].texture.width = split_textures[tex_id];
+            materials[mesh_id].texture.height = split_textures[tex_id+1];
+            materials[mesh_id].texture.offset = split_textures[tex_id+2];
+
+            if( !(bool)materials[mesh_id].texture.width && !(bool)materials[mesh_id].texture.height)
+            {
+                materials[mesh_id].useTexture = false;
+            }
+            else{
+                materials[mesh_id].useTexture = true;
+                //materials[mesh_id].diffuse_color = (Vec3){(int)texturesData[materials[mesh_id].texture.offset]/255.f,(int)texturesData[materials[mesh_id].texture.offset+1]/255.f,(int)texturesData[materials[mesh_id].texture.offset+2]/255.f};
+
+            }
             // TODO : rajouter cela
             materials[mesh_id].isTransparent = 0.0f;
             materials[mesh_id].IOR = 1.4f;
         }
     }
+
+
+
 
     //Loading Scene - mostly Triangles
     if(i==2 && j==0)
@@ -205,6 +235,11 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
             unsigned int vertex_nbr = split_meshes[mesh_id];
             unsigned int tri_nbr = split_meshes_tri[mesh_id];
             unsigned int index_nbr = tri_nbr *3;
+            unsigned int uv_id = mesh_id * 2;
+            unsigned int uv_offset = split_uvs[uv_id];
+            unsigned int uv_nbr = split_uvs[uv_id+1];
+
+
 
             for(int tri = 0; tri < tri_nbr; tri++)
             {
@@ -214,13 +249,25 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
                 int id2 = current_id + 2;
 
                 Vec3 s0 = (Vec3){vertices[(offset_vertex+indices[id0])*3+0],vertices[(offset_vertex+indices[id0])*3+1],vertices[(offset_vertex+indices[id0])*3+2]};
+                float2 uv0;
+                uv0.x = uvsData[uv_offset + indices[id0] * 2];
+                uv0.y = uvsData[uv_offset + indices[id0] * 2 + 1];
                 Vec3 s1 = (Vec3){vertices[(offset_vertex+indices[id1])*3+0],vertices[(offset_vertex+indices[id1])*3+1],vertices[(offset_vertex+indices[id1])*3+2]};
+                float2 uv1;
+                uv1.x = uvsData[uv_offset + indices[id1] * 2];
+                uv1.y = uvsData[uv_offset + indices[id1] * 2 + 1];
                 Vec3 s2 = (Vec3){vertices[(offset_vertex+indices[id2])*3+0],vertices[(offset_vertex+indices[id2])*3+1],vertices[(offset_vertex+indices[id2])*3+2]};
+                float2 uv2;
+                uv2.x = uvsData[uv_offset + indices[id2] * 2];
+                uv2.y = uvsData[uv_offset + indices[id2] * 2 + 1];
 
                 int current_tri_id =tri + offset_index/3;
                 mainScene2.triangles[current_tri_id].vertex1 = s0;
                 mainScene2.triangles[current_tri_id].vertex2 = s1;
                 mainScene2.triangles[current_tri_id].vertex3 = s2;
+                mainScene2.triangles[current_tri_id].uv0 = uv0;
+                mainScene2.triangles[current_tri_id].uv1 = uv1;
+                mainScene2.triangles[current_tri_id].uv2 = uv2;
                 mainScene2.triangles[current_tri_id].mat = mesh_id;
                 mainScene2.numTriangles++;
             }

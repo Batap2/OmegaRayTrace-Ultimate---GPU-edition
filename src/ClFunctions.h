@@ -129,6 +129,7 @@ void updateLightBuffer()
     lightsBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * lights_array.size(),lights_array.data());
 
 }
+ 
 
 //-----------------------------------------DATA EXTRACTOR FROM SCENE ---------------------------------------------------//
 
@@ -140,11 +141,15 @@ void extractSceneData()
     splitMesh_array.clear();
     splitMeshTri_array.clear();
     bbox_array.clear();
+    uv_array.clear();
+    splitUV_array.clear();
+
     size_t mesh_number = scene_meshes.size();
     meshNbr = mesh_number;
     glm::vec3 bbmin(FLT_MAX,FLT_MAX,FLT_MAX);
     glm::vec3 bbmax(FLT_MIN,FLT_MIN,FLT_MIN);
     std::vector<glm::vec3> vertexChecklist;
+    unsigned int offset = 0;
     std::cout<<"Nbr of meshes in the scene : "<< mesh_number<<"\n";
     meshNbr = (int)mesh_number;
     for(size_t i = 0; i < mesh_number; i++)
@@ -153,13 +158,14 @@ void extractSceneData()
         size_t n_tri = m.triangle_indicies.size();
         size_t n_id = m.triangle_indicies.size()*3;
         size_t n_vertex_float = m.vertices.size()*3;
-
+        size_t n_uv = m.uv.size();
         splitMeshTri_array.push_back(n_tri);
 
         std::cout<<"Mesh: "<< i+1 <<"\n";
         std::cout<<" Number of triangles : "<< n_tri<<std::endl;
         std::cout<<" Number of indices : "<< n_id <<std::endl;
         std::cout<<" Number of vertex float : "<< n_vertex_float<<std::endl;
+        std::cout << " Number of uvs float :  " << n_uv << std::endl;
 
         unsigned int element_pushed =0;
         for (size_t tri = 0; tri < n_tri; ++tri)//triangle
@@ -196,6 +202,14 @@ void extractSceneData()
         convertVec3ToFloat(m.vertices,vertices_array);
         splitMesh_array.push_back(m.vertices.size());
 
+        for (int uv_id = 0; uv_id < m.uv.size();uv_id++)
+        {
+            uv_array.push_back(m.uv[uv_id]);
+        }
+        splitUV_array.push_back(offset);
+        splitUV_array.push_back(n_uv);
+        offset+= n_uv;
+
     }
     for(int j = 0; j < 3;j++)
     {
@@ -205,12 +219,102 @@ void extractSceneData()
     {
         bbox_array.push_back(bbmax[j]);
     }
-    std::cout<<" Size of index array : "<< indices_array.size()<<std::endl;
-    std::cout<<" Size of vertex array : "<< vertices_array.size() << std::endl;
-    std::cout<<" Size of splitMesh array : "<< splitMesh_array.size() <<std::endl;
-    std::cout<<" Element of splitMesh array : "<< splitMesh_array[0] <<std::endl;
-    std::cout << "Size of bbox array "<< bbox_array.size() << std::endl;
+
+
+    std::cout << " Size of index array : " << indices_array.size() << std::endl;
+    std::cout << " Size of vertex array : " << vertices_array.size() << std::endl;
+    std::cout << " Size of splitMesh array : " << splitMesh_array.size() << std::endl;
+    std::cout << " Element of splitMesh array : " << splitMesh_array[0] << std::endl;
+    std::cout << " Element of splitUV array : " << splitUV_array[0] << std::endl;
+    std::cout << " Size of uv array : " <<uv_array.size() << " "<<  splitUV_array[0]<< " "<< splitUV_array[1]<< " "<< splitUV_array[2]<<std::endl;
+    std::cout << "Size of split uv "<< splitUV_array.size() <<std::endl;
+    printVector(splitUV_array);
+
 }
+
+
+void writePPM(const std::vector<unsigned char>& image, int width, int height, const std::string& filename, std::size_t offset = 0) {
+    std::ofstream ppmFile(filename, std::ios::out | std::ios::binary);
+
+    if (!ppmFile.is_open()) {
+        std::cerr << "Erreur : Impossible d'ouvrir le fichier " << filename << " pour l'écriture." << std::endl;
+        return;
+    }
+
+    // Écriture de l'en-tête PPM
+    ppmFile << "P6\n";
+    ppmFile << width << " " << height << "\n";
+    ppmFile << "255\n";
+
+    // Écriture des données de l'image à partir de l'offset
+    ppmFile.write(reinterpret_cast<const char*>(image.data() + offset), image.size() - offset);
+
+    ppmFile.close();
+
+    std::cout << "Fichier PPM '" << filename << "' créé avec succès." << std::endl;
+}
+
+void updateTextureBuffer()
+{
+    texturesData_array.clear();
+    splitTexture_array.clear();
+
+
+    unsigned int last_w = 0;
+    unsigned int last_h = 0;
+    unsigned int offset = 0;
+    //For all meshes
+    for (size_t i = 0; i < scene_meshes.size(); i++) {
+
+        Mesh * m = scene_meshes[i];
+        //If it has a texture to use
+        if ((bool)m->material.useTexture) {
+            std::vector<unsigned char> data = m->material.diffuse_texture.data;
+            for(int l = 0; l < data.size(); l++)
+            {
+                texturesData_array.push_back(data[l]);
+
+            }
+
+
+            //texturesData_array.insert(texturesData_array.end(),m->material.diffuse_texture.data.begin(),m->material.diffuse_texture.data.end());
+            splitTexture_array.push_back(m->material.diffuse_texture.width);
+            splitTexture_array.push_back(m->material.diffuse_texture.height);
+            splitTexture_array.push_back(last_w * last_h * 3 + offset);
+            offset += last_w * last_h * 3 + offset;
+            last_w = m->material.diffuse_texture.width;
+            last_h = m->material.diffuse_texture.height;
+        }
+        else{
+            splitTexture_array.push_back(0);
+            splitTexture_array.push_back(0);
+            splitTexture_array.push_back(offset);
+
+        }
+
+
+
+    }
+
+
+    writePPM(texturesData_array,splitTexture_array[0*3+0],splitTexture_array[0*3+1],"test.ppm",splitTexture_array[0*3+2]);
+    writePPM(texturesData_array,splitTexture_array[1*3+0],splitTexture_array[1*3+1],"test1.ppm",splitTexture_array[1*3+2]);
+
+    //printVector(offset_array);
+    //printVector(texturesId_array);
+    //printVector(texturesData_array);
+    printVector(splitTexture_array);
+    std::cout << "Number of elements in texturesData array: " << texturesData_array.size()<<" " << (int)texturesData_array[0]<<" " << (int)texturesData_array[1]<<" "  << (int)texturesData_array[2]<< std::endl;
+
+    //std::cout << "Number of elements in texturesId array: " << texturesId_array.size() <<" "<<texturesId_array[0] << std::endl;
+    texturesDataBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned char) * texturesData_array.size(),texturesData_array.data());
+    splitTextureBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitTexture_array.size(),splitTexture_array.data());
+
+
+}
+
+
+
 //---------------------------------------------FIRST INIT OF BUFFERS -------------------------------------------------------//
 
 void initializeBuffers() {
@@ -220,11 +324,15 @@ void initializeBuffers() {
     updateMaterialBuffer();
     updateskyColorBuffer();
     updateLightBuffer();
+    updateTextureBuffer();
     vertexBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * vertices_array.size(),vertices_array.data());
     indexBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * indices_array.size(), indices_array.data());
     splitMeshBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMesh_array.size(), splitMesh_array.data());
     splitMeshTriBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMeshTri_array.size(), splitMeshTri_array.data());
     bboxBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * bbox_array.size(),bbox_array.data());
+    texturesDataBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned char) * texturesData_array.size(),texturesData_array.data());
+    uvBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * uv_array.size(), uv_array.data());
+    splitUVBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitUV_array.size(), splitUV_array.data());
 
 }
 
@@ -262,6 +370,12 @@ void load(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &program, co
     load_kernel.setArg(10,lightsBuffer);
     load_kernel.setArg(11,lightNbr);
     load_kernel.setArg(12,bboxBuffer);
+    load_kernel.setArg(13,texturesDataBuffer);
+    load_kernel.setArg(14,splitTextureBuffer);
+    load_kernel.setArg(15,(int)texturesData_array.size());
+    load_kernel.setArg(16,uvBuffer);
+    load_kernel.setArg(17,splitUVBuffer);
+
     //Executing loading in kernel.cl
     queue.enqueueNDRangeKernel(load_kernel, cl::NullRange, global, local);
     cl_int kernelError = queue.finish();
@@ -378,6 +492,8 @@ void updateCL_Lights(int max_x, int max_y,cl::CommandQueue &queue, cl::Program &
         exit(1);
     }
 }
+
+
 
 
 

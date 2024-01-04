@@ -294,7 +294,7 @@ int main(int argc, char* argv[]){
 
 
     SceneOperations::initSceneLights();
-    SceneOperations::openFile("data/cornel.fbx");
+    SceneOperations::openFile("data/plane2.fbx");
     SceneOperations::init_flat_screen();
 
     ShaderUtils::reshape(window, window_width, window_height);

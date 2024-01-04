@@ -2,13 +2,17 @@
 typedef struct {
     unsigned int height, width;
     unsigned char * data;
+    unsigned int offset;
 } Texture;
+
+const int TEXTURE_MAX_NUMBER = 300000000;
+unsigned char textures[TEXTURE_MAX_NUMBER];
 
 typedef struct {
 
     Texture texture;
 
-    float useTexture;
+    bool useTexture;
     float isEmissive;
     float isTransparent;
 

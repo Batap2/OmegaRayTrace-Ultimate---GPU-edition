@@ -129,8 +129,15 @@ inline cl::Buffer skyColorBuffer;
 inline cl::Buffer cameraBuffer;
 inline cl::Buffer lightsBuffer;
 inline cl::Buffer bboxBuffer;
+inline cl::Buffer texturesDataBuffer;
+inline cl::Buffer splitTextureBuffer;
+inline cl::Buffer uvBuffer;
+inline cl::Buffer splitUVBuffer;
+
 inline int meshNbr;
 inline int lightNbr;
+inline int textureNbr;
+inline int texturesSize;
 inline std::vector<float> vertices_array;
 inline std::vector<unsigned int> indices_array;
 inline std::vector<unsigned int> splitMesh_array;
@@ -138,4 +145,8 @@ inline std::vector<unsigned int> splitMeshTri_array;
 inline std::vector<float> materials_array;
 inline std::vector<float> lights_array;
 inline std::vector<float> bbox_array;
+inline std::vector<unsigned char> texturesData_array;
+inline std::vector<unsigned int >splitTexture_array;
+inline std::vector<float> uv_array;
+inline std::vector<unsigned int> splitUV_array;
 #endif

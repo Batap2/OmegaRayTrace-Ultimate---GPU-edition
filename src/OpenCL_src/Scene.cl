@@ -234,16 +234,39 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 			break;
 		} else
 		{
-
+            Vec3 diffuse;
 			// absorb light of the light beam with the materials
-			contribution = multiply(contribution, HD.material.diffuse_color);
+			if(HD.material.useTexture)
+			{
+            // Assurez-vous que uv_hit est dans la plage [0, 1]
+			// Assurez-vous que uv_hit est dans la plage [0, 1]
+			//HD.uv_hit.x -= floor(HD.uv_hit.x);
+			//HD.uv_hit.y -= floor(HD.uv_hit.y);
+			
+			// Convertir les coordonnées UV en fonction de la largeur et de la hauteur de la texture
+			float texX = HD.uv_hit.x * HD.material.texture.width;
+			float texY = HD.uv_hit.y * HD.material.texture.height;
+
+			// Assurez-vous que texX et texY sont dans les limites de la texture
+			//texX = clamp(texX, 0.0f, HD.material.texture.width - 1.0f);
+			//texY = clamp(texY, 0.0f, HD.material.texture.height - 1.0f);
+
+            int texIndex = (int)(texY * HD.material.texture.width + texX) *3;
+
+			diffuse = (Vec3){(int)textures[HD.material.texture.offset + texIndex]/255.f,(int)textures[HD.material.texture.offset + texIndex+1]/255.f,(int)textures[HD.material.texture.offset + texIndex+2]/255.f};
+			}
+            else
+            {
+            diffuse = HD.material.diffuse_color;
+            }
+			contribution = multiply(contribution, diffuse);
 
 
 
 
 
 			// add light to light beam uniquely if the material is emissive
-			Vec3 emissiveColor = scale(HD.material.diffuse_color, HD.material.emissiveIntensity);
+			Vec3 emissiveColor = scale(diffuse, HD.material.emissiveIntensity);
 
 			Vec3 mixedColor_emissive = lerp(scale(previousColor, HD.material.emissiveIntensity), emissiveColor, 0.5f);
 
@@ -287,8 +310,20 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 					break;
 				} else
 				{
-
-					contribution = multiply(contribution, lerp(H_reflectFromTransparent.material.diffuse_color, (Vec3){1.0f,1.0f,1.0f}, 0.8f));
+                Vec3 diffuse2;
+                // absorb light of the light beam with the materials
+                if(H_reflectFromTransparent.material.useTexture)
+                {
+                			float texX = HD.uv_hit.x * HD.material.texture.width;
+                			float texY = HD.uv_hit.y * HD.material.texture.height;
+                            int texIndex = (int)(texY * HD.material.texture.width + texX) *3;
+                            diffuse2 = (Vec3){(int)textures[HD.material.texture.offset + texIndex]/255.f,(int)textures[HD.material.texture.offset + texIndex+1]/255.f,(int)textures[HD.material.texture.offset + texIndex+2]/255.f};
+                }
+                else
+                {
+                diffuse2 = H_reflectFromTransparent.material.diffuse_color;
+                }
+					contribution = multiply(contribution, lerp(diffuse2, (Vec3){1.0f,1.0f,1.0f}, 0.8f));
 
 
 					// add light to light beam uniquely if the material is emissive
