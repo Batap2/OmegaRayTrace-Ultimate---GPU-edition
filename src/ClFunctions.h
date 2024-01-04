@@ -297,14 +297,14 @@ void updateTextureBuffer()
     }
 
 
-    writePPM(texturesData_array,splitTexture_array[0*3+0],splitTexture_array[0*3+1],"test.ppm",splitTexture_array[0*3+2]);
-    writePPM(texturesData_array,splitTexture_array[1*3+0],splitTexture_array[1*3+1],"test1.ppm",splitTexture_array[1*3+2]);
+    //writePPM(texturesData_array,splitTexture_array[0*3+0],splitTexture_array[0*3+1],"test.ppm",splitTexture_array[0*3+2]);
+    //writePPM(texturesData_array,splitTexture_array[1*3+0],splitTexture_array[1*3+1],"test1.ppm",splitTexture_array[1*3+2]);
 
     //printVector(offset_array);
     //printVector(texturesId_array);
     //printVector(texturesData_array);
-    printVector(splitTexture_array);
-    std::cout << "Number of elements in texturesData array: " << texturesData_array.size()<<" " << (int)texturesData_array[0]<<" " << (int)texturesData_array[1]<<" "  << (int)texturesData_array[2]<< std::endl;
+    //printVector(splitTexture_array);
+    //std::cout << "Number of elements in texturesData array: " << texturesData_array.size()<<" " << (int)texturesData_array[0]<<" " << (int)texturesData_array[1]<<" "  << (int)texturesData_array[2]<< std::endl;
 
     //std::cout << "Number of elements in texturesId array: " << texturesId_array.size() <<" "<<texturesId_array[0] << std::endl;
     texturesDataBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned char) * texturesData_array.size(),texturesData_array.data());
@@ -330,7 +330,6 @@ void initializeBuffers() {
     splitMeshBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMesh_array.size(), splitMesh_array.data());
     splitMeshTriBuffer= cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitMeshTri_array.size(), splitMeshTri_array.data());
     bboxBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * bbox_array.size(),bbox_array.data());
-    texturesDataBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned char) * texturesData_array.size(),texturesData_array.data());
     uvBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * uv_array.size(), uv_array.data());
     splitUVBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(unsigned int) * splitUV_array.size(), splitUV_array.data());
 
@@ -503,7 +502,8 @@ void render(cl::Buffer &buffer, int max_x, int max_y, cl::CommandQueue &queue, c
     kernel.setArg(0, buffer);
     kernel.setArg(1, max_x);
     kernel.setArg(2, max_y);
-
+    /*kernel.setArg(3,texturesDataBuffer);
+    kernel.setArg(4, (int)texturesData_array.size());*/
 
 
     cl::NDRange global(max_x, max_y);
@@ -627,7 +627,13 @@ void renderImage(cl::Buffer& buffer, int nx, int ny, cl::CommandQueue& queue, cl
     //denoise_avg(buffer, nx, ny, queue, program, devices[0],1);
      denoise_bil(buffer, nx, ny, queue, program, devices[0],1,1,5);
     denoise_bil(buffer, nx, ny, queue, program, devices[0],5,7,1);
-
+    //cl::Buffer test(clContext, CL_MEM_READ_WRITE, texturesData_array.size());
+    //renderImage(buffer, window_width, window_height, clQueue, clProgram, devices);
+    std::vector<unsigned char> test;
+    test.resize(texturesData_array.size());
+    /*clQueue.enqueueReadBuffer(texturesDataBuffer, CL_TRUE, 0, texturesData_array.size()* sizeof(unsigned char), test.data());
+    writePPM(test,splitTexture_array[0*3+0],splitTexture_array[0*3+1],"test0.ppm",splitTexture_array[0*3+2]);
+    writePPM(test,splitTexture_array[1*3+0],splitTexture_array[1*3+1],"test2.ppm",splitTexture_array[1*3+2]);*/
     // Measure the time after rendering
     clock_t end_time = clock();
     double duration = double(end_time - start_time) / CLOCKS_PER_SEC;

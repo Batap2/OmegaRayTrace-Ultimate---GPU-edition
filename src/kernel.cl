@@ -124,18 +124,18 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
         skyColor = (Vec3){SkyColor[0],SkyColor[1],SkyColor[2]};
     }
 
-        //Texture setup
-        if(i==4 && j ==0)
-        {
-            for(int tex_id =0; tex_id < texturesize; tex_id++)
-            {
-                textures[tex_id] = texturesData[tex_id];
-            }
-        }
 
     //Loading Material
     if(i==2 && j==0)
     {
+
+
+
+                for(int tex_id =0; tex_id < texturesize; tex_id++)
+                {
+                    textures[tex_id] = texturesData[tex_id];
+                }
+
         for(int mesh_id =0; mesh_id < mesh_nbr; mesh_id++)
         {
 
@@ -305,7 +305,7 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
 
 
 //Fonction principale du kernel -> Rendu par raytracing 'une image de la scène
-__kernel void render(__global float* fb, int max_x, int max_y)
+__kernel void render(__global float* fb, int max_x, int max_y) //,__global unsigned char * texturesData, int size
 {
 	int i = get_global_id(0);
 	int j = get_global_id(1);
@@ -315,6 +315,13 @@ __kernel void render(__global float* fb, int max_x, int max_y)
 	randomSeed = &randomSeedInit;
 
     if ((i < max_x) && (j < max_y)) {
+    	/*if(i == 0 && j == 0)
+            {
+                for(int tex_id = 0; tex_id < size; tex_id++)
+                {
+                    texturesData[tex_id] = textures[tex_id];
+                }
+            }*/
         int pixel_index = j * max_x * 3 + i * 3;
 
 		// Calcul des coordonnées du rayon

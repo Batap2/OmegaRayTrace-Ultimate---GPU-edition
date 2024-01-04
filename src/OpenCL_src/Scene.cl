@@ -238,22 +238,18 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 			// absorb light of the light beam with the materials
 			if(HD.material.useTexture)
 			{
-            // Assurez-vous que uv_hit est dans la plage [0, 1]
-			// Assurez-vous que uv_hit est dans la plage [0, 1]
-			HD.uv_hit.x -= floor(HD.uv_hit.x);
-			HD.uv_hit.y -= floor(HD.uv_hit.y);
-			
-			// Convertir les coordonnées UV en fonction de la largeur et de la hauteur de la texture
-			float texX = HD.uv_hit.x * HD.material.texture.width;
-			float texY = HD.uv_hit.y * HD.material.texture.height;
 
-			// Assurez-vous que texX et texY sont dans les limites de la texture
-			//texX = clamp(texX, 0.0f, HD.material.texture.width - 1.0f);
-			//texY = clamp(texY, 0.0f, HD.material.texture.height - 1.0f);
+			
+			int texX = HD.uv_hit.x * HD.material.texture.width;
+			int texY = HD.uv_hit.y * HD.material.texture.height;
+
 
             int texIndex = (int)(texY * HD.material.texture.width + texX) *3;
-
-			diffuse = (Vec3){HD.uv_hit.x,HD.uv_hit.y,0.};
+            unsigned off = HD.material.texture.offset;
+            float r = textures[off+texIndex];
+            float g = textures[off+texIndex+1];
+            float b = textures[off+texIndex+2];
+			diffuse = (Vec3){r/255,g/255,b/255};
 			}
             else
             {
@@ -314,10 +310,16 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
                 // absorb light of the light beam with the materials
                 if(H_reflectFromTransparent.material.useTexture)
                 {
-                			float texX = HD.uv_hit.x * HD.material.texture.width;
-                			float texY = HD.uv_hit.y * HD.material.texture.height;
-                            int texIndex = (int)(texY * HD.material.texture.width + texX) *3;
-                            diffuse2 = (Vec3){(int)textures[HD.material.texture.offset + texIndex]/255.f,(int)textures[HD.material.texture.offset + texIndex+1]/255.f,(int)textures[HD.material.texture.offset + texIndex+2]/255.f};
+                						int texX = HD.uv_hit.x * HD.material.texture.width;
+                            			int texY = HD.uv_hit.y * HD.material.texture.height;
+
+
+                                        int texIndex = (int)(texY * HD.material.texture.width + texX) *3;
+                                        unsigned off = HD.material.texture.offset;
+                                        float r = textures[off+texIndex];
+                                        float g = textures[off+texIndex+1];
+                                        float b = textures[off+texIndex+2];
+                            			diffuse2 = (Vec3){r/255,g/255,b/255};
                 }
                 else
                 {
