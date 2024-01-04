@@ -240,8 +240,8 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 			{
             // Assurez-vous que uv_hit est dans la plage [0, 1]
 			// Assurez-vous que uv_hit est dans la plage [0, 1]
-			//HD.uv_hit.x -= floor(HD.uv_hit.x);
-			//HD.uv_hit.y -= floor(HD.uv_hit.y);
+			HD.uv_hit.x -= floor(HD.uv_hit.x);
+			HD.uv_hit.y -= floor(HD.uv_hit.y);
 			
 			// Convertir les coordonnées UV en fonction de la largeur et de la hauteur de la texture
 			float texX = HD.uv_hit.x * HD.material.texture.width;
@@ -253,7 +253,7 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 
             int texIndex = (int)(texY * HD.material.texture.width + texX) *3;
 
-			diffuse = (Vec3){(int)textures[HD.material.texture.offset + texIndex]/255.f,(int)textures[HD.material.texture.offset + texIndex+1]/255.f,(int)textures[HD.material.texture.offset + texIndex+2]/255.f};
+			diffuse = (Vec3){HD.uv_hit.x,HD.uv_hit.y,0.};
 			}
             else
             {
