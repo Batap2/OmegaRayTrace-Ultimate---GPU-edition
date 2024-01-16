@@ -140,7 +140,7 @@ inline int textureNbr;
 inline int texturesSize;
 
 //Denoise stuff
-inline unsigned int window_size = 5;
+inline int window_size = 5;
 inline float denoise_bil_colordif_val = 1;
 inline float denoise_bil_distance_val = 1;
 

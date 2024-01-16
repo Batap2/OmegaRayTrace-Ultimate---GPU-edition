@@ -97,6 +97,9 @@ namespace GUI{
         {
             updateCL_SkyColor(window_width,window_height,clQueue,clProgram,devices[0]);
         }
+        ImGui::InputInt("Denoise window size ",&window_size);
+        ImGui::InputFloat("Color distance ", &denoise_bil_colordif_val);
+        ImGui::InputFloat("Spatial distance ", &denoise_bil_distance_val);
         ImGui::Separator();ImGui::Separator();
 
         ImGui::Text(" ");ImGui::Text(" ");
