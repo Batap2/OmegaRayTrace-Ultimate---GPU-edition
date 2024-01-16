@@ -139,7 +139,7 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
         for(int mesh_id =0; mesh_id < mesh_nbr; mesh_id++)
         {
 
-            unsigned int mat_id = mesh_id*15;
+            unsigned int mat_id = mesh_id*16;
             materials[mesh_id].ambiant_color = (Vec3){materialsData[mat_id],materialsData[mat_id+1],materialsData[mat_id+2]};
             materials[mesh_id].diffuse_color = (Vec3){materialsData[mat_id+3],materialsData[mat_id+4],materialsData[mat_id+5]};
             materials[mesh_id].specular_color = (Vec3){materialsData[mat_id+6],materialsData[mat_id+7],materialsData[mat_id+8]};
@@ -149,6 +149,7 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
             materials[mesh_id].ao = materialsData[mat_id+12];
             materials[mesh_id].emissiveIntensity = materialsData[mat_id+13];
             materials[mesh_id].isTransparent = materialsData[mat_id+14];
+            materials[mesh_id].IOR = materialsData[mat_id+15];
 
             unsigned int tex_id = mesh_id* 3;
             materials[mesh_id].texture.width = split_textures[tex_id];
@@ -166,7 +167,7 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
             }
             // TODO : rajouter cela
             //materials[mesh_id].isTransparent = 0.0f;
-            materials[mesh_id].IOR = 1.4f;
+            //materials[mesh_id].IOR = 1.4f;
         }
     }
 

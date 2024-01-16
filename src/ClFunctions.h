@@ -101,9 +101,11 @@ void updateMaterialBuffer()
         }
         materials_array.push_back(scene_meshes[i]->material.emissive_intensity);
         materials_array.push_back(scene_meshes[i]->material.isTransparent);
+        materials_array.push_back(scene_meshes[i]->material.IOR);
+
     }
     std::cout<<"Number of elements in materials array : "<< materials_array.size()<<std::endl;
-    std::cout<<"Number of meshes by using materials array : "<< materials_array.size() / 15 <<std::endl;
+    std::cout<<"Number of meshes by using materials array : "<< materials_array.size() / 16 <<std::endl;
     materialsBuffer = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(float) * materials_array.size(),materials_array.data());
 
 }
