@@ -624,8 +624,9 @@ void renderImage(cl::Buffer& buffer, int nx, int ny, cl::CommandQueue& queue, cl
 
     // Render
     render(buffer, nx, ny, queue, program, devices[0]);
+    denoise_bil(buffer, nx, ny, queue, program, devices[0],denoise_bil_distance_val,denoise_bil_colordif_val,window_size);
     //denoise_avg(buffer, nx, ny, queue, program, devices[0],1);
-     //denoise_bil(buffer, nx, ny, queue, program, devices[0],1,1,5);
+    //denoise_bil(buffer, nx, ny, queue, program, devices[0],1,1,5);
     //denoise_bil(buffer, nx, ny, queue, program, devices[0],5,7,1);
     //cl::Buffer test(clContext, CL_MEM_READ_WRITE, texturesData_array.size());
     //renderImage(buffer, window_width, window_height, clQueue, clProgram, devices);

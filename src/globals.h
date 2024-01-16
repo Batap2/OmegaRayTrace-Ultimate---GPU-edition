@@ -138,6 +138,12 @@ inline int meshNbr;
 inline int lightNbr;
 inline int textureNbr;
 inline int texturesSize;
+
+//Denoise stuff
+inline unsigned int window_size = 5;
+inline float denoise_bil_colordif_val = 1;
+inline float denoise_bil_distance_val = 1;
+
 inline std::vector<float> vertices_array;
 inline std::vector<unsigned int> indices_array;
 inline std::vector<unsigned int> splitMesh_array;
