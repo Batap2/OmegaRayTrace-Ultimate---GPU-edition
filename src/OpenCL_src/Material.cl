@@ -27,6 +27,9 @@ typedef struct {
 
     float metallic, roughness, ao;
 
+
+
+
 } Material;
 
 
@@ -46,4 +49,18 @@ int createMaterial(Vec3 ambiantcolor,Vec3 diffusecolor,Vec3 specularcolor, float
     material_nbr++;
 
     return material_nbr - 1 ;
+}
+
+
+Vec3 sampleTex(Texture texture, float x, float y){
+    int texX = x * texture.width;
+    int texY = y * texture.height;
+
+
+    int texIndex = (int)(texY * texture.width + texX) *3;
+    unsigned off = texture.offset;
+    float r = textures[off+texIndex];
+    float g = textures[off+texIndex+1];
+    float b = textures[off+texIndex+2];
+    return (Vec3){r/255,g/255,b/255};
 }

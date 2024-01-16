@@ -294,7 +294,7 @@ int main(int argc, char* argv[]){
 
 
     SceneOperations::initSceneLights();
-    SceneOperations::openFile("data/cube_tex.fbx");
+    SceneOperations::openFile("data/wood_plan.fbx");
     SceneOperations::init_flat_screen();
 
     ShaderUtils::reshape(window, window_width, window_height);

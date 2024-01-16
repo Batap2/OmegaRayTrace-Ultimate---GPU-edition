@@ -625,8 +625,8 @@ void renderImage(cl::Buffer& buffer, int nx, int ny, cl::CommandQueue& queue, cl
     // Render
     render(buffer, nx, ny, queue, program, devices[0]);
     //denoise_avg(buffer, nx, ny, queue, program, devices[0],1);
-     denoise_bil(buffer, nx, ny, queue, program, devices[0],1,1,5);
-    denoise_bil(buffer, nx, ny, queue, program, devices[0],5,7,1);
+     //denoise_bil(buffer, nx, ny, queue, program, devices[0],1,1,5);
+    //denoise_bil(buffer, nx, ny, queue, program, devices[0],5,7,1);
     //cl::Buffer test(clContext, CL_MEM_READ_WRITE, texturesData_array.size());
     //renderImage(buffer, window_width, window_height, clQueue, clProgram, devices);
     std::vector<unsigned char> test;

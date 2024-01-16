@@ -7,6 +7,7 @@
 
 #include "globals.h"
 #include "MeshLoader.h"
+#include "ClFunctions.h"
 
 namespace SceneOperations
 {
@@ -150,6 +151,8 @@ namespace SceneOperations
 
             scene_objects.push_back(newObj);
         }
+        initializeBuffers();
+        load(window_width,window_height,clQueue,clProgram,devices[0]);
     }
 }
 

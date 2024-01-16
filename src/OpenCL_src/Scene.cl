@@ -219,8 +219,17 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 	{
 
 		if(bounce != 0){
-			previousColor = HD.material.diffuse_color;
+			if(HD.material.useTexture)
+			{
+				previousColor = sampleTex(HD.material.texture, HD.uv_hit.x, HD.uv_hit.y);
+			}
+            else
+            {
+            	previousColor = HD.material.diffuse_color;
+            }
 		}
+
+
 
 		HD = shootRay(ray2.origin, ray2.direction);
 
@@ -234,27 +243,24 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 			break;
 		} else
 		{
+
             Vec3 diffuse;
-			// absorb light of the light beam with the materials
+			
 			if(HD.material.useTexture)
 			{
-
-			
-			int texX = HD.uv_hit.x * HD.material.texture.width;
-			int texY = HD.uv_hit.y * HD.material.texture.height;
-
-
-            int texIndex = (int)(texY * HD.material.texture.width + texX) *3;
-            unsigned off = HD.material.texture.offset;
-            float r = textures[off+texIndex];
-            float g = textures[off+texIndex+1];
-            float b = textures[off+texIndex+2];
-			diffuse = (Vec3){r/255,g/255,b/255};
+				diffuse = sampleTex(HD.material.texture, HD.uv_hit.x, HD.uv_hit.y);
 			}
             else
             {
-            diffuse = HD.material.diffuse_color;
+            	diffuse = HD.material.diffuse_color;
             }
+
+            if(bounce == 0 && HD.material.emissiveIntensity > 0.0f){
+            	finalColor = diffuse;
+            	break;
+            }
+
+			// absorb light of the light beam with the materials
 			contribution = multiply(contribution, diffuse);
 
 
@@ -263,8 +269,10 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 
 			// add light to light beam uniquely if the material is emissive
 			Vec3 emissiveColor = scale(diffuse, HD.material.emissiveIntensity);
+			//Vec3 emissiveColor = diffuse;
 
 			Vec3 mixedColor_emissive = lerp(scale(previousColor, HD.material.emissiveIntensity), emissiveColor, 0.5f);
+			//Vec3 mixedColor_emissive = emissiveColor;
 
 			finalColor = add(finalColor, mixedColor_emissive);
 
@@ -283,6 +291,8 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 				if(HD.objectType == SPHERE)
 				{
 					ray2.origin = add(HD.position2, scale(ray2.direction, 0.01f));
+				} else {
+				    ray2.origin = add(HD.position, scale(ray2.direction, 0.01f));
 				}
 
 			} else
@@ -301,30 +311,22 @@ Vec3 computeColor(Ray *ray, Vec3 camPos, int nbBounce)
 
 				if(!HD.intersectionExists)
 				{
-
-					finalColor = add(finalColor, multiply(contribution, skyColor));
+					finalColor = add(finalColor, multiply(contribution, (Vec3){1.0f,0.0f,0.0f}));
 					break;
 				} else
 				{
-                Vec3 diffuse2;
-                // absorb light of the light beam with the materials
-                if(H_reflectFromTransparent.material.useTexture)
-                {
-                						int texX = HD.uv_hit.x * HD.material.texture.width;
-                            			int texY = HD.uv_hit.y * HD.material.texture.height;
+	                Vec3 diffuse2;
+	                if(H_reflectFromTransparent.material.useTexture)
+	                {
+	                	diffuse2 = sampleTex(HD.material.texture, HD.uv_hit.x, HD.uv_hit.y);
+	                }
+	                else
+	                {
+	                	diffuse2 = H_reflectFromTransparent.material.diffuse_color;
+	                }
 
-
-                                        int texIndex = (int)(texY * HD.material.texture.width + texX) *3;
-                                        unsigned off = HD.material.texture.offset;
-                                        float r = textures[off+texIndex];
-                                        float g = textures[off+texIndex+1];
-                                        float b = textures[off+texIndex+2];
-                            			diffuse2 = (Vec3){r/255,g/255,b/255};
-                }
-                else
-                {
-                diffuse2 = H_reflectFromTransparent.material.diffuse_color;
-                }
+	                
+	                // absorb light of the light beam with the materials
 					contribution = multiply(contribution, lerp(diffuse2, (Vec3){1.0f,1.0f,1.0f}, 0.8f));
 
 
