@@ -236,16 +236,16 @@ __kernel void loading(int max_x, int max_y,__global float* cameraData,__global f
 
         // --------------------scene : sky
 
-        int mat_created_id = createMaterial(materials[2].ambiant_color,(Vec3){1.0f,1.0f,1.0f},materials[2].specular_color,materials[2].shininess,0.0f,0.002f,materials[2].ao);
-        addSphere((Vec3){0.0f,0.2f,0.0f}, 0.2,mat_created_id);
+        // int mat_created_id = createMaterial(materials[2].ambiant_color,(Vec3){1.0f,1.0f,1.0f},materials[2].specular_color,materials[2].shininess,0.0f,0.002f,materials[2].ao);
+        // addSphere((Vec3){0.0f,0.2f,0.0f}, 0.2,mat_created_id);
 
-        int mat_created_id2 = createMaterial(materials[2].ambiant_color,(Vec3){1.0f,0.0f,0.0f},materials[2].specular_color,0.0f,0.0f,1.0f,materials[2].ao);
-        addSphere((Vec3){-0.5f,0.2f,0.0f}, 0.2,mat_created_id2);
+        // int mat_created_id2 = createMaterial(materials[2].ambiant_color,(Vec3){1.0f,0.0f,0.0f},materials[2].specular_color,0.0f,0.0f,1.0f,materials[2].ao);
+        // addSphere((Vec3){-0.5f,0.2f,0.0f}, 0.2,mat_created_id2);
 
-        int mat_created_id3 = createMaterial(materials[2].ambiant_color,(Vec3){1.0f,1.0f,1.0f},materials[2].specular_color,materials[2].shininess,0.0f,0.0f,materials[2].ao);
-        addSphere((Vec3){0.5f,0.2f,0.0f}, 0.2,mat_created_id3);
+        // int mat_created_id3 = createMaterial(materials[2].ambiant_color,(Vec3){1.0f,1.0f,1.0f},materials[2].specular_color,materials[2].shininess,0.0f,0.0f,materials[2].ao);
+        // addSphere((Vec3){0.5f,0.2f,0.0f}, 0.2,mat_created_id3);
 
-        materials[mat_created_id3].isTransparent = 1.0f;
+        // materials[mat_created_id3].isTransparent = 1.0f;
 
         // DEBUG ---------------------------------------------------------------
 

@@ -1,10 +1,8 @@
-# Object / Mesh Viewer
+# OmegaRayTrace-Ultimate---GPU-edition
 
-The following repository contains the implementation of a basic mesh/object viewer for `.obj` files. The project has been implemented in C++ using OpenGL and GLSL. This project was largely pursued to be able to get familiar with OpenGL and GLSL. The project uses the typical OpenGL rendering pipeline and uses the phong lighting model for lighting calculations.   
+This project is a mesh viewer and real-time path-tracing renderer on GPU using OpenCL 3. It supports all types of files and embedded textures. It is written in C++, with C for the OpenCL part and GLSL for shaders. For the OpenGL rendering part, a physically-based rendering (PBR) approach is implemented.
 
 ## Usage
-
-A sample binary has been uploaded with the repo (compiled on x86, as a 64 bit application), but its unlikely that it would generally work even on a system with the same configuration (try anyway, it just might). 
 
 To compile, create a directory called `build` and create Makefile using the cmake build system
 
@@ -12,35 +10,30 @@ To compile, create a directory called `build` and create Makefile using the cmak
     cmake ..
     make
 
-Once the project is compiled, the binary is directed to a `bin` directory, and takes the `.obj` mesh as a command line argument 
+Once compiled, launch the viewer and open a file with the "file" button
 
-    ./bin/viewer objects/bunny.obj 
-    
-The text newlines and messages have been hardcoded for full HD (1920x1080) resolution, but lower resolutions should not really be a problem.
+![](demo/openFile.mp4)
 
-## Tweakable: Render Mode 
-One of Smooth, Lines, Point Cloud, Mesh
-![](demonstrations/newer_render_modes.gif)
+## Input :
+Translate camera : a z e q s d
+Rotate camera : right clic + mouse
+Change camera speed : scrollwheel
 
-## Tweakable: Reflective Properties
-Sliders for Ambient, Diffuse, Specular, Shininess (in accordance to Phong Lighting model), and a checkbox for activating RBG inputs for the above sliders
+## Render Mode 
+Fast : OpenGL rendering pipeline
+RayTraced : OpenCL on GPU, path tracing rendering
 
-![](https://github.com/amanshenoy/object-viewer/blob/main/demonstrations/reflective_properties.gif)
+![](demo/raytrace.mp4)
 
-## Tweakable: Input devices
-Keyboard or Mouse, for Translation and Rotation (Alternate)
-![](https://github.com/amanshenoy/object-viewer/blob/main/demonstrations/input_devices.gif)
+## Materials :
 
-## Tweakable: Camera
-Same thing as using mouse to move object around, but finer control
-![](https://github.com/amanshenoy/object-viewer/blob/main/demonstrations/camera.gif)
+Materials can be modified by clicking on an object in the scene object list.
 
-## Tweakable: Lighting 
+## Lights :
 
-RGB and XYZ Sliders for 5 light sources, 4 of which are off by default 
-![](https://github.com/amanshenoy/object-viewer/blob/main/demonstrations/lighting.gif)
+Lights can be added or added by clicking on a light in the scene lights list. There are only used for the Fast render mode
 
+## Dependencies and Fork
 
-## Dependencies and Other Stuff
-
-The project uses [glm](https://github.com/g-truc/glm) for maths, [ImGui](https://github.com/ocornut/imgui) for the GUI and [GLFW](glfw.org) as the windowing library. GLEW was used to access OpenGL. The folder `objects` has a fair few objects to be able to play around with. Most of these were downloaded from [here](https://people.sc.fsu.edu/~jburkardt/data/obj/obj.html) and were corrected using [Meshlab](https://www.meshlab.net/).  
+This project is forked from https://github.com/amanshenoy/mesh-viewer.
+It using GLFW for the window, ImGui for the interface, OpenCL for the path tracing render on GPU, Assimp, dirent & imgui-filebrowser for importing 3D files and glm.
