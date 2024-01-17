@@ -12,7 +12,7 @@ To compile, create a directory called `build` and create Makefile using the cmak
 
 Once compiled, launch the viewer and open a file with the "file" button
 
-![](demo/openFile.mp4)
+![](demo/openFile.gif)
 
 ## Input :
 Translate camera : a z e q s d
@@ -23,7 +23,7 @@ Change camera speed : scrollwheel
 Fast : OpenGL rendering pipeline
 RayTraced : OpenCL on GPU, path tracing rendering
 
-![](demo/raytrace.mp4)
+![](demo/raytrace.gif)
 
 ## Materials :
 
