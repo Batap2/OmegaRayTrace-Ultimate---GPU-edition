@@ -2,6 +2,13 @@
 
 This project is a mesh viewer and real-time path-tracing renderer on GPU using OpenCL 3. It supports all types of files and embedded textures. It is written in C++, with C for the OpenCL part and GLSL for shaders. For the OpenGL rendering part, a physically-based rendering (PBR) approach is implemented.
 
+## Results :
+
+![](demo/renduIle.png)
+![](demo/ref2.png)
+![](demo/ring.png)
+![](demo/verre.png)
+
 ## Usage
 
 To compile, create a directory called `build` and create Makefile using the cmake build system
